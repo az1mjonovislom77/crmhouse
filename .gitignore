@@ -1,0 +1,29 @@
+# Virtual environment
+env/
+venv/
+
+# Compiled Python files
+*.pyc
+__pycache__/
+
+# Database
+*.sqlite3
+
+staticfiles/
+
+# Media and Static files
+media/
+static_collected/ # If you collect static files here
+
+# Environment variables and sensitive data
+.env
+settings_local.py # Or any other file containing local/sensitive settings
+
+# Log files
+*.log
+
+# IDE/OS specific files
+.DS_Store
+.idea/
+.vscode/
+Thumbs.db
