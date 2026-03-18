@@ -1,6 +1,5 @@
 from django.core.validators import FileExtensionValidator
 from django.db import models
-from projects.models import Projects
 from utils.compressor import optimize_image_to_webp, check_image_size
 from utils.models import Blocks, Floors, Rooms, Renovation, Basement
 from decimal import Decimal
@@ -25,16 +24,17 @@ class Home(models.Model):
         TEN = 10, "10"
 
     title = models.CharField(max_length=100)
-    projects = models.ForeignKey(Projects, on_delete=models.SET_NULL, null=True, blank=True)
-    blocks = models.ForeignKey(Blocks, on_delete=models.SET_NULL, null=True, blank=True)
+    blocks = models.ForeignKey(Blocks, on_delete=models.SET_NULL, null=True, blank=True, related_name='homes')
     floor = models.ForeignKey(Floors, on_delete=models.SET_NULL, null=True, blank=True)
     rooms = models.ForeignKey(Rooms, on_delete=models.SET_NULL, null=True, blank=True)
     area = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    home_status = models.CharField(choices=HomeStatus.choices, default=HomeStatus.AVAILABLE, max_length=10, db_index=True)
+    home_status = models.CharField(choices=HomeStatus.choices, default=HomeStatus.AVAILABLE, max_length=10,
+                                   db_index=True)
     renovation = models.ForeignKey(Renovation, on_delete=models.SET_NULL, null=True, blank=True)
     basement = models.ForeignKey(Basement, on_delete=models.SET_NULL, null=True, blank=True)
     price_per_sqm = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    entrance = models.CharField(choices=EntranceChoice.choices, default=EntranceChoice.ONE, max_length=10, db_index=True)
+    entrance = models.CharField(choices=EntranceChoice.choices, default=EntranceChoice.ONE, max_length=10,
+                                db_index=True)
 
     @property
     def total_price(self):

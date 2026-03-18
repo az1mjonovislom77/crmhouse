@@ -1,7 +1,10 @@
 from django.db import models
 
+from projects.models import Projects
+
 
 class Blocks(models.Model):
+    projects = models.ForeignKey(Projects, on_delete=models.SET_NULL, null=True, blank=True, related_name='blocks')
     title = models.CharField(max_length=100, db_index=True)
 
     def __str__(self):

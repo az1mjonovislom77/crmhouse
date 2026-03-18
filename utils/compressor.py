@@ -1,10 +1,10 @@
 import sys
 from io import BytesIO
-from django.core.files.base import ContentFile
 from PIL import Image
 import pillow_heif
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 pillow_heif.register_heif_opener()
 

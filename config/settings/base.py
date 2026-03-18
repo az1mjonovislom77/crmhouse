@@ -23,7 +23,9 @@ DJANGO_APPS = [
 LOCAL_APPS = [
     'user',
     'utils',
-    'instagram'
+    'instagram',
+    'projects',
+    'home'
 ]
 
 THIRD_PARTY_APPS = [
@@ -87,7 +89,7 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Plywood',
+    'TITLE': 'CRM_Bunyodkorhouse',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }

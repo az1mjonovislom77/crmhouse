@@ -1,7 +1,6 @@
 from user.models import User
 from django.db import models
 from django.core.validators import FileExtensionValidator
-
 from utils.compressor import check_image_size, optimize_image_to_webp
 
 
