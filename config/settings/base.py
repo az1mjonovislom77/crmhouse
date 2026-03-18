@@ -6,6 +6,7 @@ from decouple import config
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
+INSTAGRAM_ACCESS_TOKEN = config('INSTAGRAM_ACCESS_TOKEN')
 
 AUTH_USER_MODEL = 'user.User'
 
@@ -21,7 +22,8 @@ DJANGO_APPS = [
 
 LOCAL_APPS = [
     'user',
-    'utils'
+    'utils',
+    'instagram'
 ]
 
 THIRD_PARTY_APPS = [
@@ -143,3 +145,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+INSTAGRAM_API_VERSION = "v19.0"
+GRAPH_BASE_URL = "https://graph.facebook.com"
+IG_USER_ID = "17841439835654723"
