@@ -7,7 +7,7 @@ from utils.models import Blocks
 class BlocksSerializer(serializers.ModelSerializer):
     class Meta:
         model = Blocks
-        fields = '__all__'
+        fields = ['title', ]
 
 
 class ProjectsSerializer(serializers.ModelSerializer):
