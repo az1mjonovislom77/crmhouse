@@ -10,6 +10,7 @@ urlpatterns = [
     path('instagram/', include('instagram.urls')),
     path('projects/', include('projects.urls')),
     path('home/', include('home.urls')),
+    path('booking/', include('booking.urls')),
     path('utils/', include('utils.urls')),
 
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
