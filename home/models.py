@@ -1,7 +1,7 @@
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from utils.compressor import optimize_image_to_webp, check_image_size
-from utils.models import Blocks, Floors, Rooms, Renovation, Basement
+from utils.models import Blocks, Floors, Renovation, Basement
 from decimal import Decimal
 
 
@@ -23,10 +23,22 @@ class Home(models.Model):
         NINE = 9, "9"
         TEN = 10, "10"
 
-    title = models.CharField(max_length=100)
+    class RoomsChoice(models.IntegerChoices):
+        ONE = 1, "1"
+        TWO = 2, "2"
+        THREE = 3, "3"
+        FOUR = 4, "4"
+        FIVE = 5, "5"
+        SIX = 6, "6"
+        SEVEN = 7, "7"
+        EIGHT = 8, "8"
+        NINE = 9, "9"
+        TEN = 10, "10"
+
+    home_number = models.PositiveIntegerField(default=0)
     blocks = models.ForeignKey(Blocks, on_delete=models.SET_NULL, null=True, blank=True, related_name='homes')
     floor = models.ForeignKey(Floors, on_delete=models.SET_NULL, null=True, blank=True)
-    rooms = models.ForeignKey(Rooms, on_delete=models.SET_NULL, null=True, blank=True)
+    rooms = models.CharField(choices=RoomsChoice.choices, default=RoomsChoice.ONE, max_length=10, db_index=True)
     area = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     home_status = models.CharField(choices=HomeStatus.choices, default=HomeStatus.AVAILABLE, max_length=10,
                                    db_index=True)
@@ -53,14 +65,18 @@ class Home(models.Model):
     @property
     def monthly_payment(self):
         booking = getattr(self, "booking", None)
-        if not booking:
+        if not booking or not booking.payment_term:
+            return Decimal("0")
+
+        months = booking.payment_term.months or 0
+        if months == 0:
             return Decimal("0")
 
         total = self.total_price
         initial = total * booking.down_payment / Decimal("100")
         remaining = total - initial
 
-        return remaining / booking.payment_term.months
+        return remaining / months
 
     def __str__(self):
         return self.title

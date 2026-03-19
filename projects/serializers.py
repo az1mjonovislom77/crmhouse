@@ -1,5 +1,4 @@
 from rest_framework import serializers
-
 from projects.models import Projects
 from utils.models import Blocks
 
@@ -7,7 +6,7 @@ from utils.models import Blocks
 class BlocksSerializer(serializers.ModelSerializer):
     class Meta:
         model = Blocks
-        fields = ['title', ]
+        fields = ['title']
 
 
 class ProjectsSerializer(serializers.ModelSerializer):
