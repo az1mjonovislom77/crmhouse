@@ -2,7 +2,6 @@ from django.core.validators import FileExtensionValidator
 from django.db import models
 from utils.compressor import optimize_image_to_webp, check_image_size
 from utils.models import Blocks, Floors, Renovation, Basement
-from decimal import Decimal
 
 
 class Home(models.Model):
@@ -48,38 +47,8 @@ class Home(models.Model):
     entrance = models.CharField(choices=EntranceChoice.choices, default=EntranceChoice.ONE, max_length=10,
                                 db_index=True)
 
-    @property
-    def total_price(self):
-        basement_price = self.basement.price if self.basement else Decimal("0")
-        renovation_price = self.renovation.price if self.renovation else Decimal("0")
-
-        return self.area * self.price_per_sqm + basement_price + renovation_price
-
-    @property
-    def initial_payment(self):
-        booking = getattr(self, "booking", None)
-        if not booking:
-            return Decimal("0")
-        return self.total_price * booking.down_payment / Decimal("100")
-
-    @property
-    def monthly_payment(self):
-        booking = getattr(self, "booking", None)
-        if not booking or not booking.payment_term:
-            return Decimal("0")
-
-        months = booking.payment_term.months or 0
-        if months == 0:
-            return Decimal("0")
-
-        total = self.total_price
-        initial = total * booking.down_payment / Decimal("100")
-        remaining = total - initial
-
-        return remaining / months
-
     def __str__(self):
-        return self.title
+        return f"Home {self.home_number}"
 
 
 class FloorPlan(models.Model):

@@ -13,9 +13,13 @@ class HomeGetSerializer(serializers.ModelSerializer):
     block_title = serializers.SerializerMethodField()
     project_title = serializers.SerializerMethodField()
     floor_number = serializers.SerializerMethodField()
-    total_price = serializers.SerializerMethodField()
-    initial_payment = serializers.SerializerMethodField()
-    monthly_payment = serializers.SerializerMethodField()
+    total_price = serializers.DecimalField(max_digits=50, decimal_places=2, read_only=True,
+                                           source='total_price_annotated')
+    initial_payment = serializers.DecimalField(max_digits=50, decimal_places=2, read_only=True,
+                                               source='initial_payment_annotated')
+
+    monthly_payment = serializers.DecimalField(max_digits=50, decimal_places=2, read_only=True,
+                                               source='monthly_payment_annotated')
 
     class Meta:
         model = Home
@@ -29,15 +33,6 @@ class HomeGetSerializer(serializers.ModelSerializer):
 
     def get_floor_number(self, obj):
         return obj.floor.number if obj.floor else None
-
-    def get_total_price(self, obj):
-        return obj.total_price
-
-    def get_initial_payment(self, obj):
-        return obj.initial_payment
-
-    def get_monthly_payment(self, obj):
-        return obj.monthly_payment
 
 
 class HomeCreateSerializer(serializers.ModelSerializer):
