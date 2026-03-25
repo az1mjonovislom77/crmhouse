@@ -41,7 +41,7 @@ class Home(models.Model):
     floor = models.ForeignKey(Floors, on_delete=models.SET_NULL, null=True, blank=True)
     rooms = models.CharField(choices=RoomsChoice.choices, default=RoomsChoice.ONE, max_length=10, db_index=True)
     area = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    home_status = models.CharField(choices=HomeStatus.choices, default=HomeStatus.AVAILABLE, max_length=10,
+    home_status = models.CharField(choices=HomeStatus.choices, default=HomeStatus.AVAILABLE, max_length=30,
                                    db_index=True)
     renovation = models.ForeignKey(Renovation, on_delete=models.SET_NULL, null=True, blank=True)
     basement = models.ForeignKey(Basement, on_delete=models.SET_NULL, null=True, blank=True)
