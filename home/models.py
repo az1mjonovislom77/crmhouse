@@ -9,6 +9,8 @@ class Home(models.Model):
         AVAILABLE = 'available', 'Available'
         RESERVED = 'reserved', 'Reserved'
         SOLD = 'sold', 'Sold'
+        KALIT_TOPSHIRILDI = 'kalit_topshirildi', 'Kalit Topshirildi'
+        NOMIGA_OTKAZIB_BERILDI = 'nomiga_otkazib_berildi', 'Nomiga O`tkazib Berildi'
 
     class EntranceChoice(models.IntegerChoices):
         ONE = 1, "1"
