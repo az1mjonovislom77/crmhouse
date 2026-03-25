@@ -1,6 +1,7 @@
 from django.db import models
+
+from client.models import Client
 from home.models import Home
-from phonenumber_field.modelfields import PhoneNumberField
 
 
 class PaymentTerm(models.Model):
@@ -19,12 +20,9 @@ class Booking(models.Model):
         FIFTY = 50, "50%"
 
     home = models.OneToOneField(Home, on_delete=models.CASCADE, related_name="booking")
-    full_name = models.CharField(max_length=100)
-    phone_number = PhoneNumberField()
-    passport = models.CharField(max_length=20)
-    address = models.CharField(max_length=250)
+    client = models.OneToOneField(Client, on_delete=models.CASCADE, related_name="booking")
     down_payment = models.IntegerField(choices=DownPaymentChoice.choices)
     payment_term = models.ForeignKey(PaymentTerm, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
-        return self.full_name
+        return str(self.id)

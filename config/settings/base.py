@@ -26,7 +26,8 @@ LOCAL_APPS = [
     'booking',
     'instagram',
     'projects',
-    'home'
+    'home',
+    'client'
 ]
 
 THIRD_PARTY_APPS = [

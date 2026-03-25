@@ -4,7 +4,7 @@ from booking.serializers import BookingCreateSerializer, BookingGetSerializer, P
 from utils.base.views_base import BaseUserViewSet
 
 
-@extend_schema(tags=['Payment Term'])
+@extend_schema(tags=['PaymentTerm'])
 class PaymentTermViewSet(BaseUserViewSet):
     queryset = PaymentTerm.objects.all()
     serializer_class = PaymentTermSerializer

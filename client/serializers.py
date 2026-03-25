@@ -1,18 +1,12 @@
 from rest_framework import serializers
-from booking.models import Booking, PaymentTerm
-from client.serializers import ClientSerializer
+
+from booking.models import Booking
+from client.models import Client
 
 
-class PaymentTermSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PaymentTerm
-        fields = '__all__'
-
-
-class BookingGetSerializer(serializers.ModelSerializer):
+class BookingNestSerializer(serializers.ModelSerializer):
     home_number = serializers.SerializerMethodField()
     payment_term_months = serializers.SerializerMethodField()
-    client = ClientSerializer
 
     class Meta:
         model = Booking
@@ -25,7 +19,9 @@ class BookingGetSerializer(serializers.ModelSerializer):
         return obj.payment_term.months if obj.payment_term else None
 
 
-class BookingCreateSerializer(serializers.ModelSerializer):
+class ClientSerializer(serializers.ModelSerializer):
+    booking = BookingNestSerializer(many=True, read_only=True)
+
     class Meta:
-        model = Booking
+        model = Client
         fields = '__all__'
