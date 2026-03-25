@@ -7,6 +7,7 @@ from client.models import Client
 class BookingNestSerializer(serializers.ModelSerializer):
     home_number = serializers.SerializerMethodField()
     payment_term_months = serializers.SerializerMethodField()
+    home_status = serializers.SerializerMethodField()
 
     class Meta:
         model = Booking
@@ -17,6 +18,9 @@ class BookingNestSerializer(serializers.ModelSerializer):
 
     def get_payment_term_months(self, obj):
         return obj.payment_term.months if obj.payment_term else None
+
+    def get_home_status(self, obj):
+        return obj.home.home_status if obj.home else None
 
 
 class ClientSerializer(serializers.ModelSerializer):
