@@ -49,6 +49,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3003",
     "http://localhost:3004",
     "http://localhost:5173",
+    "http://localhost:5174",
     "https://professional-bunyodkor.vercel.app",
     "https://backend.bunyodkorhouse.uz",
     "https://crm.bunyodkorhouse.uz"
@@ -59,6 +60,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://crm.bunyodkorhouse.uz",
     "https://professional-bunyodkor.vercel.app",
     "http://localhost:5173"
+    "http://localhost:5174"
 ]
 
 MIDDLEWARE = [

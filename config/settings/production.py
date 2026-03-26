@@ -10,8 +10,6 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
 ]
 
-CORS_ALLOW_CREDENTIALS = True
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
