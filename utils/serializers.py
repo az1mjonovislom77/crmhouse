@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from utils.models import Basement, Blocks, Floors, Renovation
+from utils.models import Blocks, Floors, Renovation
 
 
 class BlocksGetSerializer(serializers.ModelSerializer):
@@ -28,10 +28,4 @@ class FloorsSerializer(serializers.ModelSerializer):
 class RenovationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Renovation
-        fields = '__all__'
-
-
-class BasementSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Basement
         fields = '__all__'

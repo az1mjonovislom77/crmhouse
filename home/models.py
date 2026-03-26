@@ -2,7 +2,7 @@ from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.conf import settings
 from utils.compressor import optimize_image_to_webp, check_image_size
-from utils.models import Blocks, Floors, Renovation, Basement
+from utils.models import Blocks, Floors, Renovation
 
 
 class Home(models.Model):

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from utils.models import Blocks, Floors, Renovation, Basement
+from utils.models import Blocks, Floors, Renovation
 
 
 @admin.register(Blocks)
@@ -14,9 +14,4 @@ class FloorsAdmin(admin.ModelAdmin):
 
 @admin.register(Renovation)
 class RenovationAdmin(admin.ModelAdmin):
-    list_display = ['id', 'title']
-
-
-@admin.register(Basement)
-class BasementAdmin(admin.ModelAdmin):
     list_display = ['id', 'title']

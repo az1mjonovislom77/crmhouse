@@ -1,7 +1,7 @@
 from drf_spectacular.utils import extend_schema
 from utils.base.views_base import BaseUserViewSet
-from utils.models import Basement, Blocks, Floors, Renovation
-from utils.serializers import BasementSerializer, BlocksCreateSerializer, BlocksGetSerializer, FloorsSerializer, \
+from utils.models import Blocks, Floors, Renovation
+from utils.serializers import BlocksCreateSerializer, BlocksGetSerializer, FloorsSerializer, \
     RenovationSerializer
 
 
@@ -25,9 +25,3 @@ class FloorsViewSet(BaseUserViewSet):
 class RenovationViewSet(BaseUserViewSet):
     queryset = Renovation.objects.all()
     serializer_class = RenovationSerializer
-
-
-@extend_schema(tags=['Basement'])
-class BasementViewSet(BaseUserViewSet):
-    queryset = Basement.objects.all()
-    serializer_class = BasementSerializer

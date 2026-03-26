@@ -38,27 +38,23 @@ class HomeViewSet(BaseUserViewSet):
 
     def get_queryset(self):
         return (Home.objects.select_related(
-            'blocks', 'blocks__projects', 'floor', 'renovation', 'basement', 'booking', 'booking__payment_term')
+            'blocks', 'blocks__projects', 'floor', 'renovation', 'booking', 'booking__payment_term')
         .annotate(
             total_price_annotated=ExpressionWrapper(
                 Coalesce(F('area') * F('price_per_sqm'), 0) +
-                Coalesce(F('basement__price'), 0) +
                 Coalesce(F('renovation__price'), 0),
                 output_field=DecimalField(max_digits=14, decimal_places=2)
             ),
             initial_payment_annotated=ExpressionWrapper(
                 (Coalesce(F('area') * F('price_per_sqm'), 0) +
-                 Coalesce(F('basement__price'), 0) +
                  Coalesce(F('renovation__price'), 0)) *
                 Coalesce(F('booking__down_payment'), 0) / Value(100),
                 output_field=DecimalField(max_digits=14, decimal_places=2)
             ),
             monthly_payment_annotated=ExpressionWrapper(
                 ((Coalesce(F('area') * F('price_per_sqm'), 0) +
-                  Coalesce(F('basement__price'), 0) +
                   Coalesce(F('renovation__price'), 0)) -
                  ((Coalesce(F('area') * F('price_per_sqm'), 0) +
-                   Coalesce(F('basement__price'), 0) +
                    Coalesce(F('renovation__price'), 0)) *
                   Coalesce(F('booking__down_payment'), 0) / Value(100))) /
                 Coalesce(F('booking__payment_term__months'), 1),
