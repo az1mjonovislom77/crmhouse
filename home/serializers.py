@@ -57,7 +57,7 @@ class HomeStatusHistorySerializer(serializers.ModelSerializer):
                   "home_floor"]
 
     def get_home_number(self, obj):
-        return obj.home.number if obj.home else None
+        return obj.home.home_number if obj.home else None
 
     def get_home_block(self, obj):
         return obj.home.blocks.title if obj.home and obj.home.blocks else None
