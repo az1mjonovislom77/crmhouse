@@ -45,7 +45,6 @@ class Home(models.Model):
     home_status = models.CharField(choices=HomeStatus.choices, default=HomeStatus.AVAILABLE, max_length=30,
                                    db_index=True)
     renovation = models.ForeignKey(Renovation, on_delete=models.SET_NULL, null=True, blank=True)
-    basement = models.ForeignKey(Basement, on_delete=models.SET_NULL, null=True, blank=True)
     price_per_sqm = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     entrance = models.IntegerField(choices=EntranceChoice.choices, default=EntranceChoice.ONE, db_index=True)
 
