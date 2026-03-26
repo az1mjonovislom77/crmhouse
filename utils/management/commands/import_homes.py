@@ -10,11 +10,11 @@ class Command(BaseCommand):
     help = 'Import homes from Excel file'
 
     def handle(self, *args, **kwargs):
-        file_path = os.path.join(settings.BASE_DIR, 'data', 'homes6.xlsx')
+        file_path = os.path.join(settings.BASE_DIR, 'data', 'homes7.xlsx')
 
         df = pd.read_excel(file_path)
 
-        block_obj, _ = Blocks.objects.get_or_create(title="A-1")
+        block_obj, _ = Blocks.objects.get_or_create(title="A-2")
 
         for _, row in df.iterrows():
             floor_number = int(row['floor'])
