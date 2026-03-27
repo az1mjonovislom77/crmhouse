@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from booking.models import Booking, PaymentTerm
 from client.serializers import ClientSerializer
+from home.models import Home, HomeStatusHistory
 
 
 class PaymentTermSerializer(serializers.ModelSerializer):
@@ -26,6 +27,28 @@ class BookingGetSerializer(serializers.ModelSerializer):
 
 
 class BookingCreateSerializer(serializers.ModelSerializer):
+    home_status = serializers.ChoiceField(choices=Home.HomeStatus.choices, write_only=True, required=False)
+
     class Meta:
         model = Booking
         fields = '__all__'
+
+    def create(self, validated_data):
+        home_status = validated_data.pop('home_status', None)
+        booking = super().create(validated_data)
+
+        if home_status:
+            home = booking.home
+            old_status = home.home_status
+            home.home_status = home_status
+            home.save()
+
+            HomeStatusHistory.objects.create(
+                home=home,
+                from_status=old_status,
+                to_status=home_status,
+                changed_by=self.context['request'].user
+                if self.context.get('request') else None
+            )
+
+        return booking

@@ -1,22 +1,7 @@
 from django.db import transaction
-from django.core.exceptions import ValidationError
 from booking.models import Booking
 from home.models import Home
 from home.services.history import HomeService
-
-
-@transaction.atomic
-def create_booking(*, client, home, user, **extra):
-    home = Home.objects.select_for_update().get(id=home.id)
-
-    if home.home_status != Home.HomeStatus.AVAILABLE:
-        raise ValidationError("Uy band yoki sotilgan")
-
-    booking = Booking.objects.create(client=client, home=home, **extra)
-
-    HomeService.change_status(home_id=home.id, new_status=Home.HomeStatus.SOLD, user=user)
-
-    return booking
 
 
 @transaction.atomic
