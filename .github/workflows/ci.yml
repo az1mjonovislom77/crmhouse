@@ -29,6 +29,7 @@ jobs:
           SECRET_KEY: "dummy-secret-key-for-ci"
           DEBUG: "True"
           INSTAGRAM_ACCESS_TOKEN: "dummy-token"
+          IG_USER_ID: "dummy-ig-token"
         run: |
           python manage.py check
 
@@ -38,5 +39,6 @@ jobs:
           SECRET_KEY: "dummy-secret-key-for-ci"
           DEBUG: "True"
           INSTAGRAM_ACCESS_TOKEN: "dummy-token"
+          IG_USER_ID: "dummy-ig-token"
         run: |
           python manage.py makemigrations --check --dry-run
