@@ -2,9 +2,9 @@ name: CI - Django Checks
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
 
 jobs:
   test:
@@ -30,11 +30,12 @@ jobs:
           DEBUG: "True"
         run: |
           python manage.py check
- 
+
 
       - name: Check migrations
         env:
           SECRET_KEY: "dummy-secret-key-for-ci"
           DEBUG: "True"
+          INSTAGRAM_ACCESS_TOKEN: "dummy-token"
         run: |
           python manage.py makemigrations --check --dry-run
