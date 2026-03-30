@@ -8,12 +8,9 @@ class SignInSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
-        user = AuthService.login_user(username=attrs.get("username"), password=attrs.get("password"))
+        if not attrs.get("username") or not attrs.get("password"):
+            raise serializers.ValidationError("Username and password required")
 
-        if not user:
-            raise serializers.ValidationError("Invalid username or password")
-
-        attrs["user"] = user
         return attrs
 
 
