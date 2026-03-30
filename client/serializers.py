@@ -1,5 +1,4 @@
 from rest_framework import serializers
-
 from booking.models import Booking
 from client.models import Client
 from home.serializers import HomeStatusHistorySerializer
@@ -30,4 +29,4 @@ class ClientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Client
-        fields = '__all__'
+        fields = ['booking', 'home_status_history', 'full_name', 'phone_number', 'passport', 'address']
