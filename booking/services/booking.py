@@ -11,5 +11,5 @@ def delete_booking(booking_id):
 
     booking.delete()
 
-    if not home.bookings.exists():
+    if not home.booking.exists():
         HomeService.change_status(home_id=home.id, new_status=Home.HomeStatus.AVAILABLE)
