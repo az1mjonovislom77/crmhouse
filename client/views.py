@@ -1,9 +1,13 @@
 from drf_spectacular.utils import extend_schema
+
+from booking.models import Booking
 from client.models import Client
 from client.serializers import ClientSerializer
+from home.models import HomeStatusHistory
 from utils.base.views_base import BaseUserViewSet
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+from django.db.models import Prefetch
 
 
 class ClientPagination(PageNumberPagination):
@@ -28,6 +32,14 @@ class ClientPagination(PageNumberPagination):
 
 @extend_schema(tags=['Client'])
 class ClientViewSet(BaseUserViewSet):
-    queryset = Client.objects.all()
     serializer_class = ClientSerializer
     pagination_class = ClientPagination
+
+    def get_queryset(self):
+        return Client.objects.prefetch_related(
+            Prefetch("bookings",
+                     queryset=Booking.objects.select_related("home").prefetch_related(
+                         Prefetch("home__status_history",
+                                  queryset=HomeStatusHistory.objects.select_related(
+                                      "home", "home__blocks", "home__floor", "changed_by"),
+                                  to_attr="prefetched_history"))))

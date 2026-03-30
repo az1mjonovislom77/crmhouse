@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from booking.models import Booking
 from client.models import Client
+from home.models import HomeStatusHistory, Home
 from home.serializers import HomeStatusHistorySerializer
 
 
@@ -25,8 +26,21 @@ class BookingNestSerializer(serializers.ModelSerializer):
 
 class ClientSerializer(serializers.ModelSerializer):
     booking = BookingNestSerializer(many=True, read_only=True)
-    home_status_history = HomeStatusHistorySerializer(many=True, read_only=True)
+    home_status_history = serializers.SerializerMethodField()
 
     class Meta:
         model = Client
         fields = ['id', 'booking', 'home_status_history', 'full_name', 'phone_number', 'passport', 'address']
+
+    def get_home_status_history(self, obj):
+        history = []
+
+        for booking in obj.bookings.all():
+            home = booking.home
+
+            if hasattr(home, "prefetched_history"):
+                history.extend(home.prefetched_history)
+
+        unique = {h.id: h for h in history}.values()
+
+        return HomeStatusHistorySerializer(unique, many=True).data
