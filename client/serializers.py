@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from booking.models import Booking
 from client.models import Client
+from home.serializers import HomeStatusHistorySerializer
 
 
 class BookingNestSerializer(serializers.ModelSerializer):
@@ -25,6 +26,7 @@ class BookingNestSerializer(serializers.ModelSerializer):
 
 class ClientSerializer(serializers.ModelSerializer):
     booking = BookingNestSerializer(many=True, read_only=True)
+    home_status_history = HomeStatusHistorySerializer(many=True, read_only=True)
 
     class Meta:
         model = Client
