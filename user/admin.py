@@ -1,12 +1,19 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User
+from .forms import UserAdminCreateForm
 
 
 @admin.register(User)
-class UserAdmin(admin.ModelAdmin):
+class UserAdmin(BaseUserAdmin):
+    add_form = UserAdminCreateForm
+
     list_display = ("id", "username", "role", "is_staff", "is_active")
     search_fields = ("username", "full_name", "phone_number")
     ordering = ("-id",)
+    list_filter = ("role", "is_staff", "is_active")
+
+    readonly_fields = ("id",)
 
     fieldsets = (
         (None, {"fields": ("username", "password")}),
@@ -14,7 +21,8 @@ class UserAdmin(admin.ModelAdmin):
         ("Permissions", {"fields": ("is_staff", "is_superuser", "is_active")}),
     )
 
-    def save_model(self, request, obj, form, change):
-        if obj.password and not obj.password.startswith("pbkdf2_"):
-            obj.set_password(obj.password)
-        super().save_model(request, obj, form, change)
+    add_fieldsets = (
+        (None, {
+            "classes": ("wide",),
+            "fields": ("username", "password"),
+        }))

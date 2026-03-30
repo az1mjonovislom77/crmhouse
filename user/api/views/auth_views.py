@@ -3,10 +3,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from drf_spectacular.utils import extend_schema
-from rest_framework_simplejwt.exceptions import TokenError
-from user.services.token_service import UserTokenService
-from user.serializers.auth_serializers import SignInSerializer, LogoutSerializer, MeSerializer
-from user.utils import get_client_ip, check_login_rate_limit, reset_login_rate_limit
+from user.services.auth.auth_service import AuthService
+from user.services.auth.token_service import UserTokenService
+from user.api.serializers.auth_serializers import SignInSerializer, LogoutSerializer, MeSerializer
+from user.services.common.request_service import get_client_ip
 
 
 @extend_schema(tags=["Auth"])
@@ -16,26 +16,27 @@ class SignInAPIView(APIView):
     serializer_class = SignInSerializer
 
     def post(self, request):
-        ip = get_client_ip(request)
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        username = serializer.validated_data.get("username")
 
-        if not check_login_rate_limit(ip, username):
-            return Response(
-                {"detail": "Too many login attempts. Try again later"}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        ip = get_client_ip(request)
 
-        user = serializer.validated_data["user"]
-        tokens = UserTokenService.get_tokens_for_user(user)
+        result = AuthService.login_user(
+            username=serializer.validated_data.get("username"),
+            password=serializer.validated_data.get("password"),
+            ip=ip
+        )
+
+        tokens = result["tokens"]
 
         response = Response(
             {
                 "success": True,
                 "message": "User logged in successfully",
-                "data": {"access": tokens["access"]}}, status=status.HTTP_200_OK)
+                "data": {"access": tokens["access"]}
+            }, status=status.HTTP_200_OK)
 
         UserTokenService.set_refresh_cookie(response, tokens["refresh"])
-        reset_login_rate_limit(ip, username)
 
         return response
 
@@ -48,15 +49,9 @@ class RefreshTokenAPIView(APIView):
     def post(self, request):
         refresh_token = request.COOKIES.get(UserTokenService.COOKIE_NAME)
 
-        if not refresh_token:
-            return Response({"detail": "Refresh token not found"},
-                            status=status.HTTP_400_BAD_REQUEST)
-        try:
-            access = str(UserTokenService.get_tokens_for_user_from_refresh(refresh_token))
-            return Response({"access": access}, status=status.HTTP_200_OK)
+        result = AuthService.refresh_user_token(refresh_token)
 
-        except TokenError:
-            return Response({"detail": "Invalid or expired refresh token"}, status=status.HTTP_401_UNAUTHORIZED, )
+        return Response(result, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=["Auth"])
@@ -67,7 +62,9 @@ class LogOutAPIView(APIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+
+        AuthService.logout_user(serializer.validated_data.get("refresh"))
+
         response = Response({"detail": "Successfully logged out"}, status=status.HTTP_200_OK)
 
         UserTokenService.clear_refresh_cookie(response)

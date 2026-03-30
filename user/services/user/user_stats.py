@@ -9,7 +9,7 @@ class UserStatsService:
         stats = User.objects.aggregate(
             total_users=Count("id"),
             total_salers=Count("id", filter=Q(role=User.UserRoles.SELLER)),
-            total_admins=Count("id", filter=Q(role__in=[User.UserRoles.ADMIN]))
+            total_admins=Count("id", filter=Q(role=User.UserRoles.ADMIN))
         )
 
         return stats

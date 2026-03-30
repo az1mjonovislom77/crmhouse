@@ -1,6 +1,6 @@
 from user.models import User
 from rest_framework import serializers
-from user.services.auth_service import AuthService
+from user.services.auth.auth_service import AuthService
 
 
 class SignInSerializer(serializers.Serializer):
@@ -8,7 +8,7 @@ class SignInSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
-        user = AuthService.authenticate_user(username=attrs.get("username"), password=attrs.get("password"))
+        user = AuthService.login_user(username=attrs.get("username"), password=attrs.get("password"))
 
         if not user:
             raise serializers.ValidationError("Invalid username or password")

@@ -1,6 +1,6 @@
 from user.models import User
 from rest_framework import serializers
-from user.services.user_service import UserService
+from user.services.user.user_service import UserService
 
 
 class UserDetailSerializer(serializers.ModelSerializer):

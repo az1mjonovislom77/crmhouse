@@ -38,7 +38,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         ADMIN = 'a', "ADMIN"
 
     full_name = models.CharField(max_length=100, blank=True)
-    username = models.CharField(max_length=100, unique=True, db_index=True)
+    username = models.CharField(max_length=100, unique=True)
     phone_number = models.CharField(max_length=20, blank=True)
     role = models.CharField(max_length=10, choices=UserRoles.choices, default=UserRoles.SELLER)
     is_active = models.BooleanField(default=True)
@@ -60,4 +60,4 @@ class User(AbstractBaseUser, PermissionsMixin):
         ]
 
     def __str__(self):
-        return f"{self.full_name or ''} {self.username}"
+        return self.full_name or self.username
