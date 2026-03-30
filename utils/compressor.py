@@ -29,5 +29,5 @@ def optimize_image_to_webp(image_field, quality: int = 80, max_width=1200, ) -> 
 
 
 def check_image_size(image):
-    if image.size > 10 * 1024 * 1024:
+    if image.size > 15 * 1024 * 1024:
         raise ValidationError("The image is too long")
