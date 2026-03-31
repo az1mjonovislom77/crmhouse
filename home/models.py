@@ -64,7 +64,7 @@ class HomeStatusHistory(models.Model):
 
 
 class FloorPlan(models.Model):
-    home = models.ForeignKey(Home, on_delete=models.SET_NULL, null=True, blank=True)
+    home = models.ForeignKey(Home, on_delete=models.SET_NULL, null=True, blank=True, related_name='floor_plan')
 
     image = models.ImageField(upload_to='projects/',
                               validators=[FileExtensionValidator(
