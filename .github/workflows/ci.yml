@@ -2,9 +2,9 @@ name: CI - Django Checks
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
 
 jobs:
   test:
@@ -32,5 +32,3 @@ jobs:
           IG_USER_ID: "dummy-ig-token"
         run: |
           python manage.py check
-
-      # ❌ intentionally removed makemigrations check (temporary)
