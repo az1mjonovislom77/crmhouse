@@ -65,7 +65,7 @@ class HomeStatusHistorySerializer(serializers.ModelSerializer):
 
 
 class HomeDetailGetSerializer(serializers.ModelSerializer):
-    floorplan = FloorPlanSerializer(many=True, read_only=True)
+    floorplan = FloorPlanSerializer(read_only=True)
     block_title = serializers.SerializerMethodField()
     project_title = serializers.SerializerMethodField()
     floor_number = serializers.SerializerMethodField()
