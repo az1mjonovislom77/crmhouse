@@ -1,5 +1,3 @@
-from django.db.models import DecimalField, F, ExpressionWrapper, Value
-from django.db.models.functions import Coalesce
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
@@ -7,11 +5,11 @@ from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from home.models import Home, HomeStatusHistory
+from home.api.serializers.home_serializers import HomeGetSerializer, HomeDetailGetSerializer, HomeCreateSerializer, \
+    HomeStatusHistorySerializer
+from home.models import HomeStatusHistory
 from home.selectors.history_selectors import get_home_history
 from home.selectors.home_selectors import get_homes_with_finance
-from home.serializers import HomeGetSerializer, HomeCreateSerializer, HomeStatusHistorySerializer, \
-    HomeDetailGetSerializer
 from home.services.home import HomeService
 from utils.base.views_base import BaseUserViewSet
 

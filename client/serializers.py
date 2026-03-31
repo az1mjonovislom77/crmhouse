@@ -1,8 +1,7 @@
 from rest_framework import serializers
 from booking.models import Booking
 from client.models import Client
-from home.models import HomeStatusHistory, Home
-from home.serializers import HomeStatusHistorySerializer
+from home.api.serializers.home_serializers import HomeStatusHistorySerializer
 
 
 class BookingNestSerializer(serializers.ModelSerializer):

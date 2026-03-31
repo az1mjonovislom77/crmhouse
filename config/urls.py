@@ -9,7 +9,7 @@ urlpatterns = [
     path('user/', include('user.api.urls')),
     path('instagram/', include('instagram.urls')),
     path('projects/', include('projects.api.urls')),
-    path('home/', include('home.urls')),
+    path('home/', include('home.api.urls')),
     path('booking/', include('booking.urls')),
     path('utils/', include('utils.urls')),
     path('client/', include('client.urls')),
