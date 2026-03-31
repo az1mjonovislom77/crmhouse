@@ -1,6 +1,7 @@
 from django.contrib import admin
 from home.models import Home
-from projects.models import Projects, Blocks, Floors, Renovation
+from projects.models.project_models import Projects, Blocks, Floors, Renovation
+from projects.models.showroom_models import SVG
 
 
 @admin.register(Projects)
@@ -27,3 +28,8 @@ class FloorsAdmin(admin.ModelAdmin):
 @admin.register(Renovation)
 class RenovationAdmin(admin.ModelAdmin):
     list_display = ['id', 'title']
+
+
+@admin.register(SVG)
+class SVGAdmin(admin.ModelAdmin):
+    list_display = ['id']

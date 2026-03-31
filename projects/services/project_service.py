@@ -1,4 +1,4 @@
-from projects.models import Projects
+from projects.models.project_models import Projects
 from core.services.image_service import process_image
 
 

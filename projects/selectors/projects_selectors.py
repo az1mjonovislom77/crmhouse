@@ -1,6 +1,6 @@
 from django.db.models import Case, When, Value, ExpressionWrapper, FloatField, F, Count, Q
 from home.models import Home
-from projects.models import Projects
+from projects.models.project_models import Projects
 
 
 def get_projects_with_stats():

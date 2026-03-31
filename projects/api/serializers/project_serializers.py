@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from projects.models import Projects, Blocks, Floors, Renovation
+from common.base.serializers_base import BaseReadSerializer
+from projects.models.project_models import Blocks, Projects, Floors, Renovation
 
 
 class BlocksSerializer(serializers.ModelSerializer):
@@ -34,19 +35,16 @@ class BlocksGetSerializer(serializers.ModelSerializer):
         return obj.projects.title if obj.projects else None
 
 
-class BlocksCreateSerializer(serializers.ModelSerializer):
-    class Meta:
+class BlocksCreateSerializer(BaseReadSerializer):
+    class Meta(BaseReadSerializer.Meta):
         model = Blocks
-        fields = '__all__'
 
 
-class FloorsSerializer(serializers.ModelSerializer):
-    class Meta:
+class FloorsSerializer(BaseReadSerializer):
+    class Meta(BaseReadSerializer.Meta):
         model = Floors
-        fields = '__all__'
 
 
-class RenovationSerializer(serializers.ModelSerializer):
-    class Meta:
+class RenovationSerializer(BaseReadSerializer):
+    class Meta(BaseReadSerializer.Meta):
         model = Renovation
-        fields = '__all__'

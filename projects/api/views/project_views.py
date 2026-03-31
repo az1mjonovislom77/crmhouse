@@ -1,7 +1,8 @@
 from drf_spectacular.utils import extend_schema
-from projects.api.serializers import ProjectsSerializer, BlocksGetSerializer, BlocksCreateSerializer, FloorsSerializer, \
+from projects.api.serializers.project_serializers import ProjectsSerializer, BlocksGetSerializer, \
+    BlocksCreateSerializer, FloorsSerializer, \
     RenovationSerializer
-from projects.models import Blocks, Floors, Renovation
+from projects.models.project_models import Blocks, Floors, Renovation
 from projects.selectors.projects_selectors import get_projects_with_stats
 from projects.services.project_service import ProjectService
 from common.base.views_base import BaseUserViewSet
