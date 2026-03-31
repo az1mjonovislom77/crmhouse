@@ -1,10 +1,9 @@
 from drf_spectacular.utils import extend_schema
-
 from booking.models import Booking
 from client.models import Client
 from client.serializers import ClientSerializer
+from common.base.views_base import BaseUserViewSet
 from home.models import HomeStatusHistory
-from utils.base.views_base import BaseUserViewSet
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from django.db.models import Prefetch

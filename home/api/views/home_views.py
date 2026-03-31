@@ -11,7 +11,7 @@ from home.models import HomeStatusHistory
 from home.selectors.history_selectors import get_home_history
 from home.selectors.home_selectors import get_homes_with_finance
 from home.services.home import HomeService
-from utils.base.views_base import BaseUserViewSet
+from common.base.views_base import BaseUserViewSet
 
 
 class HomePagination(PageNumberPagination):

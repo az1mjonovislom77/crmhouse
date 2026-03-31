@@ -2,13 +2,13 @@
 
 import django.core.validators
 import django.db.models.deletion
-import utils.compressor
 from django.conf import settings
 from django.db import migrations, models
 
+from core.services.image_service import check_image_size
+
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -23,9 +23,50 @@ class Migration(migrations.Migration):
                 ('title', models.CharField(db_index=True, max_length=100)),
                 ('description', models.TextField(max_length=500)),
                 ('floors', models.PositiveIntegerField(default=0)),
-                ('image', models.FileField(upload_to='projects/', validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'svg', 'webp', 'JPG', 'JPEG', 'PNG', 'SVG', 'WEBP', 'heic', 'heif']), utils.compressor.check_image_size])),
+                ('image', models.FileField(upload_to='projects/', validators=[
+                    django.core.validators.FileExtensionValidator(
+                        allowed_extensions=['jpg', 'jpeg', 'png', 'svg', 'webp', 'JPG', 'JPEG', 'PNG', 'SVG', 'WEBP',
+                                            'heic', 'heif']), check_image_size])),
                 ('rate', models.PositiveIntegerField(default=0)),
-                ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE,
+                                           to=settings.AUTH_USER_MODEL)),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Basement',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('title', models.CharField(max_length=100)),
+                ('price', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Blocks',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('title', models.CharField(db_index=True, max_length=100)),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Floors',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('number', models.PositiveIntegerField(default=0)),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Renovation',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('title', models.CharField(max_length=100)),
+                ('price', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Rooms',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('number', models.PositiveIntegerField(default=0)),
             ],
         ),
     ]

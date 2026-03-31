@@ -21,7 +21,6 @@ DJANGO_APPS = [
 
 LOCAL_APPS = [
     'user',
-    'utils',
     'booking',
     'instagram',
     'projects',

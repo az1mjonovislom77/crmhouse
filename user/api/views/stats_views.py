@@ -3,7 +3,6 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
 from user.selectors.user_selectors import get_user_stats
 
 

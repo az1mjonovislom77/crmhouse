@@ -1,6 +1,6 @@
+from common.base.views_base import BaseUserViewSet
 from user.models import User
 from drf_spectacular.utils import extend_schema
-from utils.base.views_base import BaseUserViewSet
 from user.api.serializers.user_serializers import UserCreateSerializer, UserDetailSerializer
 
 

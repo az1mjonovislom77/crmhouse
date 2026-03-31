@@ -1,6 +1,5 @@
 from django.db import models
 from django.utils import timezone
-
 from home.models import Home
 from client.models import Client
 

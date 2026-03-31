@@ -2,7 +2,7 @@ from drf_spectacular.utils import extend_schema
 from booking.models import Booking, PaymentTerm
 from booking.serializers import BookingCreateSerializer, BookingGetSerializer, PaymentTermSerializer
 from booking.services.booking import delete_booking
-from utils.base.views_base import BaseUserViewSet
+from common.base.views_base import BaseUserViewSet
 
 
 @extend_schema(tags=['PaymentTerm'])

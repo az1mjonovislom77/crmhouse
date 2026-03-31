@@ -1,12 +1,12 @@
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
+from common.base.serializers_base import BaseReadSerializer
 from home.models import FloorPlan, Home, HomeStatusHistory
 
 
-class FloorPlanSerializer(serializers.ModelSerializer):
-    class Meta:
+class FloorPlanSerializer(BaseReadSerializer):
+    class Meta(BaseReadSerializer.Meta):
         model = FloorPlan
-        fields = '__all__'
 
 
 class HomeGetSerializer(serializers.ModelSerializer):

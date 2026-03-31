@@ -2,16 +2,16 @@
 
 import django.core.validators
 import django.db.models.deletion
-import utils.compressor
 from django.db import migrations, models
+
+from core.services.image_service import check_image_size
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('utils', '0002_blocks_projects'),
+        # ('projects', '0002_blocks_projects'),
     ]
 
     operations = [
@@ -21,22 +21,34 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('title', models.CharField(max_length=100)),
                 ('area', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
-                ('home_status', models.CharField(choices=[('available', 'Available'), ('reserved', 'Reserved'), ('sold', 'Sold')], db_index=True, default='available', max_length=10)),
+                ('home_status',
+                 models.CharField(choices=[('available', 'Available'), ('reserved', 'Reserved'), ('sold', 'Sold')],
+                                  db_index=True, default='available', max_length=10)),
                 ('price_per_sqm', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
-                ('entrance', models.CharField(choices=[(1, '1'), (2, '2'), (3, '3'), (4, '4'), (5, '5'), (6, '6'), (7, '7'), (8, '8'), (9, '9'), (10, '10')], db_index=True, default=1, max_length=10)),
-                ('basement', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='utils.basement')),
-                ('blocks', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='homes', to='utils.blocks')),
-                ('floor', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='utils.floors')),
-                ('renovation', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='utils.renovation')),
-                ('rooms', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='utils.rooms')),
+                ('entrance', models.CharField(
+                    choices=[(1, '1'), (2, '2'), (3, '3'), (4, '4'), (5, '5'), (6, '6'), (7, '7'), (8, '8'), (9, '9'),
+                             (10, '10')], db_index=True, default=1, max_length=10)),
+                ('basement', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                               to='projects.basement')),
+                ('blocks', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                             related_name='homes', to='projects.blocks')),
+                ('floor', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                            to='projects.floors')),
+                ('renovation', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                                 to='projects.renovation')),
+                ('rooms', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                            to='projects.rooms')),
             ],
         ),
         migrations.CreateModel(
             name='FloorPlan',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('image', models.FileField(upload_to='projects/', validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'svg', 'webp', 'heic', 'heif']), utils.compressor.check_image_size])),
-                ('home', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='home.home')),
+                ('image', models.FileField(upload_to='projects/', validators=[
+                    django.core.validators.FileExtensionValidator(
+                        allowed_extensions=['jpg', 'jpeg', 'png', 'svg', 'webp', 'heic', 'heif']), check_image_size])),
+                ('home', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                           to='home.home')),
             ],
         ),
     ]
