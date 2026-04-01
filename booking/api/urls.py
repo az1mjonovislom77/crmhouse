@@ -1,6 +1,6 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from booking.views import BookingViewSet, PaymentTermViewSet
+from booking.api.views import BookingViewSet, PaymentTermViewSet
 
 router = DefaultRouter()
 router.register('payment-term', PaymentTermViewSet, basename='payment-term')

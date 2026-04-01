@@ -1,13 +1,13 @@
 from rest_framework import serializers
 from booking.models import Booking, PaymentTerm
-from client.serializers import ClientSerializer
-from home.models import Home, HomeStatusHistory
+from client.api.serializers import ClientSerializer
+from common.base.serializers_base import BaseReadSerializer
+from home.models import Home
 
 
-class PaymentTermSerializer(serializers.ModelSerializer):
-    class Meta:
+class PaymentTermSerializer(BaseReadSerializer):
+    class Meta(BaseReadSerializer.Meta):
         model = PaymentTerm
-        fields = '__all__'
 
 
 class BookingGetSerializer(serializers.ModelSerializer):

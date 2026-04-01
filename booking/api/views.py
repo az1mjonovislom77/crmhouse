@@ -1,6 +1,6 @@
 from drf_spectacular.utils import extend_schema
 from booking.models import Booking, PaymentTerm
-from booking.serializers import BookingCreateSerializer, BookingGetSerializer, PaymentTermSerializer
+from booking.api.serializers import BookingCreateSerializer, BookingGetSerializer, PaymentTermSerializer
 from booking.services.booking import delete_booking
 from common.base.views_base import BaseUserViewSet
 from home.services.home import HomeService
