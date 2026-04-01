@@ -39,10 +39,8 @@ class HomeService:
 
     @staticmethod
     @transaction.atomic
-    def change_status(home_id, new_status, user=None):
+    def change_status(home_id, new_status, user=None, client=None):
         home = Home.objects.select_for_update().get(id=home_id)
-        booking = getattr(home, "booking", None)
-        client = booking.client if booking else None
 
         if home.home_status == new_status:
             return home
@@ -50,6 +48,10 @@ class HomeService:
         old = home.home_status
         home.home_status = new_status
         home.save(update_fields=["home_status"])
+
+        if not client:
+            booking = getattr(home, "booking", None)
+            client = booking.client if booking else None
 
         HomeStatusHistory.objects.create(
             home=home,

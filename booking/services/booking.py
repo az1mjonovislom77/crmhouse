@@ -8,12 +8,11 @@ from home.services.home import HomeService
 def create_booking(data, user=None):
     booking = Booking.objects.create(**data)
 
-    HomeStatusHistory.objects.create(
-        home=booking.home,
-        client=booking.client,
-        from_status=None,
-        to_status=booking.home.home_status,
-        changed_by=user
+    HomeService.change_status(
+        home_id=booking.home.id,
+        new_status=Home.HomeStatus.RESERVED,
+        user=user,
+        client=booking.client
     )
 
     return booking
@@ -24,11 +23,10 @@ def delete_booking(booking_id, user=None):
     booking = Booking.objects.select_related('home', 'client').get(id=booking_id)
     home = Home.objects.select_for_update().get(id=booking.home_id)
 
-    client = booking.client  # ❗ MUHIM (delete’dan oldin)
+    client = booking.client
 
     booking.delete()
 
-    # history yozish (delete event)
     HomeStatusHistory.objects.create(
         home=home,
         client=client,
@@ -43,5 +41,6 @@ def delete_booking(booking_id, user=None):
         HomeService.change_status(
             home_id=home.id,
             new_status=Home.HomeStatus.AVAILABLE,
-            user=user
+            user=user,
+            client=client
         )
