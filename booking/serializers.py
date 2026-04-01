@@ -38,17 +38,13 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         booking = super().create(validated_data)
 
         if home_status:
-            home = booking.home
-            old_status = home.home_status
-            home.home_status = home_status
-            home.save()
+            from home.services.home import HomeService
 
-            HomeStatusHistory.objects.create(
-                home=home,
-                from_status=old_status,
-                to_status=home_status,
-                changed_by=self.context['request'].user
-                if self.context.get('request') else None
+            HomeService.change_status(
+                home_id=booking.home.id,
+                new_status=home_status,
+                user=self.context['request'].user,
+                client=booking.client
             )
 
         return booking

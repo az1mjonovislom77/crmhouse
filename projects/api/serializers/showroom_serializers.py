@@ -1,5 +1,4 @@
 from common.base.serializers_base import BaseReadSerializer
-from projects.models.project_models import Blocks, Projects
 from projects.models.showroom_models import SVG, Showroom
 from rest_framework import serializers
 
