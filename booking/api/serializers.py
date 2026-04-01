@@ -13,7 +13,8 @@ class PaymentTermSerializer(BaseReadSerializer):
 class BookingGetSerializer(serializers.ModelSerializer):
     home_number = serializers.SerializerMethodField()
     payment_term_months = serializers.SerializerMethodField()
-    client = ClientSerializer
+    client = ClientSerializer(read_only=True)
+    home_status = serializers.ChoiceField(choices=Home.HomeStatus.choices, write_only=True, required=False)
 
     class Meta:
         model = Booking

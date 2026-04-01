@@ -32,5 +32,19 @@ class BookingViewSet(BaseUserViewSet):
             client=booking.client
         )
 
+    def perform_update(self, serializer):
+        booking = serializer.save()
+        new_status = self.request.data.get("home_status")
+
+        if new_status:
+            from home.services.home import HomeService
+
+            HomeService.change_status(
+                home_id=booking.home.id,
+                new_status=new_status,
+                user=self.request.user,
+                client=booking.client
+            )
+
     def perform_destroy(self, instance):
         delete_booking(booking_id=instance.id, user=self.request.user)

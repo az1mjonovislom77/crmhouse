@@ -10,8 +10,8 @@ urlpatterns = [
     path('instagram/', include('instagram.urls')),
     path('projects/', include('projects.api.urls')),
     path('home/', include('home.api.urls')),
-    path('booking/', include('booking.urls')),
-    path('client/', include('client.urls')),
+    path('booking/', include('booking.api.urls')),
+    path('client/', include('client.api.urls')),
 
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
