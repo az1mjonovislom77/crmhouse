@@ -35,9 +35,7 @@ def delete_booking(booking_id, user=None):
         changed_by=user
     )
 
-    has_booking = Booking.objects.filter(home=home).exists()
-
-    if not has_booking:
+    if not Booking.objects.filter(home=home).exists():
         HomeService.change_status(
             home_id=home.id,
             new_status=Home.HomeStatus.AVAILABLE,

@@ -1,4 +1,6 @@
 from django.db import transaction
+
+from booking.models import Booking
 from home.models import Home, HomeStatusHistory
 from home.services.floorplan_service import FloorPlanService
 
@@ -50,8 +52,10 @@ class HomeService:
         home.save(update_fields=["home_status"])
 
         if not client:
-            booking = getattr(home, "booking", None)
-            client = booking.client if booking else None
+            try:
+                client = home.booking.client
+            except Booking.DoesNotExist:
+                client = None
 
         HomeStatusHistory.objects.create(
             home=home,
