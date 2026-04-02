@@ -1,19 +1,28 @@
 from django.db import transaction
-from booking.models import Booking
+from rest_framework.exceptions import ValidationError
+from booking.models import Booking, Company
 from home.models import Home, HomeStatusHistory
 from home.services.home import HomeService
 
 
 @transaction.atomic
-def create_booking(data, user=None):
+def create_booking(data, user=None, home_status=None):
+    data = data.copy()
+
+    if not data.get("company"):
+        company = Company.objects.order_by("id").first()
+        if not company:
+            raise ValidationError("Company hali yaratilmagan")
+        data["company"] = company
+
     booking = Booking.objects.create(**data)
 
-    HomeService.change_status(
-        home_id=booking.home.id,
-        new_status=Home.HomeStatus.RESERVED,
-        user=user,
-        client=booking.client
-    )
+    if home_status:
+        HomeService.change_status(
+            home_id=booking.home.id,
+            new_status=home_status,
+            user=user,
+            client=booking.client)
 
     return booking
 

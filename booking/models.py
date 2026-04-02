@@ -11,6 +11,15 @@ class PaymentTerm(models.Model):
         return f"{self.months} oy"
 
 
+class Company(models.Model):
+    name = models.CharField(max_length=200)
+    address = models.CharField(max_length=200)
+    phone = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.name
+
+
 class Booking(models.Model):
     class DownPaymentChoice(models.IntegerChoices):
         TEN = 10, "10%"
@@ -20,6 +29,7 @@ class Booking(models.Model):
         FIFTY = 50, "50%"
 
     home = models.OneToOneField(Home, on_delete=models.CASCADE, related_name="booking")
+    company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="bookings")
     down_payment = models.IntegerField(choices=DownPaymentChoice.choices)
     payment_term = models.ForeignKey(PaymentTerm, on_delete=models.SET_NULL, null=True, blank=True)

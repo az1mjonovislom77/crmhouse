@@ -15,7 +15,7 @@ class PaymentTermViewSet(BaseUserViewSet):
 
 @extend_schema(tags=['Booking'])
 class BookingViewSet(BaseUserViewSet):
-    queryset = Booking.objects.select_related('home', 'payment_term', 'client')
+    queryset = Booking.objects.select_related('home', 'company', 'payment_term', 'client')
 
     def get_serializer_class(self):
         if self.action == 'create':
