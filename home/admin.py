@@ -22,4 +22,4 @@ class HomeAdmin(admin.ModelAdmin):
 
 @admin.register(HomeStatusHistory)
 class HomeStatusHistoryAdmin(admin.ModelAdmin):
-    list_display = ['id', 'home_number', 'floor']
+    list_display = ['id']
