@@ -6,7 +6,7 @@ from user.api.serializers.user_serializers import UserCreateSerializer, UserDeta
 
 @extend_schema(tags=["User"])
 class UserViewSet(BaseUserViewSet):
-    queryset = User.objects.all()
+    queryset = User.objects.filter(is_staff=False)
 
     def get_serializer_class(self):
         if self.action == "retrieve":
