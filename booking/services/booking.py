@@ -10,7 +10,7 @@ def create_booking(data, user=None, home_status=None):
     data = data.copy()
 
     if not data.get("company"):
-        company = Company.objects.order_by("id").first()
+        company = Company.objects.only("id").order_by("id").first()
         if not company:
             raise ValidationError("Company hali yaratilmagan")
         data["company"] = company

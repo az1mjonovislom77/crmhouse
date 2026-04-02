@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from booking.models import Booking, PaymentTerm, Company
-from booking.services.booking import create_booking
 from client.api.serializers import ClientSerializer
 from common.base.serializers_base import BaseReadSerializer
 from home.models import Home
@@ -38,13 +37,13 @@ class BookingGetSerializer(serializers.ModelSerializer):
         return obj.payment_term.months if obj.payment_term else None
 
     def get_block_title(self, obj):
-        return obj.home.blocks.title if obj.home.blocks else None
+        return obj.home.blocks.title if obj.home and obj.home.blocks else None
 
     def get_floor_number(self, obj):
-        return obj.home.floor.number if obj.home.floor else None
+        return obj.home.floor.number if obj.home and obj.home.floor else None
 
     def get_rooms_number(self, obj):
-        return obj.home.rooms.number if obj.home.rooms else None
+        return obj.home.rooms.number if obj.home and obj.home.rooms else None
 
     def get_total_area(self, obj):
         return obj.home.area if obj.home else None
@@ -56,8 +55,3 @@ class BookingCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
         fields = '__all__'
-
-    def create(self, validated_data):
-        home_status = validated_data.pop('home_status', None)
-
-        return create_booking(data=validated_data, user=self.context['request'].user, home_status=home_status)
