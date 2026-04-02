@@ -14,4 +14,4 @@ class PaymentTermAdmin(admin.ModelAdmin):
 
 @admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
-    list_display = ['id', 'months']
+    list_display = ['id', 'name']
