@@ -3,7 +3,7 @@ from django.conf import settings
 import pandas as pd
 from django.core.management.base import BaseCommand
 from home.models import Home
-from utils.models import Blocks, Floors
+from projects.models.project_models import Floors, Blocks
 
 
 class Command(BaseCommand):
