@@ -19,8 +19,8 @@ class BookingViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'delete']
     permission_classes = [IsAuthenticated]
     pagination_class = None
-    queryset = Booking.objects.select_related('home', 'home__blocks', 'home__floor', 'home__rooms', 'company',
-                                              'payment_term', 'client')
+    queryset = Booking.objects.select_related('home', 'home__blocks', 'home__floor', 'company', 'payment_term',
+                                              'client')
 
     def get_serializer_class(self):
         if self.action == 'create':
