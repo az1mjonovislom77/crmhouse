@@ -14,6 +14,7 @@ class PaymentTermViewSet(BaseUserViewSet):
     serializer_class = PaymentTermSerializer
 
 
+@extend_schema(tags=['Booking'])
 class BookingViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'delete']
     permission_classes = [IsAuthenticated]
