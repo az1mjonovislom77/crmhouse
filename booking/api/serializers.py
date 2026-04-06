@@ -19,7 +19,6 @@ class BookingGetSerializer(serializers.ModelSerializer):
     home_number = serializers.SerializerMethodField()
     payment_term_months = serializers.SerializerMethodField()
     client = ClientSerializer(read_only=True)
-    home_status = serializers.ChoiceField(choices=Home.HomeStatus.choices, write_only=True, required=False)
     block_title = serializers.SerializerMethodField()
     floor_number = serializers.SerializerMethodField()
     total_area = serializers.SerializerMethodField()
@@ -50,7 +49,7 @@ class BookingGetSerializer(serializers.ModelSerializer):
 
 
 class BookingCreateSerializer(serializers.ModelSerializer):
-    home_status = serializers.ChoiceField(choices=Home.HomeStatus.choices, write_only=True, required=False)
+    home_status = serializers.ChoiceField(choices=Home.HomeStatus.choices, required=False)
 
     class Meta:
         model = Booking
