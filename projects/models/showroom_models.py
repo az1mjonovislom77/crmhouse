@@ -1,5 +1,4 @@
 from django.db import models
-
 from projects.models.project_models import Blocks
 
 
