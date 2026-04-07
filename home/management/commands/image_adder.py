@@ -20,7 +20,7 @@ class Command(BaseCommand):
         image_path = options['image_path']
 
         try:
-            block = Blocks.objects.get(name=block_name)
+            block = Blocks.objects.get(title=block_name)
         except Blocks.DoesNotExist:
             self.stdout.write(self.style.ERROR(f"Block {block_name} topilmadi"))
             return
