@@ -17,7 +17,7 @@ class PaymentTermViewSet(BaseUserViewSet):
                parameters=[OpenApiParameter(name='home_id', type=OpenApiTypes.INT, location=OpenApiParameter.QUERY)])
 class BookingViewSet(BaseUserViewSet):
     queryset = Booking.objects.select_related('home', 'home__blocks', 'home__floor', 'company', 'payment_term',
-                                              'client')
+                                              'client', 'home__renovation')
 
     def get_queryset(self):
         queryset = super().get_queryset()

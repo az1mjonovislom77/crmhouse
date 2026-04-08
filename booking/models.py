@@ -31,6 +31,7 @@ class Booking(models.Model):
     home = models.OneToOneField(Home, on_delete=models.CASCADE, related_name="booking")
     company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="bookings")
+    cash_payment = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     down_payment = models.IntegerField(choices=DownPaymentChoice.choices)
     payment_term = models.ForeignKey(PaymentTerm, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
