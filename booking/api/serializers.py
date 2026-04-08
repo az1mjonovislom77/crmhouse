@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from booking.models import Booking, PaymentTerm, Company
-from client.api.serializers import ClientSerializer
+from client.api.serializers import ClientNestSerializer
 from common.base.serializers_base import BaseReadSerializer
 from home.models import Home
 from decimal import Decimal
@@ -19,7 +19,7 @@ class CompanySerializer(BaseReadSerializer):
 class BookingGetSerializer(serializers.ModelSerializer):
     home_number = serializers.SerializerMethodField()
     payment_term_months = serializers.SerializerMethodField()
-    client = ClientSerializer(read_only=True)
+    client = ClientNestSerializer(read_only=True)
     block_title = serializers.SerializerMethodField()
     floor_number = serializers.SerializerMethodField()
     total_area = serializers.SerializerMethodField()
