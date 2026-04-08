@@ -40,7 +40,7 @@ class ClientNestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Client
-        fields = ['id', 'booking', 'home_status_history', 'full_name', 'phone_number', 'passport', 'address']
+        fields = ['id', 'home_status_history', 'full_name', 'phone_number', 'passport', 'address']
 
     def get_home_status_history(self, obj):
         return HomeStatusHistorySerializer(obj.status_history.all(), many=True).data
