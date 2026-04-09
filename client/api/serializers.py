@@ -58,7 +58,7 @@ class ClientSerializer(serializers.ModelSerializer):
 
 class ClientNestSerializer(serializers.ModelSerializer):
     home_status_history = serializers.SerializerMethodField()
-    booking = BookingMiniSerializer(source='bookings', read_only=True)
+    booking = BookingMiniSerializer(source='bookings', many=True, read_only=True)
 
     class Meta:
         model = Client
