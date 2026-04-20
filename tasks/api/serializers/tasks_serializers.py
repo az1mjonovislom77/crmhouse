@@ -44,6 +44,21 @@ class ProjectGetSerializer(serializers.ModelSerializer):
 class ProjectCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
+        fields = ('users', 'description', 'card', 'title')
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by']
+
+    def create(self, validated_data):
+        users = validated_data.pop('users', [])
+        card = validated_data.pop('card')
+
+        return create_project(card=card, users=users, order=None, **validated_data)
+
+
+class ProjectUpdateSerializer(serializers.ModelSerializer):
+    order = serializers.IntegerField(required=False)
+
+    class Meta:
+        model = Project
         fields = ('users', 'description', 'card', 'title', 'order')
         read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by']
 
@@ -51,13 +66,6 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
         if value is not None and value < 1:
             raise serializers.ValidationError("Order >= 1 bo‘lishi kerak")
         return value
-
-    def create(self, validated_data):
-        users = validated_data.pop('users', [])
-        order = validated_data.pop('order', None)
-        card = validated_data.pop('card', None)
-
-        return create_project(card=card, users=users, order=order, **validated_data)
 
     def update(self, instance, validated_data):
         users = validated_data.pop('users', None)

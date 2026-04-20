@@ -3,7 +3,7 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from common.base.views_base import BaseUserViewSet, PartialPutMixin
 from tasks.api.serializers.tasks_serializers import CardSerializer, CommentSerializer, ProjectGetSerializer, \
-    ProjectCreateSerializer
+    ProjectCreateSerializer, ProjectUpdateSerializer
 from tasks.api.serializers.tasks_history_serializers import ProjectHistorySerializer, CardHistorySerializer, \
     CommentHistorySerializer
 from tasks.mixins.audit import AuditMixin
@@ -38,6 +38,8 @@ class ProjectViewSet(AuditMixin, HistoryMixin, PartialPutMixin, viewsets.ModelVi
     pagination_class = None
 
     def get_serializer_class(self):
-        if self.action in ['create', 'update', 'partial_update']:
+        if self.action == 'create':
             return ProjectCreateSerializer
+        elif self.action in ['update', 'partial_update']:
+            return ProjectUpdateSerializer
         return ProjectGetSerializer

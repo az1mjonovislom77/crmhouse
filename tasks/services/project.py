@@ -13,14 +13,15 @@ def create_project(*, card=None, users=None, order=None, **data):
 
         qs = Project.objects.select_for_update().filter(card=card)
 
-        max_order = qs.aggregate(max_order=Max('order')).get('max_order') or 0
+        max_order = qs.aggregate(max_order=Max('order'))['max_order'] or 0
 
         if order is None or order > max_order:
             order = max_order + 1
-        elif order < 1:
-            order = 1
+        else:
+            if order < 1:
+                order = 1
 
-        qs.filter(order__gte=order).update(order=F('order') + 1)
+            qs.filter(order__gte=order).update(order=F('order') + 1)
         project = Project.objects.create(card=card, order=order, **data)
 
         if users is not None:
@@ -56,7 +57,7 @@ def update_project(project, *, new_card=None, new_order=None, users=None, **data
         old_qs = qs1 if old_card.id == card_ids[0] else qs2
         new_qs = qs2 if new_card.id == card_ids[1] else qs1
 
-        max_order = new_qs.aggregate(max_order=Max('order')).get('max_order') or 0
+        max_order = new_qs.aggregate(max_order=Max('order'))['max_order'] or 0
 
         if new_order > max_order:
             new_order = max_order + 1
@@ -93,7 +94,6 @@ def delete_project(project):
         order = project.order
 
         qs = Project.objects.select_for_update().filter(card=card)
+        qs.filter(order__gt=order).update(order=F('order') - 1)
 
         project.delete()
-
-        qs.filter(order__gt=order).update(order=F('order') - 1)
