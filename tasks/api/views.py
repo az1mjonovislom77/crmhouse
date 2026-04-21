@@ -47,15 +47,6 @@ class ProjectViewSet(AuditMixin, HistoryMixin, PartialPutMixin, viewsets.ModelVi
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        result = serializer.save()
-
-        return Response(result)
-
-    def partial_update(self, request, *args, **kwargs):
-        instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
