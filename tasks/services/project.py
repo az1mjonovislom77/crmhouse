@@ -7,13 +7,15 @@ from rest_framework.exceptions import ValidationError
 def _shift_orders(qs, *, delta):
     project_ids = list(qs.values_list('id', flat=True))
     if not project_ids:
-        return
+        return []
 
     max_order = Project.objects.aggregate(max_order=Max('order'))['max_order'] or 0
     offset = max_order + len(project_ids) + abs(delta) + 1
 
     Project.objects.filter(id__in=project_ids).update(order=F('order') + offset)
     Project.objects.filter(id__in=project_ids).update(order=F('order') - offset + delta)
+
+    return project_ids
 
 
 def create_project(*, card=None, users=None, order=None, **data):
@@ -44,6 +46,8 @@ def create_project(*, card=None, users=None, order=None, **data):
 
 def update_project(project, *, new_card=None, new_order=None, users=None, **data):
     with transaction.atomic():
+        updated_ids = set()
+
         old_card = project.card
         old_order = project.order
 
@@ -59,7 +63,7 @@ def update_project(project, *, new_card=None, new_order=None, users=None, **data
             if users is not None:
                 project.users.set(users)
 
-            return project
+            return [{"id": project.id, "order": project.order, "card": project.card_id}]
 
         card_ids = sorted([old_card.id, new_card.id])
 
@@ -81,14 +85,19 @@ def update_project(project, *, new_card=None, new_order=None, users=None, **data
 
         if old_card == new_card:
             if new_order > old_order:
-                _shift_orders(old_qs.filter(order__gt=old_order, order__lte=new_order), delta=-1)
+                ids = _shift_orders(old_qs.filter(order__gt=old_order, order__lte=new_order), delta=-1)
+                updated_ids.update(ids)
 
             elif new_order < old_order:
-                _shift_orders(old_qs.filter(order__gte=new_order, order__lt=old_order), delta=1)
+                ids = _shift_orders(old_qs.filter(order__gte=new_order, order__lt=old_order), delta=1)
+                updated_ids.update(ids)
 
         else:
-            _shift_orders(old_qs.filter(order__gt=old_order), delta=-1)
-            _shift_orders(new_qs.filter(order__gte=new_order), delta=1)
+            ids = _shift_orders(old_qs.filter(order__gt=old_order), delta=-1)
+            updated_ids.update(ids)
+
+            ids = _shift_orders(new_qs.filter(order__gte=new_order), delta=1)
+            updated_ids.update(ids)
 
         for key, value in data.items():
             setattr(project, key, value)
@@ -100,7 +109,11 @@ def update_project(project, *, new_card=None, new_order=None, users=None, **data
         if users is not None:
             project.users.set(users)
 
-        return project
+        updated_ids.add(project.id)
+
+        updated_projects = Project.objects.filter(id__in=updated_ids).values('id', 'order', 'card_id')
+
+        return list(updated_projects)
 
 
 def delete_project(project):

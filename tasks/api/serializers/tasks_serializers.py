@@ -73,4 +73,6 @@ class ProjectUpdateSerializer(serializers.ModelSerializer):
         new_card = validated_data.pop('card', None)
         new_order = validated_data.pop('order', None)
 
-        return update_project(instance, new_card=new_card, new_order=new_order, users=users, **validated_data)
+        updated = update_project(instance, new_card=new_card, new_order=new_order, users=users, **validated_data)
+
+        return {"updated": updated}
