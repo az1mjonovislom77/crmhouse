@@ -42,26 +42,9 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://localhost:3002",
-    "http://localhost:3003",
-    "http://localhost:3004",
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "https://professional-bunyodkor.vercel.app",
-    "https://backend.bunyodkorhouse.uz",
-    "https://crm.bunyodkorhouse.uz"
-]
+CORS_ALLOWED_ORIGINS = [s.strip() for s in config('CORS_ALLOWED_ORIGINS').split(',') if s.strip()]
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://backend.bunyodkorhouse.uz",
-    "https://crm.bunyodkorhouse.uz",
-    "https://professional-bunyodkor.vercel.app",
-    "http://localhost:5173"
-    "http://localhost:5174"
-]
+CSRF_TRUSTED_ORIGINS = [s.strip() for s in config('CSRF_TRUSTED_ORIGINS').split(',') if s.strip()]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
