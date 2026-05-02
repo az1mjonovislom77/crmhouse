@@ -2,13 +2,7 @@ from .base import *
 
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    "backend.bunyodkorhouse.uz",
-    "crm.bunyodkorhouse.uz",
-    "professional-bunyodkor.vercel.app",
-    "localhost",
-    "127.0.0.1",
-]
+ALLOWED_HOSTS = [s.strip() for s in config('ALLOWED_HOSTS').split(',') if s.strip()]
 
 DATABASES = {
     'default': {
