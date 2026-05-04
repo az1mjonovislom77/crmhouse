@@ -4,7 +4,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     s.strip()
-    for s in config('ALLOWED_HOSTS').split(',')
+    for s in config('ALLOWED_HOSTS', default='').split(',')
     if s.strip()
 ]
 

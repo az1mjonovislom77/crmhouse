@@ -50,7 +50,7 @@ CORS_ALLOWED_ORIGINS = [
 
 CSRF_TRUSTED_ORIGINS = [
     s.strip()
-    for s in config('CSRF_TRUSTED_ORIGINS').split(',')
+    for s in config('CSRF_TRUSTED_ORIGINS', default='').split(',')
     if s.strip()
 ]
 
