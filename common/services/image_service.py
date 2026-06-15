@@ -21,7 +21,6 @@ def optimize_image_to_webp(image_field, quality: int = 80, max_width=1200, ) -> 
     buffer = BytesIO()
     img.save(buffer, format='WEBP', quality=quality)
     buffer.seek(0)
-
     file_name = image_field.name.rsplit('.', 1)[0] + '.webp'
     new_image = InMemoryUploadedFile(buffer, 'ImageField', file_name, 'image/webp', sys.getsizeof(buffer), None)
 

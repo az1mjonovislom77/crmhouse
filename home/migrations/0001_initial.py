@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        # ('projects', '0002_blocks_projects'),
+        ('projects', '0001_initial'),
     ]
 
     operations = [
