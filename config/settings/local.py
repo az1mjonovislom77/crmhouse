@@ -18,3 +18,5 @@ CACHES = {
         "LOCATION": "unique-snowflake",
     }
 }
+
+REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = []

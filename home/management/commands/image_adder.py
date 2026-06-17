@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.core.files import File
 from home.models import FloorPlan, Home
-from projects.models.project_models import Blocks
+from projects.models.project_models import Block
 
 
 class Command(BaseCommand):
@@ -20,8 +20,8 @@ class Command(BaseCommand):
         image_path = options['image_path']
 
         try:
-            block = Blocks.objects.get(title=block_name)
-        except Blocks.DoesNotExist:
+            block = Block.objects.get(title=block_name)
+        except Block.DoesNotExist:
             self.stdout.write(self.style.ERROR(f"Block {block_name} topilmadi"))
             return
 
@@ -40,4 +40,4 @@ class Command(BaseCommand):
                 img.seek(0)
                 created_count += 1
 
-        self.stdout.write(self.style.SUCCESS(f"{created_count} ta FloorPlan qo‘shildi ✅"))
+        self.stdout.write(self.style.SUCCESS(f"{created_count} ta FloorPlan qo'shildi ✅"))

@@ -1,16 +1,16 @@
 from drf_spectacular.utils import extend_schema
-from projects.api.serializers.project_serializers import ProjectsSerializer, BlocksGetSerializer, \
-    BlocksCreateSerializer, FloorsSerializer, \
+from projects.api.serializers.project_serializers import ProjectSerializer, BlockGetSerializer, \
+    BlockCreateSerializer, FloorsSerializer, \
     RenovationSerializer
-from projects.models.project_models import Blocks, Floors, Renovation
+from projects.models.project_models import Block, Floors, Renovation
 from projects.selectors.projects_selectors import get_projects_with_stats
 from projects.services.project_service import ProjectService
 from common.base.views_base import BaseUserViewSet
 
 
 @extend_schema(tags=['Projects'])
-class ProjectsViewSet(BaseUserViewSet):
-    serializer_class = ProjectsSerializer
+class ProjectViewSet(BaseUserViewSet):
+    serializer_class = ProjectSerializer
 
     def get_queryset(self):
         return get_projects_with_stats()
@@ -23,13 +23,13 @@ class ProjectsViewSet(BaseUserViewSet):
 
 
 @extend_schema(tags=['Blocks'])
-class BlocksViewSet(BaseUserViewSet):
-    queryset = Blocks.objects.select_related('projects')
+class BlockViewSet(BaseUserViewSet):
+    queryset = Block.objects.select_related('projects')
 
     def get_serializer_class(self):
         if self.action == 'create':
-            return BlocksCreateSerializer
-        return BlocksGetSerializer
+            return BlockCreateSerializer
+        return BlockGetSerializer
 
 
 @extend_schema(tags=['Floors'])

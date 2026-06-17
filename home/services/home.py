@@ -9,7 +9,7 @@ class HomeService:
     @staticmethod
     @transaction.atomic
     def create_home(data):
-        floorplans = data.pop("floorplans", [])
+        floorplans = data.pop("floorplan", [])
 
         home = Home.objects.create(**data)
 
@@ -22,7 +22,7 @@ class HomeService:
     @staticmethod
     @transaction.atomic
     def update_home(instance, data):
-        floorplans = data.pop("floorplans", None)
+        floorplans = data.pop("floorplan", None)
 
         for attr, value in data.items():
             setattr(instance, attr, value)
@@ -30,7 +30,7 @@ class HomeService:
         instance.save()
 
         if floorplans is not None:
-            instance.floorplan_set.all().delete()
+            instance.plans.all().delete()
 
             for fp in floorplans:
                 fp["home"] = instance

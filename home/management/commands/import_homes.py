@@ -3,7 +3,7 @@ from django.conf import settings
 import pandas as pd
 from django.core.management.base import BaseCommand
 from home.models import Home
-from projects.models.project_models import Floors, Blocks
+from projects.models.project_models import Floors, Block
 
 
 class Command(BaseCommand):
@@ -14,7 +14,7 @@ class Command(BaseCommand):
 
         df = pd.read_excel(file_path)
 
-        block_obj, _ = Blocks.objects.get_or_create(title="A-1")
+        block_obj, _ = Block.objects.get_or_create(title="A-1")
 
         for _, row in df.iterrows():
             floor_number = int(row['floor'])

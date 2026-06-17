@@ -4,7 +4,7 @@ from django.db import models
 from django.core.validators import FileExtensionValidator
 
 
-class Projects(models.Model):
+class Project(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     title = models.CharField(max_length=100, db_index=True)
     description = models.TextField(max_length=500)
@@ -15,22 +15,26 @@ class Projects(models.Model):
                                 'heif']), check_image_size], null=True, blank=True)
 
     class Meta:
+        db_table = 'projects_projects'
         ordering = ["-id"]
 
     def __str__(self):
         return self.title
 
 
-class Blocks(models.Model):
-    projects = models.ForeignKey(Projects, on_delete=models.SET_NULL, null=True, blank=True, related_name='blocks')
+class Block(models.Model):
+    projects = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True, related_name='blocks')
     title = models.CharField(max_length=100, db_index=True)
     image = models.FileField(upload_to='projects/', validators=[
         FileExtensionValidator(
             allowed_extensions=['jpg', 'jpeg', 'png', 'svg', 'webp', 'heic', 'heif']), check_image_size])
 
+    class Meta:
+        db_table = 'projects_blocks'
+
     def save(self, *args, **kwargs):
         if self.pk:
-            old = Blocks.objects.only("image").filter(pk=self.pk).first()
+            old = Block.objects.only("image").filter(pk=self.pk).first()
             if old and old.image == self.image:
                 super().save(*args, **kwargs)
                 return

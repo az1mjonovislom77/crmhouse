@@ -74,7 +74,7 @@ class HomeViewSet(BaseUserViewSet):
 
 @extend_schema(tags=['HomeHistory'])
 class HomeHistoryListAPIView(ListAPIView):
-    queryset = HomeStatusHistory.objects.select_related("home", "changed_by").order_by("-changed_at")
+    queryset = HomeStatusHistory.objects.select_related("home", "home__blocks", "home__floor", "changed_by").order_by("-changed_at")
     serializer_class = HomeStatusHistorySerializer
     pagination_class = HomePagination
     permission_classes = [IsAuthenticated]

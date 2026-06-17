@@ -1,5 +1,5 @@
 from django.db import models
-from projects.models.project_models import Blocks
+from projects.models.project_models import Block
 
 
 class SVG(models.Model):
@@ -10,7 +10,7 @@ class SVG(models.Model):
 
 
 class Showroom(models.Model):
-    blocks = models.ForeignKey(Blocks, on_delete=models.SET_NULL, null=True, blank=True, related_name='showrooms')
+    block = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name='showrooms')
     blocks_number = models.IntegerField(default=0)
     path = models.CharField(max_length=500)
     navigate_to = models.CharField(max_length=200)

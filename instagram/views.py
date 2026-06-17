@@ -1,3 +1,5 @@
+from django.conf import settings
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
@@ -6,15 +8,14 @@ from .services import InstagramService, InstagramAPIError
 
 instagram_service = InstagramService()
 
-IG_USER_ID = "17841439835654723"
-
 
 @extend_schema(tags=["Instagram"])
 class InstagramViewSet(ViewSet):
+    permission_classes = [IsAuthenticated]
 
     def media(self, request):
         try:
-            data = instagram_service.get_media(IG_USER_ID)
+            data = instagram_service.get_media(settings.IG_USER_ID)
             return Response(data)
 
         except InstagramAPIError as e:

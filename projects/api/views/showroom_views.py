@@ -12,6 +12,7 @@ class SVGView(ListAPIView):
     queryset = SVG.objects.all()
     serializer_class = SVGSerializer
     pagination_class = None
+    permission_classes = [IsAuthenticated]
 
 
 @extend_schema(tags=['Showroom'])

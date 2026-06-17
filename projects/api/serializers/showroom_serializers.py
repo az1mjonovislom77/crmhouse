@@ -23,10 +23,10 @@ class ShowroomSerializer(serializers.ModelSerializer):
                   'available_homes', 'sold_homes', 'reserved_homes', 'project_title', 'project_id']
 
     def get_label(self, obj):
-        return obj.blocks.title if obj.blocks else None
+        return obj.block.title if obj.block else None
 
     def get_project_title(self, obj):
-        return obj.blocks.projects.title if obj.blocks.projects else None
+        return obj.block.projects.title if obj.block and obj.block.projects else None
 
     def get_project_id(self, obj):
-        return obj.blocks.projects.id if obj.blocks.projects else None
+        return obj.block.projects.id if obj.block and obj.block.projects else None

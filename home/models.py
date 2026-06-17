@@ -3,7 +3,7 @@ from django.db import models
 from django.conf import settings
 from client.models import Client
 from common.services.image_service import check_image_size, optimize_image_to_webp
-from projects.models.project_models import Blocks, Floors, Renovation
+from projects.models.project_models import Block, Floors, Renovation
 
 
 class Home(models.Model):
@@ -39,7 +39,7 @@ class Home(models.Model):
         TEN = 10, "10 xona"
 
     home_number = models.PositiveIntegerField(default=0)
-    blocks = models.ForeignKey(Blocks, on_delete=models.SET_NULL, null=True, blank=True, related_name='homes')
+    blocks = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name='homes')
     floor = models.ForeignKey(Floors, on_delete=models.SET_NULL, null=True, blank=True)
     rooms = models.IntegerField(choices=RoomsChoice.choices, default=RoomsChoice.ONE, db_index=True)
     area = models.DecimalField(max_digits=10, decimal_places=2, default=0)

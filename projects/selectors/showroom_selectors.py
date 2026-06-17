@@ -6,9 +6,9 @@ from projects.models.showroom_models import Showroom
 def get_blocks_stats():
     return (
         Showroom.objects
-        .select_related('blocks')
+        .select_related('block', 'block__projects')
         .annotate(
-            homes_count=Count('blocks__homes'),
-            available_homes=Count('blocks__homes', filter=Q(blocks__homes__home_status=Home.HomeStatus.AVAILABLE)),
-            sold_homes=Count('blocks__homes', filter=Q(blocks__homes__home_status=Home.HomeStatus.SOLD)),
-            reserved_homes=Count('blocks__homes', filter=Q(blocks__homes__home_status=Home.HomeStatus.RESERVED))))
+            homes_count=Count('block__homes'),
+            available_homes=Count('block__homes', filter=Q(block__homes__home_status=Home.HomeStatus.AVAILABLE)),
+            sold_homes=Count('block__homes', filter=Q(block__homes__home_status=Home.HomeStatus.SOLD)),
+            reserved_homes=Count('block__homes', filter=Q(block__homes__home_status=Home.HomeStatus.RESERVED))))

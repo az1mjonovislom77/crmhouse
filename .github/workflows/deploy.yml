@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🚀 Deploy via SSH
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -23,23 +23,23 @@ jobs:
 
             cd ${{ secrets.PROJECT_PATH }}
 
-            echo "📥 Pulling latest code..."
+            echo "Pulling latest code..."
             git pull origin main
 
-            echo "🐍 Activating venv..."
+            echo "Activating venv..."
             source venv/bin/activate
 
-            echo "📦 Installing requirements..."
+            echo "Installing requirements..."
             pip install -r requirements.txt
 
-            echo "🧱 Running migrations (SAFE)..."
-            python3 manage.py migrate --noinput || true
+            echo "Running migrations..."
+            python3 manage.py migrate --noinput
 
-            echo "🎨 Collecting static files..."
+            echo "Collecting static files..."
             python3 manage.py collectstatic --noinput
 
-            echo "🔄 Restarting services..."
+            echo "Restarting services..."
             sudo systemctl restart ${{ secrets.SERVICE_NAME }}
             sudo systemctl restart nginx
 
-            echo "✅ Deploy finished!"
+            echo "Deploy finished!"

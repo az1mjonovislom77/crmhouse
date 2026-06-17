@@ -1,11 +1,11 @@
 from django.contrib import admin
 from home.models import Home
-from projects.models.project_models import Projects, Blocks, Floors, Renovation
+from projects.models.project_models import Project, Block, Floors, Renovation
 from projects.models.showroom_models import SVG, Showroom
 
 
-@admin.register(Projects)
-class ProjectsAdmin(admin.ModelAdmin):
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin):
     list_display = ['id', 'title']
 
 
@@ -14,8 +14,8 @@ class HomeInline(admin.TabularInline):
     extra = 1
 
 
-@admin.register(Blocks)
-class BlocksAdmin(admin.ModelAdmin):
+@admin.register(Block)
+class BlockAdmin(admin.ModelAdmin):
     list_display = ['id', 'title']
     inlines = [HomeInline]
 
@@ -37,4 +37,4 @@ class SVGAdmin(admin.ModelAdmin):
 
 @admin.register(Showroom)
 class ShowroomAdmin(admin.ModelAdmin):
-    list_display = ['id', 'blocks']
+    list_display = ['id', 'block']

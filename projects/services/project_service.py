@@ -1,5 +1,5 @@
 from common.services.image_service import process_image
-from projects.models.project_models import Projects
+from projects.models.project_models import Project
 
 
 class ProjectService:
@@ -11,7 +11,7 @@ class ProjectService:
         if image:
             validated_data["image"] = process_image(image)
 
-        return Projects.objects.create(**validated_data)
+        return Project.objects.create(**validated_data)
 
     @staticmethod
     def update_project(instance, validated_data):

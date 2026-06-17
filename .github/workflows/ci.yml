@@ -11,24 +11,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 🐍 Setup Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: 📦 Install requirements
+      - name: Install requirements
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: ✅ Django system check
+      - name: Django system check
         env:
           SECRET_KEY: "dummy-secret-key-for-ci"
-          DEBUG: "True"
           INSTAGRAM_ACCESS_TOKEN: "dummy-token"
-          IG_USER_ID: "dummy-ig-token"
-        run: |
-          python manage.py check
+          IG_USER_ID: "dummy-ig-id"
+        run: python manage.py check --settings=config.settings.local
+
+      - name: Run tests
+        env:
+          SECRET_KEY: "dummy-secret-key-for-ci"
+          INSTAGRAM_ACCESS_TOKEN: "dummy-token"
+          IG_USER_ID: "dummy-ig-id"
+        run: python manage.py test --settings=config.settings.local --verbosity=2

@@ -15,3 +15,4 @@ class ProjectAdmin(admin.ModelAdmin):
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
     list_display = ['id', 'user']
+    list_select_related = ['user', 'project']
