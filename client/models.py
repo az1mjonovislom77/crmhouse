@@ -7,7 +7,7 @@ class Client(models.Model):
     phone_number = PhoneNumberField()
     phone_number2 = PhoneNumberField(null=True, blank=True)
     passport = models.CharField(max_length=20)
-    address = models.CharField(max_length=250)
+    address = models.CharField(max_length=500)
 
     def __str__(self):
         return self.full_name

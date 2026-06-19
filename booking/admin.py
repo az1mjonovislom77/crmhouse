@@ -1,5 +1,5 @@
 from django.contrib import admin
-from booking.models import Booking, PaymentTerm, Company
+from booking.models import Booking, PaymentTerm, Company, Payment
 
 
 @admin.register(Booking)
@@ -16,3 +16,7 @@ class PaymentTermAdmin(admin.ModelAdmin):
 @admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
     list_display = ['id', 'name']
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ['id', 'amount', 'note']

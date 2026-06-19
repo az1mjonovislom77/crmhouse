@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from booking.models import Booking, PaymentTerm, Company
+from booking.models import Booking, PaymentTerm, Company, Payment
 from client.api.serializers import ClientNestSerializer
 from common.base.serializers_base import BaseReadSerializer
 from home.models import Home
@@ -68,3 +68,14 @@ class BookingCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
         fields = '__all__'
+
+
+class PaymentSerializer(serializers.ModelSerializer):
+    remaining_debt = serializers.DecimalField(
+        source='booking.remaining_debt', max_digits=14, decimal_places=2, read_only=True
+    )
+
+    class Meta:
+        model = Payment
+        fields = ['id', 'booking', 'amount', 'note', 'created_at', 'remaining_debt']
+        read_only_fields = ['id', 'created_at', 'remaining_debt']
