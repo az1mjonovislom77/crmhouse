@@ -40,6 +40,7 @@ class Booking(models.Model):
     deadline = models.DateField(null=True, blank=True)
     map_key = models.CharField(max_length=200, null=True, blank=True)
     booking_no = models.CharField(max_length=200, null=True, blank=True)
+    from_who = models.CharField(max_length=200, null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 
     @property
