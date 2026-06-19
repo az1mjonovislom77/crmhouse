@@ -26,6 +26,8 @@ class BookingGetSerializer(serializers.ModelSerializer):
     rooms_number = serializers.SerializerMethodField()
     company = CompanySerializer(read_only=True)
     cash_payment_percent = serializers.SerializerMethodField()
+    total_price = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
+    remaining_debt = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
 
     class Meta:
         model = Booking

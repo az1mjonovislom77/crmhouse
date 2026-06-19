@@ -10,6 +10,8 @@ class BookingNestSerializer(serializers.ModelSerializer):
     payment_term_months = serializers.SerializerMethodField()
     home_status = serializers.SerializerMethodField()
     cash_payment_percent = serializers.SerializerMethodField()
+    total_price = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
+    remaining_debt = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
 
     class Meta:
         model = Booking
@@ -39,6 +41,8 @@ class BookingNestSerializer(serializers.ModelSerializer):
 
 class BookingMiniSerializer(serializers.ModelSerializer):
     cash_payment_percent = serializers.SerializerMethodField()
+    total_price = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
+    remaining_debt = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
 
     class Meta:
         model = Booking
