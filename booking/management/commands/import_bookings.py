@@ -82,9 +82,17 @@ class Command(BaseCommand):
         home_number = int(raw_home_num)
         map_key = str(row.get('map_key') or '').strip() or None
 
-        home = Home.objects.filter(home_number=home_number).first()
+        bino = row.get('Bino')
+        home = None
+        if bino is not None:
+            block_title = str(int(bino)) if isinstance(bino, float) else str(bino).strip()
+            home = Home.objects.filter(home_number=home_number, blocks__title=block_title).first()
+
         if not home:
-            raise SkipRow(f'home_number={home_number} topilmadi')
+            home = Home.objects.filter(home_number=home_number).first()
+
+        if not home:
+            raise SkipRow(f'home_number={home_number}, bino={bino} topilmadi')
 
         if Booking.objects.filter(home=home).exists():
             raise SkipRow(f'home_number={home_number} (entrance={home.entrance}) uchun booking allaqachon mavjud')
