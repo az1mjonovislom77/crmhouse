@@ -30,6 +30,30 @@ def fmt_phone(value):
     return f'+998{digits}'
 
 
+def to_str(value):
+    """Raqam yoki matn qiymatni stringga o'giradi. Float ni int sifatida."""
+    if value is None:
+        return None
+    if isinstance(value, float):
+        return str(int(value))
+    s = str(value).strip()
+    return s or None
+
+
+def parse_deadline(value):
+    if not value:
+        return None
+    s = str(value).strip()
+    if not s or s == ' ':
+        return None
+    for fmt in ('%d.%m.%Y', '%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y'):
+        try:
+            return pd.to_datetime(s, format=fmt).date()
+        except Exception:
+            pass
+    return None
+
+
 class Command(BaseCommand):
     help = 'Import bookings from booking.xlsx'
 
@@ -80,7 +104,7 @@ class Command(BaseCommand):
             raise SkipRow('home_number yo`q')
 
         home_number = int(raw_home_num)
-        map_key = str(row.get('map_key') or '').strip() or None
+        map_key = to_str(row.get('map_key'))
 
         bino = row.get('Bino')
         home = None
@@ -141,20 +165,14 @@ class Command(BaseCommand):
         except (ValueError, TypeError):
             cash_payment = 0
 
-        # Deadline
-        deadline = row.get('deadline') or None
-        if deadline is not None:
-            try:
-                deadline = pd.to_datetime(deadline).date()
-            except Exception:
-                deadline = None
+        deadline = parse_deadline(row.get('deadline'))
 
         Booking.objects.create(
             home=home,
             client=client,
             company=company,
             cash_payment=cash_payment,
-            booking_no=str(row.get('booking_no') or '').strip() or None,
+            booking_no=to_str(row.get('booking_no')),
             map_key=map_key,
             from_who=str(row.get('from_who') or '').strip() or None,
             description=str(row.get('description') or '').strip() or None,
