@@ -2,6 +2,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from common.base.views_base import BaseUserViewSet, PartialPutMixin
+from common.search import TransliteratedSearchFilter
 from tasks.api.serializers.tasks_serializers import CardSerializer, CommentSerializer, ProjectGetSerializer, \
     ProjectCreateSerializer, ProjectUpdateSerializer
 from tasks.api.serializers.tasks_history_serializers import ProjectHistorySerializer, CardHistorySerializer, \
@@ -18,6 +19,8 @@ class CardViewSet(AuditMixin, HistoryMixin, BaseUserViewSet, ):
     queryset = Card.objects.all()
     serializer_class = CardSerializer
     history_serializer_class = CardHistorySerializer
+    filter_backends = [TransliteratedSearchFilter]
+    search_fields = ['title']
 
 
 @extend_schema(tags=['Comment'])
@@ -25,6 +28,8 @@ class CommentViewSet(AuditMixin, HistoryMixin, BaseUserViewSet):
     queryset = Comment.objects.select_related('user', 'project')
     serializer_class = CommentSerializer
     history_serializer_class = CommentHistorySerializer
+    filter_backends = [TransliteratedSearchFilter]
+    search_fields = ['text']
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -37,6 +42,8 @@ class ProjectViewSet(AuditMixin, HistoryMixin, PartialPutMixin, viewsets.ModelVi
     http_method_names = ["get", "post", "put", "delete"]
     permission_classes = [IsAuthenticated, IsProjectMemberOrAdmin]
     pagination_class = None
+    filter_backends = [TransliteratedSearchFilter]
+    search_fields = ['title', 'description']
 
     def get_serializer_class(self):
         if self.action == 'create':

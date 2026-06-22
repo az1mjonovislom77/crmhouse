@@ -2,7 +2,6 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-
 from home.models import Home
 from projects.models.project_models import Block, Floors, Project, Renovation
 from projects.models.showroom_models import Showroom, SVG

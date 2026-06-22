@@ -31,17 +31,13 @@ def create_booking(data, user=None, home_status=None):
 def delete_booking(booking_id, user=None):
     booking = Booking.objects.select_related('home', 'client').get(id=booking_id)
     home = Home.objects.select_for_update().get(id=booking.home_id)
-
     client = booking.client
 
     booking.delete()
 
     HomeStatusHistory.objects.create(
-        home=home,
-        client=client,
-        from_status=home.home_status,
-        to_status="booking_deleted",
-        changed_by=user
+        home=home, client=client, from_status=home.home_status,
+        to_status="booking_deleted", changed_by=user
     )
 
     if not Booking.objects.filter(home=home).exists():

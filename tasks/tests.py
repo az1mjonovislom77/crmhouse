@@ -5,7 +5,6 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
-
 from tasks.models import Card, Comment, Project
 from tasks.permissions import IsProjectMemberOrAdmin
 from tasks.services.project import create_project, delete_project, update_project

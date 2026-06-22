@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from client.selectors.client_selectors import get_client_queryset
 from common.base.views_base import BaseUserViewSet
 from client.api.serializers import ClientSerializer
+from common.search import TransliteratedSearchFilter
 
 
 class ClientPagination(PageNumberPagination):
@@ -30,6 +31,8 @@ class ClientPagination(PageNumberPagination):
 class ClientViewSet(BaseUserViewSet):
     serializer_class = ClientSerializer
     pagination_class = ClientPagination
+    filter_backends = [TransliteratedSearchFilter]
+    search_fields = ['full_name', 'phone_number', 'passport', 'address']
 
     def get_queryset(self):
         return get_client_queryset()

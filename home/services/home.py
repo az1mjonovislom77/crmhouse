@@ -10,7 +10,6 @@ class HomeService:
     @transaction.atomic
     def create_home(data):
         floorplans = data.pop("floorplan", [])
-
         home = Home.objects.create(**data)
 
         for fp in floorplans:
@@ -57,11 +56,6 @@ class HomeService:
                 client = None
 
         HomeStatusHistory.objects.create(
-            home=home,
-            client=client,
-            from_status=old,
-            to_status=new_status,
-            changed_by=user
-        )
+            home=home, client=client, from_status=old, to_status=new_status, changed_by=user)
 
         return home

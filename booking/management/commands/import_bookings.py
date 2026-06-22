@@ -4,7 +4,6 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from django.db import transaction
-
 from booking.models import Booking, Company
 from client.models import Client
 from home.models import Home
@@ -31,7 +30,6 @@ def fmt_phone(value):
 
 
 def to_str(value):
-    """Raqam yoki matn qiymatni stringga o'giradi. Float ni int sifatida."""
     if value is None:
         return None
     if isinstance(value, float):
@@ -59,10 +57,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--file',
-            default='booking.xlsx',
-            help='Excel fayl nomi (default: booking.xlsx)',
-        )
+            '--file', default='booking.xlsx', help='Excel fayl nomi (default: booking.xlsx)')
 
     def handle(self, *args, **kwargs):
         file_path = os.path.join(settings.BASE_DIR, kwargs['file'])
@@ -121,13 +116,11 @@ class Command(BaseCommand):
         if Booking.objects.filter(home=home).exists():
             raise SkipRow(f'home_number={home_number} (entrance={home.entrance}) uchun booking allaqachon mavjud')
 
-        # Status
         raw_status = str(row.get('home_status') or '').strip()
         new_status = STATUS_MAP.get(raw_status.lower())
         if not new_status:
             raise SkipRow(f'noma`lum status: "{raw_status}"')
 
-        # User (locked_by)
         locked_by_name = str(row.get('locked_by') or '').strip()
         user = None
         if locked_by_name:
@@ -141,7 +134,6 @@ class Command(BaseCommand):
                     f'  [{row_num}] user topilmadi: "{locked_by_name}"'
                 ))
 
-        # Client
         phone = fmt_phone(row.get('phone_number'))
         phone2 = fmt_phone(row.get('phone_number2'))
         full_name = str(row.get('client_full_name') or '').strip()
@@ -159,7 +151,6 @@ class Command(BaseCommand):
             }
         )
 
-        # Cash payment
         try:
             cash_payment = float(row.get('cash_payment') or 0)
         except (ValueError, TypeError):
@@ -179,16 +170,9 @@ class Command(BaseCommand):
             deadline=deadline,
         )
 
-        HomeService.change_status(
-            home_id=home.id,
-            new_status=new_status,
-            user=user,
-            client=client,
-        )
+        HomeService.change_status(home_id=home.id, new_status=new_status, user=user, client=client)
 
-        self.stdout.write(
-            f'  [{row_num}] OK home={home_number} kirish={home.entrance} | {full_name} | {raw_status}'
-        )
+        self.stdout.write(f'  [{row_num}] OK home={home_number} kirish={home.entrance} | {full_name} | {raw_status}')
 
 
 class SkipRow(Exception):

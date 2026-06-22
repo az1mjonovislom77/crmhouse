@@ -2,9 +2,11 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework.exceptions import ValidationError
 from booking.models import Booking, PaymentTerm, Payment
-from booking.api.serializers import BookingCreateSerializer, BookingGetSerializer, PaymentTermSerializer, PaymentSerializer
+from booking.api.serializers import BookingCreateSerializer, BookingGetSerializer, PaymentTermSerializer, \
+    PaymentSerializer
 from booking.services.booking import delete_booking, create_booking
 from common.base.views_base import BaseUserViewSet
+from common.search import TransliteratedSearchFilter
 from home.services.home import HomeService
 
 
@@ -19,6 +21,8 @@ class PaymentTermViewSet(BaseUserViewSet):
 class BookingViewSet(BaseUserViewSet):
     queryset = Booking.objects.select_related('home', 'home__blocks', 'home__floor', 'company', 'payment_term',
                                               'client', 'home__renovation')
+    filter_backends = [TransliteratedSearchFilter]
+    search_fields = ['client__full_name', 'client__phone_number', 'booking_no', 'from_who']
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -51,11 +55,7 @@ class BookingViewSet(BaseUserViewSet):
 
         if home_status is not None:
             HomeService.change_status(
-                home_id=booking.home.id,
-                new_status=home_status,
-                user=self.request.user,
-                client=booking.client
-            )
+                home_id=booking.home.id, new_status=home_status, user=self.request.user, client=booking.client)
 
     def perform_destroy(self, instance):
         delete_booking(booking_id=instance.id, user=self.request.user)
@@ -84,6 +84,7 @@ class PaymentViewSet(BaseUserViewSet):
             raise ValidationError({"detail": "Qarz to'liq qoplangan, qo'shimcha to'lov qilib bo'lmaydi."})
 
         if amount > remaining:
-            raise ValidationError({"amount": f"Kiritilgan summa qoldiq qarzdan ({remaining}) ko'p bo'lishi mumkin emas."})
+            raise ValidationError(
+                {"amount": f"Kiritilgan summa qoldiq qarzdan ({remaining}) ko'p bo'lishi mumkin emas."})
 
         serializer.save()
