@@ -2,8 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-
-from booking.models import Booking, Company, PaymentTerm
+from booking.models import Booking, Company
 from client.models import Client
 from client.selectors.client_selectors import get_client_queryset
 from home.models import Home, HomeStatusHistory

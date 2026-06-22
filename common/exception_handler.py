@@ -17,5 +17,4 @@ def custom_exception_handler(exc, context):
 
     return Response(
         {"detail": "Internal server error. Please try again later."},
-        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    )
+        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
