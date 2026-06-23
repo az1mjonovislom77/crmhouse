@@ -18,6 +18,7 @@ class CardSerializer(BaseReadSerializer):
 class CommentSerializer(BaseReadSerializer):
     created_by = UserMiniSerializer(read_only=True)
     updated_by = UserMiniSerializer(read_only=True)
+    file = serializers.FileField(required=False, allow_null=True)
 
     class Meta(BaseReadSerializer.Meta):
         model = Comment
