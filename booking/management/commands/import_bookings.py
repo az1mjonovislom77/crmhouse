@@ -85,6 +85,10 @@ class Command(BaseCommand):
             row_num = idx + 2
             try:
                 self._update_passport_date(row, row_num)
+            except Exception as e:
+                self.stdout.write(self.style.ERROR(f'  [{row_num}] passport_date xato: {e}'))
+
+            try:
                 self._import_row(row, company, row_num)
                 created += 1
             except SkipRow as e:
@@ -99,7 +103,8 @@ class Command(BaseCommand):
         ))
 
     def _update_passport_date(self, row, row_num):
-        passport_date = parse_deadline(row.get('passport berilgan sana'))
+        raw = row.get('Pasport berilgan sana')
+        passport_date = parse_deadline(raw)
         if not passport_date:
             return
 
@@ -176,7 +181,7 @@ class Command(BaseCommand):
         if not full_name:
             raise SkipRow('client_full_name yo`q')
 
-        passport_date = parse_deadline(row.get('passport berilgan sana'))
+        passport_date = parse_deadline(row.get('Pasport berilgan sana'))
 
         client, _ = Client.objects.get_or_create(
             full_name=full_name,
