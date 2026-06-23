@@ -154,7 +154,7 @@ class Command(BaseCommand):
             }
         )
 
-        if not created and passport_date and client.passport_date != passport_date:
+        if not created and passport_date and (not client.passport_date or client.passport_date != passport_date):
             client.passport_date = passport_date
             client.save(update_fields=['passport_date'])
 
