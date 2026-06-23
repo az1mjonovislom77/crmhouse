@@ -79,6 +79,7 @@ class Command(BaseCommand):
         for idx, row in df.iterrows():
             row_num = idx + 2
             try:
+                self._update_passport_date(row, row_num)
                 self._import_row(row, company, row_num)
                 created += 1
             except SkipRow as e:
@@ -91,6 +92,35 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f'\nNatija: {created} yaratildi, {skipped} skip, {errors} xato'
         ))
+
+    def _update_passport_date(self, row, row_num):
+        passport_date = parse_deadline(row.get('passport berilgan sana'))
+        if not passport_date:
+            return
+
+        raw_home_num = row.get('home_number')
+        if not raw_home_num:
+            return
+
+        home_number = int(raw_home_num)
+        bino = row.get('Bino')
+        home = None
+        if bino is not None:
+            block_title = str(int(bino)) if isinstance(bino, float) else str(bino).strip()
+            home = Home.objects.filter(home_number=home_number, blocks__title=block_title).first()
+        if not home:
+            home = Home.objects.filter(home_number=home_number).first()
+        if not home:
+            return
+
+        booking = Booking.objects.select_related('client').filter(home=home).first()
+        if not booking or not booking.client:
+            return
+
+        client = booking.client
+        if not client.passport_date or client.passport_date != passport_date:
+            Client.objects.filter(pk=client.pk).update(passport_date=passport_date)
+            self.stdout.write(f'  [{row_num}] passport_date yangilandi: {client.full_name} → {passport_date}')
 
     @transaction.atomic
     def _import_row(self, row, company, row_num):
@@ -143,7 +173,7 @@ class Command(BaseCommand):
 
         passport_date = parse_deadline(row.get('passport berilgan sana'))
 
-        client, created = Client.objects.get_or_create(
+        client, _ = Client.objects.get_or_create(
             full_name=full_name,
             defaults={
                 'phone_number': phone or '+998000000000',
@@ -153,10 +183,6 @@ class Command(BaseCommand):
                 'address': str(row.get('address') or '').strip() or '',
             }
         )
-
-        if not created and passport_date and (not client.passport_date or client.passport_date != passport_date):
-            client.passport_date = passport_date
-            client.save(update_fields=['passport_date'])
 
         try:
             cash_payment = float(row.get('cash_payment') or 0)
