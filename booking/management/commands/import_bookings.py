@@ -141,15 +141,22 @@ class Command(BaseCommand):
         if not full_name:
             raise SkipRow('client_full_name yo`q')
 
-        client, _ = Client.objects.get_or_create(
+        passport_date = parse_deadline(row.get('passport berilgan sana'))
+
+        client, created = Client.objects.get_or_create(
             full_name=full_name,
             defaults={
                 'phone_number': phone or '+998000000000',
                 'phone_number2': phone2,
                 'passport': str(row.get('passport') or '').strip() or '',
+                'passport_date': passport_date,
                 'address': str(row.get('address') or '').strip() or '',
             }
         )
+
+        if not created and passport_date and client.passport_date != passport_date:
+            client.passport_date = passport_date
+            client.save(update_fields=['passport_date'])
 
         try:
             cash_payment = float(row.get('cash_payment') or 0)
