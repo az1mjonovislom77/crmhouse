@@ -1,8 +1,6 @@
 from decimal import Decimal
-
 from django.db.models import Sum
 from rest_framework import serializers
-
 from booking.models import Booking, PaymentTerm, Company, Payment
 from client.api.serializers import ClientNestSerializer
 from common.base.serializers_base import BaseReadSerializer

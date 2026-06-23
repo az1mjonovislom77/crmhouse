@@ -1,11 +1,9 @@
 from decimal import Decimal
-
 from django.db.models import Sum, Value, DecimalField, Prefetch, OuterRef, Subquery
 from django.db.models.functions import Coalesce
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework.exceptions import ValidationError
-
 from booking.models import Booking, PaymentTerm, Payment
 from booking.api.serializers import BookingCreateSerializer, BookingGetSerializer, PaymentTermSerializer, \
     PaymentSerializer
@@ -15,15 +13,12 @@ from common.search import TransliteratedSearchFilter
 from home.models import HomeStatusHistory
 from home.services.home import HomeService
 
-_client_bookings_qs = Booking.objects.select_related(
-    'home', 'home__renovation', 'payment_term'
-).annotate(
-    payments_total=Coalesce(Sum('payments__amount'), Value(Decimal('0')), output_field=DecimalField())
-)
+_client_bookings_qs = (Booking.objects.select_related('home', 'home__renovation', 'payment_term')
+.annotate(
+    payments_total=Coalesce(Sum('payments__amount'), Value(Decimal('0')), output_field=DecimalField())))
 
-_client_status_history_qs = HomeStatusHistory.objects.select_related(
-    'home', 'home__blocks', 'home__floor', 'changed_by'
-)
+_client_status_history_qs = HomeStatusHistory.objects.select_related('home', 'home__blocks', 'home__floor',
+                                                                     'changed_by')
 
 
 @extend_schema(tags=['PaymentTerm'])
@@ -99,8 +94,7 @@ class PaymentViewSet(BaseUserViewSet):
             .values('total')
         )
         queryset = Payment.objects.select_related('booking__home').annotate(
-            booking_payments_total=Subquery(_booking_total_sq, output_field=DecimalField())
-        )
+            booking_payments_total=Subquery(_booking_total_sq, output_field=DecimalField()))
         booking_id = self.request.query_params.get('booking_id')
         if booking_id:
             queryset = queryset.filter(booking_id=booking_id)
