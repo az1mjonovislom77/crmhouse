@@ -40,7 +40,6 @@ class Command(BaseCommand):
         image_files = image_files[:3]
         self.stdout.write(f'Rasmlar ({images_dir}): {image_files}')
 
-        # 3 ta rasmni media ga saqlash (webp ga o'tkazish ham shu yerda bo'ladi)
         master_plans = []
         for img_name in image_files:
             img_path = os.path.join(images_dir, img_name)
