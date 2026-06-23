@@ -86,7 +86,7 @@ class Command(BaseCommand):
             try:
                 self._update_client_fields(row, row_num)
             except Exception as e:
-                self.stdout.write(self.style.ERROR(f'  [{row_num}] passport_date xato: {e}'))
+                self.stdout.write(self.style.ERROR(f'  [{row_num}] client yangilash xato: {e}'))
 
             try:
                 self._import_row(row, company, row_num)
