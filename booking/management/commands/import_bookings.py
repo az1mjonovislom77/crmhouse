@@ -39,17 +39,22 @@ def to_str(value):
 
 
 def parse_deadline(value):
-    if not value:
+    if value is None:
         return None
+    if hasattr(value, 'date'):
+        return value.date()
     s = str(value).strip()
-    if not s or s == ' ':
+    if not s or s == 'NaT':
         return None
     for fmt in ('%d.%m.%Y', '%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y'):
         try:
             return pd.to_datetime(s, format=fmt).date()
         except Exception:
             pass
-    return None
+    try:
+        return pd.to_datetime(s).date()
+    except Exception:
+        return None
 
 
 class Command(BaseCommand):
