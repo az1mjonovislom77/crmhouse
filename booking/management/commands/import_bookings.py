@@ -84,7 +84,7 @@ class Command(BaseCommand):
         for idx, row in df.iterrows():
             row_num = idx + 2
             try:
-                self._update_passport_date(row, row_num)
+                self._update_client_fields(row, row_num)
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f'  [{row_num}] passport_date xato: {e}'))
 
@@ -102,12 +102,7 @@ class Command(BaseCommand):
             f'\nNatija: {created} yaratildi, {skipped} skip, {errors} xato'
         ))
 
-    def _update_passport_date(self, row, row_num):
-        raw = row.get('Pasport berilgan sana')
-        passport_date = parse_deadline(raw)
-        if not passport_date:
-            return
-
+    def _update_client_fields(self, row, row_num):
         raw_home_num = row.get('home_number')
         if not raw_home_num:
             return
@@ -128,9 +123,19 @@ class Command(BaseCommand):
             return
 
         client = booking.client
-        if not client.passport_date or client.passport_date != passport_date:
-            Client.objects.filter(pk=client.pk).update(passport_date=passport_date)
-            self.stdout.write(f'  [{row_num}] passport_date yangilandi: {client.full_name} → {passport_date}')
+        updates = {}
+
+        passport_date = parse_deadline(row.get('Pasport berilgan sana'))
+        if passport_date and (not client.passport_date or client.passport_date != passport_date):
+            updates['passport_date'] = passport_date
+
+        from_who = str(row.get('from_who') or '').strip() or None
+        if from_who and (not client.from_who or client.from_who != from_who):
+            updates['from_who'] = from_who
+
+        if updates:
+            Client.objects.filter(pk=client.pk).update(**updates)
+            self.stdout.write(f'  [{row_num}] client yangilandi: {client.full_name} → {updates}')
 
     @transaction.atomic
     def _import_row(self, row, company, row_num):
@@ -191,6 +196,7 @@ class Command(BaseCommand):
                 'passport': str(row.get('passport') or '').strip() or '',
                 'passport_date': passport_date,
                 'address': str(row.get('address') or '').strip() or '',
+                'from_who': str(row.get('from_who') or '').strip() or None,
             }
         )
 
@@ -208,7 +214,6 @@ class Command(BaseCommand):
             cash_payment=cash_payment,
             booking_no=to_str(row.get('booking_no')),
             map_key=map_key,
-            from_who=str(row.get('from_who') or '').strip() or None,
             description=str(row.get('description') or '').strip() or None,
             deadline=deadline,
         )

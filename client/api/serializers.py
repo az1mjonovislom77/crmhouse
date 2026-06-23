@@ -68,7 +68,7 @@ class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = ['id', 'booking', 'home_status_history', 'full_name', 'phone_number', 'phone_number2', 'passport',
-                  'passport_date', 'address']
+                  'passport_date', 'address', 'from_who']
 
     def get_home_status_history(self, obj):
         return HomeStatusHistorySerializer(obj.status_history.all(), many=True).data
@@ -81,7 +81,7 @@ class ClientNestSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = ['id', 'booking', 'home_status_history', 'full_name', 'phone_number', 'phone_number2', 'passport',
-                  'passport_date', 'address']
+                  'passport_date', 'address', 'from_who']
 
     def get_home_status_history(self, obj):
         return HomeStatusHistorySerializer(obj.status_history.all(), many=True).data

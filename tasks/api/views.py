@@ -3,7 +3,6 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
 from common.base.views_base import BaseUserViewSet, PartialPutMixin
 from common.search import TransliteratedSearchFilter
 from tasks.api.serializers.tasks_serializers import CardSerializer, CommentSerializer, ProjectGetSerializer, \

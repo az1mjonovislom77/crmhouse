@@ -9,6 +9,7 @@ class Client(models.Model):
     passport = models.CharField(max_length=20)
     passport_date = models.DateField(null=True, blank=True)
     address = models.CharField(max_length=500)
+    from_who = models.CharField(max_length=200, null=True, blank=True)
 
     def __str__(self):
         return self.full_name

@@ -45,7 +45,7 @@ class BookingViewSet(BaseUserViewSet):
         payments_total=Coalesce(Sum('payments__amount'), Value(Decimal('0')), output_field=DecimalField())
     )
     filter_backends = [TransliteratedSearchFilter]
-    search_fields = ['client__full_name', 'client__phone_number', 'booking_no', 'from_who']
+    search_fields = ['client__full_name', 'client__phone_number', 'booking_no', 'client__from_who']
 
     def get_queryset(self):
         queryset = super().get_queryset()
