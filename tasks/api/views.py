@@ -1,6 +1,9 @@
+from django.db.models import Prefetch
 from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
 from common.base.views_base import BaseUserViewSet, PartialPutMixin
 from common.search import TransliteratedSearchFilter
 from tasks.api.serializers.tasks_serializers import CardSerializer, CommentSerializer, ProjectGetSerializer, \
@@ -11,7 +14,6 @@ from tasks.mixins.audit import AuditMixin
 from tasks.mixins.history import HistoryMixin
 from tasks.models import Card, Comment, Project
 from tasks.permissions import IsProjectMemberOrAdmin
-from rest_framework.response import Response
 
 
 @extend_schema(tags=['Card'])
@@ -37,7 +39,10 @@ class CommentViewSet(AuditMixin, HistoryMixin, BaseUserViewSet):
 
 @extend_schema(tags=['Project'])
 class ProjectViewSet(AuditMixin, HistoryMixin, PartialPutMixin, viewsets.ModelViewSet):
-    queryset = Project.objects.select_related('card').prefetch_related('users', 'comments')
+    queryset = Project.objects.select_related('card', 'created_by', 'updated_by').prefetch_related(
+        'users',
+        Prefetch('comments', queryset=Comment.objects.select_related('created_by', 'updated_by')),
+    )
     history_serializer_class = ProjectHistorySerializer
     http_method_names = ["get", "post", "put", "delete"]
     permission_classes = [IsAuthenticated, IsProjectMemberOrAdmin]

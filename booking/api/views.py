@@ -1,13 +1,29 @@
+from decimal import Decimal
+
+from django.db.models import Sum, Value, DecimalField, Prefetch, OuterRef, Subquery
+from django.db.models.functions import Coalesce
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework.exceptions import ValidationError
+
 from booking.models import Booking, PaymentTerm, Payment
 from booking.api.serializers import BookingCreateSerializer, BookingGetSerializer, PaymentTermSerializer, \
     PaymentSerializer
 from booking.services.booking import delete_booking, create_booking
 from common.base.views_base import BaseUserViewSet
 from common.search import TransliteratedSearchFilter
+from home.models import HomeStatusHistory
 from home.services.home import HomeService
+
+_client_bookings_qs = Booking.objects.select_related(
+    'home', 'home__renovation', 'payment_term'
+).annotate(
+    payments_total=Coalesce(Sum('payments__amount'), Value(Decimal('0')), output_field=DecimalField())
+)
+
+_client_status_history_qs = HomeStatusHistory.objects.select_related(
+    'home', 'home__blocks', 'home__floor', 'changed_by'
+)
 
 
 @extend_schema(tags=['PaymentTerm'])
@@ -19,8 +35,15 @@ class PaymentTermViewSet(BaseUserViewSet):
 @extend_schema(tags=['Booking'],
                parameters=[OpenApiParameter(name='home_id', type=OpenApiTypes.INT, location=OpenApiParameter.QUERY)])
 class BookingViewSet(BaseUserViewSet):
-    queryset = Booking.objects.select_related('home', 'home__blocks', 'home__floor', 'company', 'payment_term',
-                                              'client', 'home__renovation')
+    queryset = Booking.objects.select_related(
+        'home', 'home__blocks', 'home__floor', 'home__renovation',
+        'company', 'payment_term', 'client',
+    ).prefetch_related(
+        Prefetch('client__bookings', queryset=_client_bookings_qs),
+        Prefetch('client__status_history', queryset=_client_status_history_qs),
+    ).annotate(
+        payments_total=Coalesce(Sum('payments__amount'), Value(Decimal('0')), output_field=DecimalField())
+    )
     filter_backends = [TransliteratedSearchFilter]
     search_fields = ['client__full_name', 'client__phone_number', 'booking_no', 'from_who']
 
@@ -65,11 +88,19 @@ class BookingViewSet(BaseUserViewSet):
                parameters=[OpenApiParameter(name='booking_id', type=OpenApiTypes.INT, location=OpenApiParameter.QUERY)])
 class PaymentViewSet(BaseUserViewSet):
     http_method_names = ['get', 'post']
-    queryset = Payment.objects.select_related('booking__home')
     serializer_class = PaymentSerializer
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        _booking_total_sq = (
+            Payment.objects
+            .filter(booking_id=OuterRef('booking_id'))
+            .values('booking_id')
+            .annotate(total=Sum('amount'))
+            .values('total')
+        )
+        queryset = Payment.objects.select_related('booking__home').annotate(
+            booking_payments_total=Subquery(_booking_total_sq, output_field=DecimalField())
+        )
         booking_id = self.request.query_params.get('booking_id')
         if booking_id:
             queryset = queryset.filter(booking_id=booking_id)

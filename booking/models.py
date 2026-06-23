@@ -50,7 +50,10 @@ class Booking(models.Model):
     @property
     def remaining_debt(self):
         down_payment_amount = (self.total_price * self.down_payment / 100) if self.down_payment else 0
-        paid = self.payments.aggregate(total=Sum('amount'))['total'] or 0
+        if hasattr(self, 'payments_total'):
+            paid = self.payments_total or 0
+        else:
+            paid = self.payments.aggregate(total=Sum('amount'))['total'] or 0
         return self.total_price - self.cash_payment - down_payment_amount - paid
 
     def __str__(self):
