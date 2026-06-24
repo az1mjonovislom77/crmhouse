@@ -1,4 +1,5 @@
 import os
+import re
 
 from django.conf import settings
 from django.core.files import File
@@ -8,6 +9,11 @@ from home.models import FloorPlan, Home
 from projects.models.project_models import Block
 
 ALLOWED_EXT = ('.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif')
+
+
+def natural_sort_key(filename):
+    """3-uy 1, 3-uy 2, ..., 3-uy 10 tartibida saralash uchun."""
+    return [int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', filename)]
 
 
 class Command(BaseCommand):
@@ -68,7 +74,7 @@ class Command(BaseCommand):
             f for f in os.listdir(images_dir)
             if f.lower().endswith(ALLOWED_EXT)
             and (not prefix or f.startswith(prefix))
-        ])
+        ], key=natural_sort_key)
 
         if not image_files:
             msg = f'Rasm topilmadi: {images_dir}'
