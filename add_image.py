@@ -10,7 +10,7 @@ from projects.models.project_models import Block
 
 img_name = '3-uy 0.png'
 img_path = os.path.join(settings.BASE_DIR, 'images', img_name)
-block = Block.objects.get(title='3-block')
+block = Block.objects.get(title='3 - Block')
 homes = Home.objects.filter(blocks=block).order_by('home_number')
 master = FloorPlan()
 master.image.save(img_name, File(open(img_path, 'rb')), save=True)
