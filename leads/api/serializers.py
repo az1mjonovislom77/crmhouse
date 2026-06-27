@@ -1,6 +1,9 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from leads.models import Lead, LeadEvent
+
+User = get_user_model()
 
 
 class LeadEventSerializer(serializers.ModelSerializer):
@@ -53,6 +56,7 @@ class LeadCreateSerializer(serializers.ModelSerializer):
 
 
 class LeadUpdateSerializer(serializers.ModelSerializer):
+    owner = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False)
     comment = serializers.CharField(required=False, write_only=True)
     call_result = serializers.CharField(required=False, write_only=True)
     meeting_at = serializers.DateTimeField(required=False, write_only=True)
