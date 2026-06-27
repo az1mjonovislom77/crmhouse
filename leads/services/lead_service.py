@@ -25,10 +25,20 @@ class LeadService:
     @transaction.atomic
     def create_lead(data, user):
         board = data['board']
+        meeting_at = data.pop('meeting_at', None)
+        meeting_type = data.pop('meeting_type', None)
         status = BOARD_FIRST_STATUS[board]
         sub = BOARD_STATUSES[board][status][0]
-        lead = Lead.objects.create(**data, owner=user, status=status, sub_status=sub, score=0)
+        lead = Lead.objects.create(
+            **data, owner=user, status=status, sub_status=sub, score=0,
+            meeting_at=meeting_at, meeting_type=meeting_type,
+        )
         LeadEvent.objects.create(lead=lead, type=LeadEvent.TYPE_CREATED, by=user)
+        if meeting_at and meeting_type:
+            LeadEvent.objects.create(
+                lead=lead, type=LeadEvent.TYPE_MEETING,
+                meeting_at=meeting_at, meeting_type=meeting_type, by=user,
+            )
         lead.score = _compute_score(lead)
         lead.save(update_fields=['score'])
         return lead
@@ -85,6 +95,8 @@ class LeadService:
         if meeting_at and meeting_type:
             LeadEvent.objects.create(lead=instance, type=LeadEvent.TYPE_MEETING,
                                      meeting_at=meeting_at, meeting_type=meeting_type, by=user)
+            instance.meeting_at = meeting_at
+            instance.meeting_type = meeting_type
             if instance.board == Lead.BOARD_SALES and instance.status != 'uchrashuv':
                 LeadEvent.objects.create(
                     lead=instance, type=LeadEvent.TYPE_STATUS,

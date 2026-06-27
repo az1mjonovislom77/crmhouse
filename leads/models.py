@@ -55,6 +55,8 @@ class Lead(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='owned_leads')
     score = models.PositiveSmallIntegerField(default=0)
     note = models.TextField(null=True, blank=True)
+    meeting_at = models.DateTimeField(null=True, blank=True)
+    meeting_type = models.CharField(max_length=20, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

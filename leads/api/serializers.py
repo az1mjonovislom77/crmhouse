@@ -18,7 +18,8 @@ class LeadListSerializer(serializers.ModelSerializer):
         model = Lead
         fields = [
             'id', 'full_name', 'phone', 'email', 'source', 'board', 'status', 'sub_status',
-            'owner_id', 'owner_name', 'score', 'note', 'created_at', 'updated_at',
+            'owner_id', 'owner_name', 'score', 'note',
+            'meeting_at', 'meeting_type', 'created_at', 'updated_at',
         ]
 
 
@@ -30,14 +31,25 @@ class LeadDetailSerializer(serializers.ModelSerializer):
         model = Lead
         fields = [
             'id', 'full_name', 'phone', 'email', 'source', 'board', 'status', 'sub_status',
-            'owner_id', 'owner_name', 'score', 'note', 'created_at', 'updated_at', 'events']
+            'owner_id', 'owner_name', 'score', 'note', 'meeting_at', 'meeting_type', 'created_at', 'updated_at', 'events']
 
 
 class LeadCreateSerializer(serializers.ModelSerializer):
+    meeting_at = serializers.DateTimeField(required=False, write_only=True)
+    meeting_type = serializers.ChoiceField(
+        choices=[c[0] for c in LeadEvent.MEETING_TYPE_CHOICES], required=False, write_only=True)
+
     class Meta:
         model = Lead
-        fields = ['full_name', 'phone', 'email', 'source', 'board', 'note']
+        fields = ['full_name', 'phone', 'email', 'source', 'board', 'note', 'meeting_at', 'meeting_type']
         extra_kwargs = {'board': {'required': True}}
+
+    def validate(self, data):
+        if data.get('meeting_at') and not data.get('meeting_type'):
+            raise serializers.ValidationError({'meeting_type': 'Bu maydon majburiy'})
+        if data.get('meeting_type') and not data.get('meeting_at'):
+            raise serializers.ValidationError({'meeting_at': 'Bu maydon majburiy'})
+        return data
 
 
 class LeadUpdateSerializer(serializers.ModelSerializer):
