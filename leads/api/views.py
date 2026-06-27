@@ -2,8 +2,8 @@ import json
 import re
 import httpx
 from django.conf import settings
-from drf_spectacular.utils import extend_schema
-from rest_framework import status
+from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer
+from rest_framework import serializers, status
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -70,6 +70,14 @@ class LeadViewSet(BaseUserViewSet):
         lead = LeadService.update_lead(instance, serializer.validated_data, request.user)
         return Response(LeadDetailSerializer(get_lead_detail_queryset().get(pk=lead.pk)).data)
 
+    @extend_schema(
+        request=None,
+        responses={200: inline_serializer('AiSuggestResponse', fields={
+            'tips': serializers.ListField(child=serializers.CharField()),
+            'suggested_message': serializers.CharField(allow_null=True),
+            'next_action': serializers.CharField(allow_null=True),
+        })},
+    )
     @action(detail=True, methods=['post'], url_path='ai-suggest')
     def ai_suggest(self, request, pk=None):
         lead = get_lead_detail_queryset().get(pk=pk)
