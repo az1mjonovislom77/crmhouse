@@ -10,8 +10,6 @@ def _compute_score(lead):
         'Facebook': 12, 'LinkedIn': 12, 'Veb-sayt': 10, "Qo'ng'iroq": 8,
     }
     score += source_scores.get(lead.source, 5)
-    if lead.budget:
-        score += 10
     if lead.note:
         score += 5
     status_order = list(BOARD_STATUSES.get(lead.board, {}).keys())

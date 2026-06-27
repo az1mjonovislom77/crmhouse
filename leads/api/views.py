@@ -80,14 +80,13 @@ class LeadViewSet(BaseUserViewSet):
             for e in lead.events.all()
         ]) or "Hali hech qanday amal yo'q"
 
-        budget_str = str(lead.budget) if lead.budget else "ko'rsatilmagan"
         note_str = lead.note or "yo'q"
         prompt = (
             "Sen ko'chmas mulk sotuv bo'yicha yordamchisan.\n"
             "Quyidagi lead ma'lumotlariga qarab maslahat ber:\n\n"
             f"Mijoz: {lead.full_name} | Manba: {lead.source}\n"
             f"Board: {lead.board} | Status: {lead.status}/{lead.sub_status or '-'}\n"
-            f"Byudjet: {budget_str} | Izoh: {note_str}\n\n"
+            f"Izoh: {note_str}\n\n"
             f"Tarix:\n{events_text}\n\n"
             "O'zbek tilida 3-5 ta qisqa, amaliy maslahat ber. Faqat JSON:\n"
             '{"tips":["..."],"suggested_message":"...","next_action":"call|meeting|comment"}'

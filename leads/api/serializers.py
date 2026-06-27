@@ -18,7 +18,7 @@ class LeadListSerializer(serializers.ModelSerializer):
         model = Lead
         fields = [
             'id', 'full_name', 'phone', 'email', 'source', 'board', 'status', 'sub_status',
-            'owner_id', 'owner_name', 'score', 'budget', 'note', 'created_at', 'updated_at',
+            'owner_id', 'owner_name', 'score', 'note', 'created_at', 'updated_at',
         ]
 
 
@@ -30,13 +30,13 @@ class LeadDetailSerializer(serializers.ModelSerializer):
         model = Lead
         fields = [
             'id', 'full_name', 'phone', 'email', 'source', 'board', 'status', 'sub_status',
-            'owner_id', 'owner_name', 'score', 'budget', 'note', 'created_at', 'updated_at', 'events']
+            'owner_id', 'owner_name', 'score', 'note', 'created_at', 'updated_at', 'events']
 
 
 class LeadCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lead
-        fields = ['full_name', 'phone', 'email', 'source', 'board', 'budget', 'note']
+        fields = ['full_name', 'phone', 'email', 'source', 'board', 'note']
         extra_kwargs = {'board': {'required': True}}
 
 
@@ -50,7 +50,7 @@ class LeadUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lead
         fields = [
-            'full_name', 'phone', 'email', 'source', 'budget', 'note',
+            'full_name', 'phone', 'email', 'source', 'note',
             'status', 'sub_status', 'owner',
             'comment', 'call_result', 'meeting_at', 'meeting_type',
         ]
