@@ -26,7 +26,8 @@ LOCAL_APPS = [
     'projects',
     'home',
     'client',
-    'tasks'
+    'tasks',
+    'leads',
 ]
 
 THIRD_PARTY_APPS = [
@@ -205,3 +206,5 @@ INSTAGRAM_ACCESS_TOKEN = config('INSTAGRAM_ACCESS_TOKEN')
 INSTAGRAM_API_VERSION = "v19.0"
 GRAPH_BASE_URL = "https://graph.facebook.com"
 IG_USER_ID = config('IG_USER_ID')
+
+GROQ_API_KEY = config('GROQ_API_KEY', default='')
