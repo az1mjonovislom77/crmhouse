@@ -29,6 +29,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--file', default='home.xlsx')
         parser.add_argument('--block-prefix', default='', help='Block title prefiks, masalan "Block "')
+        parser.add_argument('--block-suffix', default='', help='Block title suffiks, masalan " - Block"')
         parser.add_argument('--project-id', type=int, default=None)
         parser.add_argument('--dry-run', action='store_true')
 
@@ -46,6 +47,7 @@ class Command(BaseCommand):
 
         dry_run = options['dry_run']
         block_prefix = options['block_prefix']
+        block_suffix = options['block_suffix']
         project_id = options['project_id']
 
         wb = openpyxl.load_workbook(file_path)
@@ -79,7 +81,7 @@ class Command(BaseCommand):
                 rooms = parse_rooms(rooms_raw)
 
                 # Block topish
-                block_title = f"{block_prefix}{bino}"
+                block_title = f"{block_prefix}{bino}{block_suffix}"
                 block_qs = Block.objects.filter(title=block_title)
                 if project_id:
                     block_qs = block_qs.filter(projects_id=project_id)
