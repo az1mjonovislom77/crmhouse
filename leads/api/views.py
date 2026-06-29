@@ -11,6 +11,7 @@ from common.base.views_base import BaseUserViewSet
 from leads.api.serializers import (LeadCreateSerializer, LeadDetailSerializer,
                                    LeadListSerializer, LeadUpdateSerializer,
                                    LeadNotificationSerializer)
+from django.utils import timezone
 from leads.models import LeadNotification
 from leads.selectors.lead_selectors import filter_leads, get_lead_detail_queryset, get_lead_list_queryset, \
     get_status_counts
@@ -145,7 +146,11 @@ class LeadNotificationViewSet(BaseUserViewSet):
     http_method_names = ['get']
 
     def get_queryset(self):
-        return LeadNotification.objects.filter(owner=self.request.user).select_related('lead')
+        today = timezone.now().date()
+        return LeadNotification.objects.filter(
+            owner=self.request.user,
+            meeting_at__date=today,
+        ).select_related('lead')
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()

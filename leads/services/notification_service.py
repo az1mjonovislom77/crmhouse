@@ -1,4 +1,3 @@
-from datetime import timedelta
 from django.utils import timezone
 from leads.models import Lead, LeadNotification
 
@@ -7,10 +6,11 @@ class MeetingNotificationService:
 
     @staticmethod
     def check_and_create():
-        now = timezone.now()
-        deadline = now + timedelta(minutes=30)
-        upcoming = Lead.objects.filter(meeting_at__gte=now, meeting_at__lte=deadline,
-                                       owner__isnull=False).select_related('owner')
+        today = timezone.now().date()
+        upcoming = Lead.objects.filter(
+            meeting_at__date=today,
+            owner__isnull=False,
+        ).select_related('owner')
 
         created_ids = []
         for lead in upcoming:
