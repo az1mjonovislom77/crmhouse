@@ -53,6 +53,7 @@ class LeadService:
         new_status = data.pop('status', None)
         new_sub = data.pop('sub_status', None)
         new_owner = data.pop('owner', None)
+        new_subsidiya = data.pop('subsidiya', None)
 
         for attr, value in data.items():
             setattr(instance, attr, value)
@@ -91,6 +92,14 @@ class LeadService:
 
         if call_result:
             LeadEvent.objects.create(lead=instance, type=LeadEvent.TYPE_CALL, text=call_result, by=user)
+
+        if new_subsidiya is not None and new_subsidiya != instance.subsidiya:
+            LeadEvent.objects.create(
+                lead=instance, type=LeadEvent.TYPE_SUBSIDIYA,
+                from_value=str(instance.subsidiya), to_value=str(new_subsidiya),
+                subsidiya=new_subsidiya, by=user,
+            )
+            instance.subsidiya = new_subsidiya
 
         if meeting_at and meeting_type:
             LeadEvent.objects.create(lead=instance, type=LeadEvent.TYPE_MEETING,

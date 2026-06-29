@@ -2,7 +2,7 @@ import json
 import re
 import httpx
 from django.conf import settings
-from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer
+from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
@@ -58,10 +58,8 @@ class LeadViewSet(BaseUserViewSet):
         serializer = LeadCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         lead = LeadService.create_lead(serializer.validated_data, request.user)
-        return Response(
-            LeadDetailSerializer(get_lead_detail_queryset().get(pk=lead.pk)).data,
-            status=status.HTTP_201_CREATED,
-        )
+        return Response(LeadDetailSerializer(get_lead_detail_queryset().get(pk=lead.pk)).data,
+                        status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -107,18 +105,15 @@ class LeadViewSet(BaseUserViewSet):
             return Response({'error': "GROQ_API_KEY sozlanmagan"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         try:
-            resp = httpx.post(
-                'https://api.groq.com/openai/v1/chat/completions',
-                headers={
-                    'Authorization': f'Bearer {api_key}',
-                    'content-type': 'application/json',
-                },
-                json={
-                    'model': 'llama-3.3-70b-versatile',
-                    'max_tokens': 1024,
-                    'messages': [{'role': 'user', 'content': prompt}],
-                }, timeout=30,
-            )
+            resp = httpx.post('https://api.groq.com/openai/v1/chat/completions',
+                              headers={
+                                  'Authorization': f'Bearer {api_key}',
+                                  'content-type': 'application/json',
+                              },
+                              json={
+                                  'model': 'llama-3.3-70b-versatile',
+                                  'max_tokens': 1024,
+                                  'messages': [{'role': 'user', 'content': prompt}]}, timeout=30)
             resp.raise_for_status()
             content = resp.json()['choices'][0]['message']['content']
             match = re.search(r'\{.*\}', content, re.DOTALL)

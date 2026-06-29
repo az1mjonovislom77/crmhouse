@@ -42,6 +42,7 @@ class Lead(models.Model):
         ("Qo'ng'iroq", "Qo'ng'iroq"),
         ('Veb-sayt', 'Veb-sayt'),
         ('Tavsiya', 'Tavsiya'),
+        ('Reklama', 'Reklama'),
         ('Boshqa', 'Boshqa'),
     ]
 
@@ -52,11 +53,13 @@ class Lead(models.Model):
     board = models.CharField(max_length=10, choices=BOARD_CHOICES, default=BOARD_SALES)
     status = models.CharField(max_length=50)
     sub_status = models.CharField(max_length=50, null=True, blank=True)
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='owned_leads')
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
+                              related_name='owned_leads')
     score = models.PositiveSmallIntegerField(default=0)
     note = models.TextField(null=True, blank=True)
     meeting_at = models.DateTimeField(null=True, blank=True)
     meeting_type = models.CharField(max_length=20, null=True, blank=True)
+    subsidiya = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -79,6 +82,7 @@ class LeadEvent(models.Model):
     TYPE_CALL = 'call'
     TYPE_TRANSFER = 'transfer'
     TYPE_MEETING = 'meeting'
+    TYPE_SUBSIDIYA = 'subsidiya'
 
     TYPE_CHOICES = [
         (TYPE_CREATED, 'Created'),
@@ -88,6 +92,7 @@ class LeadEvent(models.Model):
         (TYPE_CALL, 'Call'),
         (TYPE_TRANSFER, 'Transfer'),
         (TYPE_MEETING, 'Meeting'),
+        (TYPE_SUBSIDIYA, 'Subsidiya changed'),
     ]
     MEETING_TYPE_CHOICES = [
         ('Ofisda', 'Ofisda'),
@@ -103,6 +108,7 @@ class LeadEvent(models.Model):
     text = models.TextField(null=True, blank=True)
     meeting_at = models.DateTimeField(null=True, blank=True)
     meeting_type = models.CharField(max_length=20, choices=MEETING_TYPE_CHOICES, null=True, blank=True)
+    subsidiya = models.BooleanField(default=False)
     by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='lead_events')
     at = models.DateTimeField(auto_now_add=True)
 

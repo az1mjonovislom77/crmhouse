@@ -11,7 +11,7 @@ class LeadEventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LeadEvent
-        fields = ['id', 'type', 'from_value', 'to_value', 'text', 'meeting_at', 'meeting_type', 'by', 'at']
+        fields = ['id', 'type', 'from_value', 'to_value', 'text', 'meeting_at', 'meeting_type', 'subsidiya', 'by', 'at']
 
 
 class LeadListSerializer(serializers.ModelSerializer):
@@ -22,7 +22,7 @@ class LeadListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'full_name', 'phone', 'email', 'source', 'board', 'status', 'sub_status',
             'owner_id', 'owner_name', 'score', 'note',
-            'meeting_at', 'meeting_type', 'created_at', 'updated_at',
+            'meeting_at', 'meeting_type', 'subsidiya', 'created_at', 'updated_at',
         ]
 
 
@@ -34,7 +34,8 @@ class LeadDetailSerializer(serializers.ModelSerializer):
         model = Lead
         fields = [
             'id', 'full_name', 'phone', 'email', 'source', 'board', 'status', 'sub_status',
-            'owner_id', 'owner_name', 'score', 'note', 'meeting_at', 'meeting_type', 'created_at', 'updated_at', 'events']
+            'owner_id', 'owner_name', 'score', 'note', 'meeting_at', 'meeting_type', 'subsidiya',
+            'created_at', 'updated_at', 'events']
 
 
 class LeadCreateSerializer(serializers.ModelSerializer):
@@ -44,7 +45,7 @@ class LeadCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lead
-        fields = ['full_name', 'phone', 'email', 'source', 'board', 'note', 'meeting_at', 'meeting_type']
+        fields = ['full_name', 'phone', 'email', 'source', 'board', 'note', 'subsidiya', 'meeting_at', 'meeting_type']
         extra_kwargs = {'board': {'required': True}}
 
     def validate(self, data):
@@ -66,7 +67,7 @@ class LeadUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lead
         fields = [
-            'full_name', 'phone', 'email', 'source', 'note',
+            'full_name', 'phone', 'email', 'source', 'note', 'subsidiya',
             'status', 'sub_status', 'owner',
             'comment', 'call_result', 'meeting_at', 'meeting_type',
         ]
