@@ -114,8 +114,16 @@ class LeadEvent(models.Model):
     at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-
         ordering = ['at']
 
     def __str__(self):
         return f"{self.lead_id} — {self.type} @ {self.at}"
+
+
+class Notification(models.Model):
+    lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='notifications')
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.text

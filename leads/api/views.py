@@ -9,7 +9,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from common.base.views_base import BaseUserViewSet
 from leads.api.serializers import LeadCreateSerializer, LeadDetailSerializer, LeadListSerializer, LeadUpdateSerializer
-from leads.selectors.lead_selectors import filter_leads, get_lead_detail_queryset, get_lead_list_queryset
+from leads.selectors.lead_selectors import filter_leads, get_lead_detail_queryset, get_lead_list_queryset, get_status_counts
 from leads.services.lead_service import LeadService
 
 
@@ -48,11 +48,19 @@ class LeadViewSet(BaseUserViewSet):
         return LeadListSerializer
 
     def list(self, request, *args, **kwargs):
+        # Status filtrisiz queryset — counts uchun (boshqa filtrlar saqlanadi)
+        count_params = request.query_params.copy()
+        count_params._mutable = True
+        count_params.pop('status', None)
+        counts = get_status_counts(filter_leads(self.get_queryset(), count_params))
+
         qs = filter_leads(self.get_queryset(), request.query_params)
         page = self.paginate_queryset(qs)
         if page is not None:
-            return self.get_paginated_response(LeadListSerializer(page, many=True).data)
-        return Response(LeadListSerializer(qs, many=True).data)
+            response = self.get_paginated_response(LeadListSerializer(page, many=True).data)
+            response.data['counts'] = counts
+            return response
+        return Response({'counts': counts, 'data': LeadListSerializer(qs, many=True).data})
 
     def create(self, request, *args, **kwargs):
         serializer = LeadCreateSerializer(data=request.data)

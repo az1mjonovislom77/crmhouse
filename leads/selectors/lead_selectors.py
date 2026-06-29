@@ -1,4 +1,4 @@
-from django.db.models import Q, Prefetch
+from django.db.models import Q, Prefetch, Count
 from leads.models import Lead, LeadEvent
 
 
@@ -9,6 +9,13 @@ def get_lead_list_queryset():
 def get_lead_detail_queryset():
     return Lead.objects.select_related('owner').prefetch_related(
         Prefetch('events', queryset=LeadEvent.objects.select_related('by').order_by('at')))
+
+
+def get_status_counts(queryset):
+    rows = queryset.values('status').annotate(n=Count('id'))
+    counts = {r['status']: r['n'] for r in rows}
+    counts['all'] = sum(counts.values())
+    return counts
 
 
 def filter_leads(queryset, params):
