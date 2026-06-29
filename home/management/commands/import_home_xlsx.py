@@ -5,13 +5,14 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from home.models import Home
+from projects.models.project_models import Block, Floors
 
 STATUS_MAP = {
-    'sotildi':   Home.HomeStatus.SOLD,
-    'band':      Home.HomeStatus.RESERVED,
-    "bo'sh":     Home.HomeStatus.AVAILABLE,
-    'bosh':      Home.HomeStatus.AVAILABLE,
-    'shartnoma': Home.HomeStatus.RESERVED,
+    'sotildi':                 Home.HomeStatus.SOLD,
+    'band':                    Home.HomeStatus.RESERVED,
+    "bo'sh":                   Home.HomeStatus.AVAILABLE,
+    'bosh':                    Home.HomeStatus.AVAILABLE,
+    'shartnoma':               Home.HomeStatus.RESERVED,
     'kalit topshirildi':       Home.HomeStatus.KALIT_TOPSHIRILDI,
     'nomiga otkazib berildi':  Home.HomeStatus.NOMIGA_OTKAZIB_BERILDI,
 }
@@ -23,10 +24,12 @@ def parse_rooms(val):
 
 
 class Command(BaseCommand):
-    help = 'home.xlsx fayldan Home statuslarini yangilaydi'
+    help = 'home.xlsx dan Home larni import qiladi / statusni yangilaydi'
 
     def add_arguments(self, parser):
         parser.add_argument('--file', default='home.xlsx')
+        parser.add_argument('--block-prefix', default='', help='Block title prefiks, masalan "Block "')
+        parser.add_argument('--project-id', type=int, default=None)
         parser.add_argument('--dry-run', action='store_true')
 
     def handle(self, *args, **options):
@@ -42,63 +45,101 @@ class Command(BaseCommand):
             file_path = os.path.join(settings.BASE_DIR, file_path)
 
         dry_run = options['dry_run']
+        block_prefix = options['block_prefix']
+        project_id = options['project_id']
 
         wb = openpyxl.load_workbook(file_path)
         ws = wb.active
 
-        updated = 0
-        not_found = 0
-        skipped = 0
-        no_status = 0
+        created_count = 0
+        updated_count = 0
+        skipped_count = 0
+        error_count = 0
 
-        for row in ws.iter_rows(min_row=2, values_only=True):
-            home_number_raw = row[4]   # Xonadon raqami (5-ustun)
-            status_raw      = row[11]  # Status (12-ustun)
+        for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            bino        = row[1]   # Bino
+            entrance_raw = row[2]  # Pod'ezd
+            floor_raw   = row[3]   # Qavat
+            home_num    = row[4]   # Xonadon raqami
+            rooms_raw   = row[5]   # Xona turi
+            area_raw    = row[6]   # Maydon (m²)
+            price_raw   = row[7]   # 1 m² narx
+            status_raw  = row[11]  # Status
 
-            if not home_number_raw:
-                skipped += 1
+            if not home_num:
+                skipped_count += 1
                 continue
 
             try:
-                home_number = int(home_number_raw)
-            except (ValueError, TypeError):
-                skipped += 1
-                continue
+                home_number = int(home_num)
+                floor_number = int(floor_raw)
+                entrance = int(entrance_raw)
+                area = float(area_raw or 0)
+                price_per_sqm = float(price_raw or 0)
+                rooms = parse_rooms(rooms_raw)
 
-            try:
-                home = Home.objects.get(home_number=home_number)
-            except Home.DoesNotExist:
-                self.stdout.write(f'Topilmadi: home_number={home_number}')
-                not_found += 1
-                continue
+                # Block topish
+                block_title = f"{block_prefix}{bino}"
+                block_qs = Block.objects.filter(title=block_title)
+                if project_id:
+                    block_qs = block_qs.filter(projects_id=project_id)
+                block_obj = block_qs.first()
 
-            # Status bo'sh bo'lsa — tegmaymiz
-            if not status_raw:
-                no_status += 1
-                continue
+                if not block_obj:
+                    self.stdout.write(self.style.WARNING(
+                        f"Qator {row_idx}: Block '{block_title}' topilmadi — o'tkazildi"
+                    ))
+                    skipped_count += 1
+                    continue
 
-            new_status = STATUS_MAP.get(str(status_raw).strip().lower())
-            if not new_status:
-                self.stdout.write(self.style.WARNING(
-                    f'home_number={home_number}: noma\'lum status "{status_raw}"'
-                ))
-                skipped += 1
-                continue
+                floor_obj, _ = Floors.objects.get_or_create(number=floor_number)
 
-            if not dry_run:
-                home.home_status = new_status
-                home.save(update_fields=['home_status'])
+                # Status aniqlash
+                new_status = None
+                if status_raw:
+                    new_status = STATUS_MAP.get(str(status_raw).strip().lower())
+                    if not new_status:
+                        self.stdout.write(self.style.WARNING(
+                            f"Qator {row_idx}: noma'lum status '{status_raw}'"
+                        ))
 
-            self.stdout.write(
-                f'{"[DRY] " if dry_run else ""}'
-                f'home_number={home_number}: {home.home_status} → {new_status}'
-            )
-            updated += 1
+                defaults = {
+                    'area': area,
+                    'rooms': rooms,
+                    'price_per_sqm': price_per_sqm,
+                    'entrance': entrance,
+                }
+                if new_status:
+                    defaults['home_status'] = new_status
+
+                if not dry_run:
+                    _, created = Home.objects.update_or_create(
+                        home_number=home_number,
+                        floor=floor_obj,
+                        blocks=block_obj,
+                        defaults=defaults,
+                    )
+                    if created:
+                        created_count += 1
+                    else:
+                        updated_count += 1
+                else:
+                    exists = Home.objects.filter(
+                        home_number=home_number, floor=floor_obj, blocks=block_obj
+                    ).exists()
+                    if exists:
+                        updated_count += 1
+                    else:
+                        created_count += 1
+
+            except Exception as e:
+                self.stderr.write(f'Qator {row_idx} xato: {e}')
+                error_count += 1
 
         label = '[DRY RUN] ' if dry_run else ''
         self.stdout.write(self.style.SUCCESS(
-            f'\n{label}Yangilandi: {updated} | '
-            f'Topilmadi: {not_found} | '
-            f'Status yo\'q: {no_status} | '
-            f'O\'tkazildi: {skipped}'
+            f'\n{label}Yaratildi: {created_count} | '
+            f'Yangilandi: {updated_count} | '
+            f"O'tkazildi: {skipped_count} | "
+            f'Xato: {error_count}'
         ))
