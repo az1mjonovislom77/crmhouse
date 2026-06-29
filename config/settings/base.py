@@ -10,6 +10,7 @@ SECRET_KEY = config('SECRET_KEY')
 AUTH_USER_MODEL = 'user.User'
 
 DJANGO_APPS = [
+    'daphne',
     'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -37,6 +38,7 @@ THIRD_PARTY_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'simple_history',
+    'channels',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -201,6 +203,24 @@ MEDIA_URL = '/media/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800
+
+# ASGI / Channels
+ASGI_APPLICATION = 'config.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    }
+}
+
+# Celery
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_BEAT_SCHEDULE = {
+    'check-meeting-notifications': {
+        'task': 'leads.tasks.check_meeting_notifications',
+        'schedule': 300.0,
+    },
+}
 
 INSTAGRAM_ACCESS_TOKEN = config('INSTAGRAM_ACCESS_TOKEN')
 INSTAGRAM_API_VERSION = "v19.0"

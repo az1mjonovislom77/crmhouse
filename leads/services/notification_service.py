@@ -12,13 +12,13 @@ class MeetingNotificationService:
         upcoming = Lead.objects.filter(meeting_at__gte=now, meeting_at__lte=deadline,
                                        owner__isnull=False).select_related('owner')
 
-        created_count = 0
+        created_ids = []
         for lead in upcoming:
-            _, created = LeadNotification.objects.get_or_create(
+            obj, created = LeadNotification.objects.get_or_create(
                 lead=lead, meeting_at=lead.meeting_at,
                 defaults={'owner': lead.owner},
             )
             if created:
-                created_count += 1
+                created_ids.append(obj.id)
 
-        return created_count
+        return created_ids
