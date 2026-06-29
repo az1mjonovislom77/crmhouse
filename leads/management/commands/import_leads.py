@@ -45,6 +45,16 @@ COMMENT_RE = re.compile(
 
 # ---------- Yordamchi funksiyalar ----------
 
+def normalize(val):
+    """Uzbek apostrof variantlarini standart belgiga o'tkazadi."""
+    if not val:
+        return ''
+    s = str(val).strip()
+    for ch in ('‘', '’', 'ʼ', '￼', '`', '´'):
+        s = s.replace(ch, "'")
+    return s
+
+
 def clean_phone(val):
     if not val:
         return "Noma'lum"
@@ -117,17 +127,27 @@ class Command(BaseCommand):
         # Topilmagan menejerlarni hisoblaymiz
         unmatched: dict[str, int] = {}
 
+        # Bazada mavjud phone raqamlar — duplicate oldini olish uchun
+        existing_phones = set(Lead.objects.values_list('phone', flat=True))
+
         wb = openpyxl.load_workbook(filepath)
         ws = wb.active
 
         created_count = 0
         skipped_count = 0
+        duplicate_count = 0
         error_count = 0
 
         for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-            _, full_name, phone, source_raw, subsidiya_raw, \
-            status_raw, manager_name, meeting_col, note_raw, \
-            contact_date, _apt, _booking, _region = row
+            full_name    = row[1]
+            phone        = row[2]
+            source_raw   = row[3]
+            subsidiya_raw = row[4]
+            status_raw   = row[5]
+            manager_name = row[6]
+            meeting_col  = row[7]
+            note_raw     = row[8]
+            contact_date = row[9] if len(row) > 9 else None
 
             if not full_name and not phone:
                 skipped_count += 1
@@ -136,15 +156,15 @@ class Command(BaseCommand):
             try:
                 full_name = str(full_name).strip() if full_name else "Noma'lum"
                 phone = clean_phone(phone)
-                source = SOURCE_MAP.get(str(source_raw).strip() if source_raw else '', 'Boshqa')
+                source = SOURCE_MAP.get(normalize(source_raw), 'Boshqa')
                 subsidiya = parse_subsidiya(subsidiya_raw)
 
-                status_key = str(status_raw).strip() if status_raw else ''
+                status_key = normalize(status_raw)
                 status, sub_status = STATUS_MAP.get(
                     status_key, ('yangi_murojaat', 'murojaat_qildi')
                 )
 
-                manager_key = str(manager_name).strip() if manager_name else ''
+                manager_key = normalize(manager_name)
                 if manager_key and manager_key not in FAKE_MANAGERS:
                     owner = users.get(manager_key.lower())
                     if not owner:
@@ -170,6 +190,11 @@ class Command(BaseCommand):
                 # Structured [sana|ism] 💬 matn va qolgan oddiy matn
                 structured_comments, general_note = parse_comments(note_raw)
 
+                # Bazada bu phone bor bo'lsa — o'tkazib yuboramiz
+                if phone in existing_phones:
+                    duplicate_count += 1
+                    continue
+
                 if dry_run:
                     ev_count = (
                         1  # created
@@ -188,7 +213,8 @@ class Command(BaseCommand):
                     created_count += 1
                     continue
 
-                # Lead yaratish
+                # Lead yaratish va phone ni existing ga qo'shamiz (bir fayldagi dublikat uchun)
+                existing_phones.add(phone)
                 lead = Lead.objects.create(
                     full_name=full_name,
                     phone=phone,
@@ -253,6 +279,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f'{label}Yaratildi: {created_count} | '
             f"O'tkazildi: {skipped_count} | "
+            f'Dublikat: {duplicate_count} | '
             f'Xato: {error_count}'
         ))
 
