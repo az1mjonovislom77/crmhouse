@@ -197,8 +197,12 @@ class Command(BaseCommand):
                 # Structured [sana|ism] 💬 matn va qolgan oddiy matn
                 structured_comments, general_note = parse_comments(note_raw)
 
-                # Bazada bu phone bor bo'lsa — o'tkazib yuboramiz
+                # Bazada bu phone bor bo'lsa — faqat contacted_at ni yangilaymiz
                 if phone in existing_phones:
+                    if contact_dt:
+                        Lead.objects.filter(phone=phone, contacted_at__isnull=True).update(
+                            contacted_at=contact_dt
+                        )
                     duplicate_count += 1
                     continue
 
