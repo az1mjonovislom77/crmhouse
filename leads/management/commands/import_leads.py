@@ -68,9 +68,16 @@ def parse_subsidiya(val):
 
 
 def make_aware(dt):
-    if isinstance(dt, datetime) and timezone.is_naive(dt):
-        return timezone.make_aware(dt)
-    return dt
+    if isinstance(dt, datetime):
+        return timezone.make_aware(dt) if timezone.is_naive(dt) else dt
+    if isinstance(dt, str):
+        dt = dt.strip()
+        for fmt in ('%d.%m.%Y', '%Y-%m-%d', '%d/%m/%Y'):
+            try:
+                return timezone.make_aware(datetime.strptime(dt, fmt))
+            except ValueError:
+                continue
+    return None
 
 
 def parse_comments(text):
