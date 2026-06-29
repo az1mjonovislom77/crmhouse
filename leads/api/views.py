@@ -53,7 +53,6 @@ class LeadViewSet(BaseUserViewSet):
         return LeadListSerializer
 
     def list(self, request, *args, **kwargs):
-        # Status filtrisiz queryset — counts uchun (boshqa filtrlar saqlanadi)
         count_params = request.query_params.copy()
         count_params._mutable = True
         count_params.pop('status', None)
