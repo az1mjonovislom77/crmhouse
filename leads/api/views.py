@@ -8,8 +8,13 @@ from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from common.base.views_base import BaseUserViewSet
-from leads.api.serializers import LeadCreateSerializer, LeadDetailSerializer, LeadListSerializer, LeadUpdateSerializer
-from leads.selectors.lead_selectors import filter_leads, get_lead_detail_queryset, get_lead_list_queryset, get_status_counts
+from leads.api.serializers import (LeadCreateSerializer, LeadDetailSerializer,
+                                   LeadListSerializer, LeadUpdateSerializer,
+                                   LeadNotificationSerializer)
+from leads.models import LeadNotification
+from leads.services.notification_service import MeetingNotificationService
+from leads.selectors.lead_selectors import filter_leads, get_lead_detail_queryset, get_lead_list_queryset, \
+    get_status_counts
 from leads.services.lead_service import LeadService
 
 
@@ -133,3 +138,18 @@ class LeadViewSet(BaseUserViewSet):
             return Response({'error': 'AI xizmatiga ulanishda xato'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         except Exception:
             return Response({'error': 'AI javob qaytarishda xato'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@extend_schema(tags=['Notifications'])
+class LeadNotificationViewSet(BaseUserViewSet):
+    serializer_class = LeadNotificationSerializer
+    http_method_names = ['get']
+
+    def get_queryset(self):
+        return LeadNotification.objects.filter(owner=self.request.user).select_related('lead')
+
+    def list(self, request, *args, **kwargs):
+        MeetingNotificationService.check_and_create()
+        queryset = self.get_queryset()
+        data = LeadNotificationSerializer(queryset, many=True).data
+        return Response(data)

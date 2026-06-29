@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from leads.models import Lead, LeadEvent
+from leads.models import Lead, LeadEvent, LeadNotification
 
 User = get_user_model()
 
@@ -54,6 +54,16 @@ class LeadCreateSerializer(serializers.ModelSerializer):
         if data.get('meeting_type') and not data.get('meeting_at'):
             raise serializers.ValidationError({'meeting_at': 'Bu maydon majburiy'})
         return data
+
+
+class LeadNotificationSerializer(serializers.ModelSerializer):
+    lead_name = serializers.CharField(source='lead.full_name', read_only=True)
+    lead_phone = serializers.CharField(source='lead.phone', read_only=True)
+
+    class Meta:
+        model = LeadNotification
+        fields = ['id', 'lead_id', 'lead_name', 'lead_phone', 'meeting_at', 'created_at']
+        read_only_fields = ['id', 'lead_id', 'lead_name', 'lead_phone', 'meeting_at', 'created_at']
 
 
 class LeadUpdateSerializer(serializers.ModelSerializer):

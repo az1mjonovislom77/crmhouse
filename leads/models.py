@@ -120,10 +120,16 @@ class LeadEvent(models.Model):
         return f"{self.lead_id} — {self.type} @ {self.at}"
 
 
-class Notification(models.Model):
+class LeadNotification(models.Model):
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='notifications')
-    text = models.TextField()
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                              related_name='lead_notifications')
+    meeting_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = [('lead', 'meeting_at')]
+
     def __str__(self):
-        return self.text
+        return f"{self.lead.full_name} — {self.meeting_at}"
