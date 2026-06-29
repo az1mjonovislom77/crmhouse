@@ -30,16 +30,16 @@ class AuthService:
     def refresh_user_token(refresh_token):
         if not refresh_token:
             raise ValidationError({"detail": "Refresh token not found"})
-
         try:
-            access = UserTokenService.get_tokens_for_user_from_refresh(refresh_token)
-            return {"access": access}
+            return UserTokenService.rotate_refresh_token(refresh_token)
         except TokenError:
             raise ValidationError({"detail": "Invalid or expired refresh token."})
 
     @staticmethod
     def logout_user(refresh_token):
+        if not refresh_token:
+            return
         try:
             RefreshToken(refresh_token).blacklist()
         except TokenError:
-            raise ValidationError({"detail": "Invalid or expired token."})
+            pass

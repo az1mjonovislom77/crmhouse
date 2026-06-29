@@ -4,12 +4,12 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 class UserTokenService:
     COOKIE_NAME = "refresh_token"
-    COOKIE_MAX_AGE = 60 * 60 * 24 * 7
+    COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 days
 
     COOKIE_SETTINGS = {
         "httponly": True,
         "secure": not settings.DEBUG,
-        "samesite": "Strict",
+        "samesite": "Lax" if settings.DEBUG else "None",
         "max_age": COOKIE_MAX_AGE,
         "path": "/",
     }
@@ -23,10 +23,16 @@ class UserTokenService:
         }
 
     @staticmethod
-    def get_tokens_for_user_from_refresh(refresh_token: str):
+    def rotate_refresh_token(refresh_token_str: str):
+        """Eski tokenni blacklist qiladi, yangi access+refresh qaytaradi."""
         try:
-            refresh = RefreshToken(refresh_token)
-            return str(refresh.access_token)
+            refresh = RefreshToken(refresh_token_str)
+            new_access = str(refresh.access_token)
+            refresh.blacklist()
+            refresh.set_jti()
+            refresh.set_exp()
+            refresh.set_iat()
+            return {"access": new_access, "refresh": str(refresh)}
         except TokenError:
             raise TokenError("Invalid or expired refresh token")
 
@@ -41,5 +47,9 @@ class UserTokenService:
 
     @classmethod
     def clear_refresh_cookie(cls, response):
-        response.delete_cookie(cls.COOKIE_NAME, path="/")
+        response.delete_cookie(
+            cls.COOKIE_NAME,
+            path="/",
+            samesite=cls.COOKIE_SETTINGS["samesite"],
+        )
         return response
