@@ -22,7 +22,7 @@ class LeadListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'full_name', 'phone', 'email', 'source', 'board', 'status', 'sub_status',
             'owner_id', 'owner_name', 'score', 'note',
-            'meeting_at', 'meeting_type', 'subsidiya', 'created_at', 'updated_at',
+            'meeting_at', 'meeting_type', 'subsidiya', 'contacted_at', 'created_at', 'updated_at',
         ]
 
 
@@ -35,7 +35,7 @@ class LeadDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'full_name', 'phone', 'email', 'source', 'board', 'status', 'sub_status',
             'owner_id', 'owner_name', 'score', 'note', 'meeting_at', 'meeting_type', 'subsidiya',
-            'created_at', 'updated_at', 'events']
+            'contacted_at', 'created_at', 'updated_at', 'events']
 
 
 class LeadCreateSerializer(serializers.ModelSerializer):
