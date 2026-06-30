@@ -63,6 +63,9 @@ class Booking(models.Model):
 class Payment(models.Model):
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='payments')
     amount = models.DecimalField(max_digits=14, decimal_places=2)
+    payment_date = models.DateField(null=True, blank=True)
+    payment_data = models.TextField(null=True, blank=True)
+    payment_number = models.CharField(max_length=200, null=True, blank=True)
     note = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 
