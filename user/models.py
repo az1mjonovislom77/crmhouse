@@ -61,3 +61,27 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.full_name or self.username
+
+
+class RequestLog(models.Model):
+    user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='request_logs')
+    method = models.CharField(max_length=10)
+    path = models.CharField(max_length=500)
+    status_code = models.PositiveSmallIntegerField()
+    duration_ms = models.PositiveIntegerField()
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'request_logs'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['method']),
+            models.Index(fields=['status_code']),
+        ]
+
+    def __str__(self):
+        user_str = str(self.user) if self.user else 'anonymous'
+        return f"{self.method} {self.path} [{self.status_code}] by {user_str}"
