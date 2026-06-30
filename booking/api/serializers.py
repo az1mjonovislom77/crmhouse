@@ -79,7 +79,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = ['id', 'booking', 'amount', 'note', 'created_at', 'remaining_debt', 'payment_date', 'payment_data',
-                  'payment_number']
+                  'payment_number', 'file']
         read_only_fields = ['id', 'created_at', 'remaining_debt']
 
     def get_remaining_debt(self, obj):
