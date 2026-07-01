@@ -3,13 +3,6 @@ from common.base.models_base import TimeStampedModel
 
 
 class CallRecord(TimeStampedModel):
-    organization = models.ForeignKey(
-        'organization.Organization',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='call_records',
-    )
     calldate = models.DateTimeField(db_index=True)
     clid = models.CharField(max_length=255, null=True, blank=True)
     src = models.CharField(max_length=50, null=True, blank=True, db_index=True)

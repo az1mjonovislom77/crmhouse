@@ -5,13 +5,6 @@ from django.core.validators import FileExtensionValidator
 
 
 class Project(models.Model):
-    organization = models.ForeignKey(
-        'organization.Organization',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='projects',
-    )
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     title = models.CharField(max_length=100, db_index=True)
     description = models.TextField(max_length=500)

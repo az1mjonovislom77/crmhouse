@@ -9,7 +9,6 @@ from booking.api.serializers import BookingCreateSerializer, BookingGetSerialize
     PaymentSerializer
 from booking.services.booking import delete_booking, create_booking
 from common.base.views_base import BaseUserViewSet
-from common.mixins import get_user_org, filter_by_org
 from common.search import TransliteratedSearchFilter
 from home.models import HomeStatusHistory
 from home.services.home import HomeService
@@ -31,24 +30,24 @@ class PaymentTermViewSet(BaseUserViewSet):
 @extend_schema(tags=['Booking'],
                parameters=[OpenApiParameter(name='home_id', type=OpenApiTypes.INT, location=OpenApiParameter.QUERY)])
 class BookingViewSet(BaseUserViewSet):
+    queryset = Booking.objects.select_related(
+        'home', 'home__blocks', 'home__floor', 'home__renovation',
+        'company', 'payment_term', 'client',
+    ).prefetch_related(
+        Prefetch('client__bookings', queryset=_client_bookings_qs),
+        Prefetch('client__status_history', queryset=_client_status_history_qs),
+    ).annotate(
+        payments_total=Coalesce(Sum('payments__amount'), Value(Decimal('0')), output_field=DecimalField())
+    )
     filter_backends = [TransliteratedSearchFilter]
     search_fields = ['client__full_name', 'client__phone_number', 'booking_no', 'client__from_who']
 
     def get_queryset(self):
-        qs = (Booking.objects.select_related(
-            'home', 'home__blocks', 'home__floor', 'home__renovation',
-            'company', 'payment_term', 'client',
-        ).prefetch_related(
-            Prefetch('client__bookings', queryset=_client_bookings_qs),
-            Prefetch('client__status_history', queryset=_client_status_history_qs),
-        ).annotate(
-            payments_total=Coalesce(Sum('payments__amount'), Value(Decimal('0')), output_field=DecimalField())
-        ))
-        qs = filter_by_org(qs, self.request)
+        queryset = super().get_queryset()
         home_id = self.request.query_params.get('home_id')
         if home_id:
-            qs = qs.filter(home_id=home_id)
-        return qs
+            queryset = queryset.filter(home_id=home_id)
+        return queryset
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
@@ -56,11 +55,8 @@ class BookingViewSet(BaseUserViewSet):
         return BookingGetSerializer
 
     def perform_create(self, serializer):
-        validated_data = dict(serializer.validated_data)
+        validated_data = serializer.validated_data.copy()
         home_status = validated_data.pop('home_status', None)
-        org = get_user_org(self.request)
-        if org:
-            validated_data['organization'] = org
         booking = create_booking(data=validated_data, user=self.request.user, home_status=home_status)
         serializer.instance = booking
 
@@ -90,13 +86,12 @@ class PaymentViewSet(BaseUserViewSet):
             .annotate(total=Sum('amount'))
             .values('total')
         )
-        qs = Payment.objects.select_related('booking__home').annotate(
+        queryset = Payment.objects.select_related('booking__home').annotate(
             booking_payments_total=Subquery(_booking_total_sq, output_field=DecimalField()))
-        qs = filter_by_org(qs, self.request, field='booking__organization')
         booking_id = self.request.query_params.get('booking_id')
         if booking_id:
-            qs = qs.filter(booking_id=booking_id)
-        return qs
+            queryset = queryset.filter(booking_id=booking_id)
+        return queryset
 
     def perform_create(self, serializer):
         booking = serializer.validated_data['booking']

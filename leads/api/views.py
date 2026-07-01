@@ -8,7 +8,6 @@ from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from common.base.views_base import BaseUserViewSet
-from common.mixins import get_user_org, filter_by_org
 from leads.api.serializers import (LeadCreateSerializer, LeadDetailSerializer,
                                    LeadListSerializer, LeadUpdateSerializer,
                                    LeadNotificationSerializer)
@@ -41,10 +40,8 @@ class LeadViewSet(BaseUserViewSet):
 
     def get_queryset(self):
         if self.action == 'retrieve':
-            qs = get_lead_detail_queryset()
-        else:
-            qs = get_lead_list_queryset()
-        return filter_by_org(qs, self.request)
+            return get_lead_detail_queryset()
+        return get_lead_list_queryset()
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -59,10 +56,9 @@ class LeadViewSet(BaseUserViewSet):
         count_params = request.query_params.copy()
         count_params._mutable = True
         count_params.pop('status', None)
-        base_qs = self.get_queryset()
-        counts = get_status_counts(filter_leads(base_qs, count_params))
+        counts = get_status_counts(filter_leads(self.get_queryset(), count_params))
 
-        qs = filter_leads(base_qs, request.query_params)
+        qs = filter_leads(self.get_queryset(), request.query_params)
         page = self.paginate_queryset(qs)
         if page is not None:
             response = self.get_paginated_response(LeadListSerializer(page, many=True).data)
@@ -73,11 +69,7 @@ class LeadViewSet(BaseUserViewSet):
     def create(self, request, *args, **kwargs):
         serializer = LeadCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        data = dict(serializer.validated_data)
-        org = get_user_org(request)
-        if org:
-            data['organization'] = org
-        lead = LeadService.create_lead(data, request.user)
+        lead = LeadService.create_lead(serializer.validated_data, request.user)
         return Response(LeadDetailSerializer(get_lead_detail_queryset().get(pk=lead.pk)).data,
                         status=status.HTTP_201_CREATED)
 

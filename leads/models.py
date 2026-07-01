@@ -46,13 +46,6 @@ class Lead(models.Model):
         ('Boshqa', 'Boshqa'),
     ]
 
-    organization = models.ForeignKey(
-        'organization.Organization',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='leads',
-    )
     full_name = models.CharField(max_length=200)
     phone = models.CharField(max_length=30)
     email = models.EmailField(null=True, blank=True)

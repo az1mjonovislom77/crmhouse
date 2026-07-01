@@ -5,7 +5,6 @@ from projects.models.project_models import Block, Floors, Renovation
 from projects.selectors.projects_selectors import get_projects_with_stats
 from projects.services.project_service import ProjectService
 from common.base.views_base import BaseUserViewSet
-from common.mixins import get_user_org, filter_by_org
 from common.search import TransliteratedSearchFilter
 
 
@@ -16,14 +15,10 @@ class ProjectViewSet(BaseUserViewSet):
     search_fields = ['title', 'description']
 
     def get_queryset(self):
-        return filter_by_org(get_projects_with_stats(), self.request)
+        return get_projects_with_stats()
 
     def perform_create(self, serializer):
-        data = dict(serializer.validated_data)
-        org = get_user_org(self.request)
-        if org:
-            data['organization'] = org
-        ProjectService.create_project(data)
+        ProjectService.create_project(serializer.validated_data)
 
     def perform_update(self, serializer):
         ProjectService.update_project(instance=self.get_object(), validated_data=serializer.validated_data)

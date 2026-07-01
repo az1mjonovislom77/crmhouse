@@ -6,7 +6,6 @@ from rest_framework.response import Response
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
 
-from common.mixins import filter_by_org
 from contact_center.filters import CallRecordFilter
 from contact_center.models import CallRecord
 from contact_center.serializers import CRSerializer
@@ -42,10 +41,7 @@ class CDRListView(generics.ListAPIView):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_class = CallRecordFilter
     search_fields = ['clid', 'uniqueid', 'src', 'dst']
-
-    def get_queryset(self):
-        qs = CallRecord.objects.all().order_by('-calldate')
-        return filter_by_org(qs, self.request)
+    queryset = CallRecord.objects.all().order_by('-calldate')
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()

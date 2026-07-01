@@ -34,13 +34,6 @@ class Booking(models.Model):
         FIFTY = 50, "50%"
 
     home = models.OneToOneField(Home, on_delete=models.CASCADE, related_name="booking")
-    organization = models.ForeignKey(
-        'organization.Organization',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='bookings',
-    )
     company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="bookings")
     cash_payment = models.DecimalField(max_digits=10, decimal_places=2, default=0)
