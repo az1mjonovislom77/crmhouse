@@ -85,7 +85,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     def get_remaining_debt(self, obj):
         booking = obj.booking
         total_price = booking.total_price
-        down_payment_amount = (total_price * booking.down_payment / 100) if booking.down_payment else 0
+        down_payment_amount = (total_price * booking.down_payment / 100) if booking.down_payment is not None else 0
         if hasattr(obj, 'booking_payments_total') and obj.booking_payments_total is not None:
             paid = obj.booking_payments_total
         else:

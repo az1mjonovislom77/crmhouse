@@ -8,16 +8,16 @@ from .forms import UserAdminCreateForm
 class UserAdmin(BaseUserAdmin):
     add_form = UserAdminCreateForm
 
-    list_display = ("id", "username", "role", "is_staff", "is_active")
+    list_display = ("id", "username", "full_name", "organization", "role", "is_staff", "is_active")
     search_fields = ("username", "full_name", "phone_number")
     ordering = ("-id",)
-    list_filter = ("role", "is_staff", "is_active")
+    list_filter = ("role", "is_staff", "is_active", "organization")
 
     readonly_fields = ("id",)
 
     fieldsets = (
         (None, {"fields": ("username", "password")}),
-        ("Info", {"fields": ("full_name", "phone_number", "role")}),
+        ("Info", {"fields": ("full_name", "phone_number", "role", "organization")}),
         ("Permissions", {"fields": ("is_staff", "is_superuser", "is_active")}),
     )
 

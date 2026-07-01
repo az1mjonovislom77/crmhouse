@@ -1,5 +1,8 @@
 from django.db import models
 from django.db.models import Sum
+from django.core.validators import FileExtensionValidator
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.utils import timezone
 from home.models import Home
 from client.models import Client
@@ -31,6 +34,13 @@ class Booking(models.Model):
         FIFTY = 50, "50%"
 
     home = models.OneToOneField(Home, on_delete=models.CASCADE, related_name="booking")
+    organization = models.ForeignKey(
+        'organization.Organization',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='bookings',
+    )
     company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="bookings")
     cash_payment = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -49,7 +59,7 @@ class Booking(models.Model):
 
     @property
     def remaining_debt(self):
-        down_payment_amount = (self.total_price * self.down_payment / 100) if self.down_payment else 0
+        down_payment_amount = (self.total_price * self.down_payment / 100) if self.down_payment is not None else 0
         if hasattr(self, 'payments_total'):
             paid = self.payments_total or 0
         else:
@@ -63,7 +73,10 @@ class Booking(models.Model):
 class Payment(models.Model):
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='payments')
     amount = models.DecimalField(max_digits=14, decimal_places=2)
-    file = models.FileField(upload_to='payments/', null=True, blank=True)
+    file = models.FileField(
+        upload_to='payments/', null=True, blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'jpg', 'jpeg', 'png', 'webp'])]
+    )
     payment_date = models.DateField(null=True, blank=True)
     payment_data = models.TextField(null=True, blank=True)
     payment_number = models.CharField(max_length=200, null=True, blank=True)
@@ -72,3 +85,9 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"Payment {self.id} - {self.amount}"
+
+
+@receiver(post_delete, sender=Payment)
+def delete_payment_file(sender, instance, **kwargs):
+    if instance.file:
+        instance.file.delete(save=False)

@@ -5,6 +5,13 @@ from config import settings
 
 
 class Card(TimeStampedModel):
+    organization = models.ForeignKey(
+        'organization.Organization',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cards',
+    )
     title = models.CharField(max_length=200)
 
     history = HistoricalRecords()

@@ -39,6 +39,13 @@ class Home(models.Model):
         TEN = 10, "10 xona"
 
     home_number = models.PositiveIntegerField(default=0)
+    organization = models.ForeignKey(
+        'organization.Organization',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='homes',
+    )
     blocks = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name='homes')
     floor = models.ForeignKey(Floors, on_delete=models.SET_NULL, null=True, blank=True)
     rooms = models.IntegerField(choices=RoomsChoice.choices, default=RoomsChoice.ONE, db_index=True)

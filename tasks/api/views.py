@@ -4,6 +4,7 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from common.base.views_base import BaseUserViewSet, PartialPutMixin
+from common.mixins import OrganizationMixin, get_user_org
 from common.search import TransliteratedSearchFilter
 from tasks.api.serializers.tasks_serializers import CardSerializer, CommentSerializer, ProjectGetSerializer, \
     ProjectCreateSerializer, ProjectUpdateSerializer
@@ -16,28 +17,36 @@ from tasks.permissions import IsProjectMemberOrAdmin
 
 
 @extend_schema(tags=['Card'])
-class CardViewSet(AuditMixin, HistoryMixin, BaseUserViewSet, ):
+class CardViewSet(OrganizationMixin, AuditMixin, HistoryMixin, BaseUserViewSet):
     queryset = Card.objects.all()
     serializer_class = CardSerializer
     history_serializer_class = CardHistorySerializer
     filter_backends = [TransliteratedSearchFilter]
     search_fields = ['title']
 
+    def perform_create(self, serializer):
+        org = get_user_org(self.request)
+        kwargs = {"created_by": self.request.user}
+        if org:
+            kwargs["organization"] = org
+        serializer.save(**kwargs)
+
 
 @extend_schema(tags=['Comment'])
-class CommentViewSet(AuditMixin, HistoryMixin, BaseUserViewSet):
+class CommentViewSet(OrganizationMixin, AuditMixin, HistoryMixin, BaseUserViewSet):
     queryset = Comment.objects.select_related('user', 'project')
     serializer_class = CommentSerializer
     history_serializer_class = CommentHistorySerializer
     filter_backends = [TransliteratedSearchFilter]
     search_fields = ['text']
+    organization_field = 'project__card__organization'
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
 
 @extend_schema(tags=['Project'])
-class ProjectViewSet(AuditMixin, HistoryMixin, PartialPutMixin, viewsets.ModelViewSet):
+class ProjectViewSet(OrganizationMixin, AuditMixin, HistoryMixin, PartialPutMixin, viewsets.ModelViewSet):
     queryset = Project.objects.select_related('card', 'created_by', 'updated_by').prefetch_related(
         'users',
         Prefetch('comments', queryset=Comment.objects.select_related('created_by', 'updated_by')),
@@ -48,6 +57,7 @@ class ProjectViewSet(AuditMixin, HistoryMixin, PartialPutMixin, viewsets.ModelVi
     pagination_class = None
     filter_backends = [TransliteratedSearchFilter]
     search_fields = ['title', 'description']
+    organization_field = 'card__organization'
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -56,11 +66,12 @@ class ProjectViewSet(AuditMixin, HistoryMixin, PartialPutMixin, viewsets.ModelVi
             return ProjectUpdateSerializer
         return ProjectGetSerializer
 
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-
         result = serializer.save()
-
         return Response(result)

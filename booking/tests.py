@@ -309,3 +309,98 @@ class BookingViewSetTest(APITestCase):
         self.client.logout()
         resp = self.client.get(self.list_url)
         self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class PaymentViewSetTest(APITestCase):
+    def setUp(self):
+        self.user = make_user(username='pay_api')
+        self.client.force_authenticate(user=self.user)
+        self.home = make_home(price_per_sqm=1000, area=50)
+        self.booking = make_booking(home=self.home, cash_payment=0)
+        self.list_url = reverse('payment-list')
+
+    def _create_payment(self, amount):
+        resp = self.client.post(self.list_url, {
+            'booking': self.booking.id,
+            'amount': str(amount),
+        })
+        return resp
+
+    def test_create_payment_returns_201(self):
+        resp = self._create_payment(10000)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+    def test_create_payment_exceeding_debt_rejected(self):
+        resp = self._create_payment(99999999)
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('amount', resp.data)
+
+    def test_remaining_debt_decreases_after_payment(self):
+        from booking.models import Payment
+        resp = self._create_payment(10000)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        payment_id = resp.data['id']
+        payment = Payment.objects.get(id=payment_id)
+        self.assertEqual(payment.booking.remaining_debt, self.booking.total_price - 10000)
+
+    def test_update_payment_amount(self):
+        from booking.models import Payment
+        self._create_payment(10000)
+        payment = Payment.objects.filter(booking=self.booking).first()
+        url = reverse('payment-detail', args=[payment.id])
+        resp = self.client.put(url, {'booking': self.booking.id, 'amount': '5000'})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        payment.refresh_from_db()
+        self.assertEqual(payment.amount, 5000)
+
+    def test_update_payment_amount_exceeding_debt_rejected(self):
+        from booking.models import Payment
+        self._create_payment(10000)
+        payment = Payment.objects.filter(booking=self.booking).first()
+        url = reverse('payment-detail', args=[payment.id])
+        resp = self.client.put(url, {'booking': self.booking.id, 'amount': '99999999'})
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('amount', resp.data)
+
+    def test_update_payment_remaining_debt_correct(self):
+        from booking.models import Payment
+        self._create_payment(10000)
+        payment = Payment.objects.filter(booking=self.booking).first()
+        url = reverse('payment-detail', args=[payment.id])
+        self.client.put(url, {'booking': self.booking.id, 'amount': '20000'})
+        payment.refresh_from_db()
+        self.booking.refresh_from_db()
+        expected = self.booking.total_price - 20000
+        self.assertEqual(self.booking.remaining_debt, expected)
+
+    def test_delete_payment_returns_204(self):
+        from booking.models import Payment
+        self._create_payment(10000)
+        payment = Payment.objects.filter(booking=self.booking).first()
+        url = reverse('payment-detail', args=[payment.id])
+        resp = self.client.delete(url)
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Payment.objects.filter(id=payment.id).exists())
+
+    def test_delete_payment_increases_remaining_debt(self):
+        from booking.models import Payment
+        total = self.booking.total_price
+        self._create_payment(10000)
+        payment = Payment.objects.filter(booking=self.booking).first()
+        url = reverse('payment-detail', args=[payment.id])
+        self.client.delete(url)
+        self.booking.refresh_from_db()
+        self.assertEqual(self.booking.remaining_debt, total)
+
+    def test_cannot_pay_when_debt_fully_covered(self):
+        total = int(self.booking.total_price)
+        self._create_payment(total)
+        resp = self._create_payment(1)
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_down_payment_zero_handled_correctly(self):
+        from booking.models import Booking
+        self.booking.down_payment = Booking.DownPaymentChoice.ZERO
+        self.booking.save()
+        self.booking.refresh_from_db()
+        self.assertEqual(self.booking.remaining_debt, self.booking.total_price)

@@ -21,6 +21,7 @@ DJANGO_APPS = [
 ]
 
 LOCAL_APPS = [
+    'organization',
     'user',
     'booking',
     'instagram',
@@ -29,6 +30,7 @@ LOCAL_APPS = [
     'client',
     'tasks',
     'leads',
+    'contact_center',
 ]
 
 THIRD_PARTY_APPS = [
@@ -220,6 +222,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'leads.tasks.check_meeting_notifications',
         'schedule': 300.0,
     },
+    'sync-cdr-data': {
+        'task': 'contact_center.tasks.sync_cdr_data',
+        'schedule': 3600.0,
+    },
 }
 
 INSTAGRAM_ACCESS_TOKEN = config('INSTAGRAM_ACCESS_TOKEN')
@@ -228,3 +234,16 @@ GRAPH_BASE_URL = "https://graph.facebook.com"
 IG_USER_ID = config('IG_USER_ID')
 
 GROQ_API_KEY = config('GROQ_API_KEY', default='')
+
+# PBX / Contact Center
+PBX_BASE_URL = config('PBX_BASE_URL', default='')
+PBX_USER = config('PBX_USER', default='')
+PBX_PASSWORD = config('PBX_PASSWORD', default='')
+PBX_VERIFY_SSL = config('PBX_VERIFY_SSL', default=False, cast=bool)
+
+SIP_API_USER = config('SIP_API_USER', default='')
+SIP_API_PASSWORD = config('SIP_API_PASSWORD', default='')
+
+ISSABEL_BASE_URL = config('ISSABEL_BASE_URL', default='')
+ISSABEL_API_USER = config('ISSABEL_API_USER', default='')
+ISSABEL_API_PASSWORD = config('ISSABEL_API_PASSWORD', default='')
