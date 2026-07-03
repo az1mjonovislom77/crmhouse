@@ -35,11 +35,22 @@ jobs:
             echo "Running migrations..."
             python3 manage.py migrate --noinput
 
+            echo "Backfilling client users..."
+            python3 manage.py backfill_client_users
+
             echo "Collecting static files..."
             python3 manage.py collectstatic --noinput
 
             echo "Restarting services..."
             sudo systemctl restart ${{ secrets.SERVICE_NAME }}
+            # Celery worker/beat ham yangi kod bilan qayta ishga tushishi shart —
+            # aks holda eski task kodi yangi DB sxemasi bilan ishlashda davom etadi.
+            if [ -n "${{ secrets.CELERY_SERVICE_NAME }}" ]; then
+              sudo systemctl restart ${{ secrets.CELERY_SERVICE_NAME }}
+            fi
+            if [ -n "${{ secrets.CELERY_BEAT_SERVICE_NAME }}" ]; then
+              sudo systemctl restart ${{ secrets.CELERY_BEAT_SERVICE_NAME }}
+            fi
             sudo systemctl restart nginx
 
             echo "Deploy finished!"

@@ -2,17 +2,22 @@ import logging
 import os
 import tempfile
 from datetime import date, timedelta
-
 from celery import shared_task
+from django.core.cache import cache
 from django.core.files import File
-
 from .services import CDRService
 
 logger = logging.getLogger(__name__)
 
+SYNC_LOCK_KEY = 'cdr_sync_running'
 
-@shared_task
-def sync_cdr_data():
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=120)
+def sync_cdr_data(self):
+    if not cache.add(SYNC_LOCK_KEY, 1, timeout=25 * 60):
+        logger.info('CDR sync allaqachon ishlamoqda, o\'tkazib yuborildi')
+        return
+
     today = date.today()
     start_date = today - timedelta(days=7)
 
@@ -23,9 +28,12 @@ def sync_cdr_data():
 
     try:
         saved = CDRService.fetch_and_save_cdr(params)
-        logger.info(f'CDR sync muvaffaqiyatli: {saved} ta yangi yozuv saqlandi')
+        logger.info(f'CDR sync muvaffaqiyatli: {saved} ta yozuv qayta ishlandi')
     except Exception as e:
         logger.error(f'CDR sync xatosi: {str(e)}', exc_info=True)
+        raise self.retry(exc=e)
+    finally:
+        cache.delete(SYNC_LOCK_KEY)
 
 
 @shared_task(bind=True, max_retries=3)
@@ -33,7 +41,10 @@ def download_recording_task(self, record_id):
     from contact_center.models import CallRecord
     from contact_center.services import IssabelService
 
-    record = CallRecord.objects.get(id=record_id)
+    record = CallRecord.objects.filter(id=record_id).first()
+    if record is None:
+        logger.warning('CallRecord %s topilmadi, yuklab olish bekor qilindi', record_id)
+        return
 
     if record.audio_downloaded or not record.recordingfile:
         return

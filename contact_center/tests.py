@@ -1,10 +1,8 @@
 from unittest.mock import MagicMock, patch
-
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
-
 from contact_center.models import CallRecord
 from contact_center.services.common_service import CDRService
 from contact_center.services.dedub_service import CDRDedupService
@@ -12,7 +10,7 @@ from user.models import User
 
 
 def make_user(**kwargs):
-    defaults = {'username': 'cc_user', 'full_name': 'CC User', 'role': User.UserRoles.ADMIN}
+    defaults = {'username': 'cc_user', 'full_name': 'CC User', 'role': User.UserRoles.ADMIN, 'is_staff': True}
     defaults.update(kwargs)
     u = User(**defaults)
     u.set_password('pass123')

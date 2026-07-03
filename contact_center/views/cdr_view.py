@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from drf_spectacular.utils import extend_schema
 from rest_framework import status, permissions
 from rest_framework.filters import SearchFilter
@@ -5,7 +6,6 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
-
 from contact_center.filters import CallRecordFilter
 from contact_center.models import CallRecord
 from contact_center.serializers import CRSerializer
@@ -46,7 +46,8 @@ class CDRListView(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         if not queryset.exists():
-            sync_cdr_data.delay()
+            if cache.add('cdr_sync_requested', 1, timeout=300):
+                sync_cdr_data.delay()
             return Response({
                 'message': "Ma'lumotlar yangilanmoqda, 10-60 soniya ichida qayta so'rang",
                 'count': 0,

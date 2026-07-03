@@ -1,7 +1,10 @@
 from common.base.views_base import BaseUserViewSet
+from common.mixins import filter_by_org
+from common.permissions import IsAdminOrReadOnly
 from common.search import TransliteratedSearchFilter
 from drf_spectacular.utils import extend_schema
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from user.models import User
 from user.api.serializers.user_serializers import UserCreateSerializer, UserDetailSerializer
@@ -31,8 +34,12 @@ class UserPagination(PageNumberPagination):
 class UserViewSet(BaseUserViewSet):
     queryset = User.objects.filter(is_staff=False)
     pagination_class = UserPagination
+    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
     filter_backends = [TransliteratedSearchFilter]
     search_fields = ['full_name', 'username', 'phone_number']
+
+    def get_queryset(self):
+        return filter_by_org(super().get_queryset(), self.request)
 
     def get_serializer_class(self):
         if self.action == "retrieve":

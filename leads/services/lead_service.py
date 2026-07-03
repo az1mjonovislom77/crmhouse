@@ -68,7 +68,10 @@ class LeadService:
                 from_value=instance.status, to_value=new_status, by=user,
             )
             instance.status = new_status
-            instance.sub_status = board_statuses[new_status][0] if board_statuses[new_status] else None
+            if new_sub and new_sub in board_statuses[new_status]:
+                instance.sub_status = new_sub
+            else:
+                instance.sub_status = board_statuses[new_status][0] if board_statuses[new_status] else None
 
         elif new_sub and new_sub != instance.sub_status:
             if new_sub not in board_statuses.get(instance.status, []):

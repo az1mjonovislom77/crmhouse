@@ -108,11 +108,12 @@ SPECTACULAR_SETTINGS = {
     'TITLE': 'CRM_Bunyodkorhouse',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.IsAuthenticated'],
 }
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": False,
@@ -197,14 +198,14 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
-STATIC_ROOT = 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800
+DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024  # 20 MB
 
 # ASGI / Channels
 ASGI_APPLICATION = 'config.asgi.application'
@@ -239,7 +240,7 @@ GROQ_API_KEY = config('GROQ_API_KEY', default='')
 PBX_BASE_URL = config('PBX_BASE_URL', default='')
 PBX_USER = config('PBX_USER', default='')
 PBX_PASSWORD = config('PBX_PASSWORD', default='')
-PBX_VERIFY_SSL = config('PBX_VERIFY_SSL', default=False, cast=bool)
+PBX_VERIFY_SSL = config('PBX_VERIFY_SSL', default=True, cast=bool)
 
 SIP_API_USER = config('SIP_API_USER', default='')
 SIP_API_PASSWORD = config('SIP_API_PASSWORD', default='')

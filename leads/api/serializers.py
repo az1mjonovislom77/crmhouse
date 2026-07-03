@@ -15,7 +15,10 @@ class LeadEventSerializer(serializers.ModelSerializer):
 
 
 class LeadListSerializer(serializers.ModelSerializer):
-    owner_name = serializers.CharField(source='owner.full_name', read_only=True)
+    owner_name = serializers.SerializerMethodField()
+
+    def get_owner_name(self, obj):
+        return obj.owner.full_name if obj.owner else None
 
     class Meta:
         model = Lead
@@ -27,8 +30,11 @@ class LeadListSerializer(serializers.ModelSerializer):
 
 
 class LeadDetailSerializer(serializers.ModelSerializer):
-    owner_name = serializers.CharField(source='owner.full_name', read_only=True)
+    owner_name = serializers.SerializerMethodField()
     events = LeadEventSerializer(many=True, read_only=True)
+
+    def get_owner_name(self, obj):
+        return obj.owner.full_name if obj.owner else None
 
     class Meta:
         model = Lead
@@ -68,6 +74,13 @@ class LeadNotificationSerializer(serializers.ModelSerializer):
 
 class LeadUpdateSerializer(serializers.ModelSerializer):
     owner = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False)
+
+    def validate_owner(self, value):
+        request = self.context.get('request')
+        if request is not None and not request.user.is_staff:
+            if value.organization_id != request.user.organization_id:
+                raise serializers.ValidationError("Bu foydalanuvchi sizning tashkilotingizga tegishli emas.")
+        return value
     comment = serializers.CharField(required=False, write_only=True)
     call_result = serializers.CharField(required=False, write_only=True)
     meeting_at = serializers.DateTimeField(required=False, write_only=True)

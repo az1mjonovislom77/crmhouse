@@ -48,7 +48,10 @@ class Booking(models.Model):
 
     @property
     def total_price(self):
-        return self.home.price_per_sqm * self.home.area
+        total = (self.home.price_per_sqm or 0) * (self.home.area or 0)
+        if self.home.renovation:
+            total += self.home.renovation.price
+        return total
 
     @property
     def remaining_debt(self):

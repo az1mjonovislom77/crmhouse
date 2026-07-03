@@ -1,3 +1,4 @@
+from django.db.models import F
 from django.utils import timezone
 from leads.models import Lead, LeadNotification
 
@@ -6,6 +7,10 @@ class MeetingNotificationService:
 
     @staticmethod
     def check_and_create():
+        # Drop notifications whose meeting time no longer matches the lead
+        # (rescheduled or cancelled meetings).
+        LeadNotification.objects.exclude(meeting_at=F('lead__meeting_at')).delete()
+
         today = timezone.now().date()
         upcoming = Lead.objects.filter(
             meeting_at__date=today,
@@ -14,7 +19,7 @@ class MeetingNotificationService:
 
         created_ids = []
         for lead in upcoming:
-            obj, created = LeadNotification.objects.get_or_create(
+            obj, created = LeadNotification.objects.update_or_create(
                 lead=lead, meeting_at=lead.meeting_at,
                 defaults={'owner': lead.owner},
             )

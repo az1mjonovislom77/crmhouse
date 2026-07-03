@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -10,6 +11,14 @@ class Client(models.Model):
     passport_date = models.DateField(null=True, blank=True)
     address = models.CharField(max_length=500)
     from_who = models.CharField(max_length=200, null=True, blank=True)
+    # Mijoz uni yaratgan userga bog'lanadi; tashkilot user orqali aniqlanadi
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='clients',
+    )
 
     def __str__(self):
         return self.full_name

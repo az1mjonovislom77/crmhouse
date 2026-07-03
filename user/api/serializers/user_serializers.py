@@ -17,7 +17,22 @@ class UserCreateSerializer(serializers.ModelSerializer):
         fields = ['id', 'full_name', 'username', 'phone_number', 'password', 'role']
         read_only_fields = ['id']
 
+    def validate_role(self, value):
+        request = self.context.get('request')
+        if request is None:
+            return value
+        actor = request.user
+        # Only a SUPERADMIN (or Django staff) may grant the SUPERADMIN role.
+        if value == User.UserRoles.SUPERADMIN and not (
+            actor.is_staff or actor.role == User.UserRoles.SUPERADMIN
+        ):
+            raise serializers.ValidationError("You are not allowed to assign this role.")
+        return value
+
     def create(self, validated_data):
+        request = self.context.get('request')
+        if request is not None and not request.user.is_staff:
+            validated_data['organization'] = request.user.organization
         return UserService.create_user(validated_data)
 
     def update(self, instance, validated_data):

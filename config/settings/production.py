@@ -8,6 +8,15 @@ ALLOWED_HOSTS = [
     if s.strip()
 ]
 
+# HTTPS hardening (nginx TLS termination ortida ishlaydi)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+# nginx odatda HTTP->HTTPS redirectni o'zi qiladi; kerak bo'lsa env orqali yoqiladi
+SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
+SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=0, cast=int)
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',

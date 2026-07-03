@@ -15,7 +15,7 @@ IS_SQLITE = connection.vendor == "sqlite"
 
 def make_user(**kwargs):
     password = kwargs.pop("password", "pass123")
-    defaults = {"username": "tk_user", "full_name": "TK User", "role": User.UserRoles.SELLER}
+    defaults = {"username": "tk_user", "full_name": "TK User", "role": User.UserRoles.SELLER, "is_staff": True}
     defaults.update(kwargs)
     u = User(**defaults)
     u.set_password(password)

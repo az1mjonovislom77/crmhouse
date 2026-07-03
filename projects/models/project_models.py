@@ -11,8 +11,8 @@ class Project(models.Model):
     floors = models.PositiveIntegerField(default=0)
     image = models.ImageField(upload_to='projects/', validators=[
         FileExtensionValidator(
-            allowed_extensions=['jpg', 'jpeg', 'png', 'svg', 'webp', 'JPG', 'JPEG', 'PNG', 'SVG', 'WEBP', 'heic',
-                                'heif']), check_image_size], null=True, blank=True)
+            allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']), check_image_size],
+        null=True, blank=True)
 
     class Meta:
         db_table = 'projects_projects'
@@ -27,7 +27,7 @@ class Block(models.Model):
     title = models.CharField(max_length=100, db_index=True)
     image = models.FileField(upload_to='projects/', validators=[
         FileExtensionValidator(
-            allowed_extensions=['jpg', 'jpeg', 'png', 'svg', 'webp', 'heic', 'heif']), check_image_size])
+            allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']), check_image_size])
 
     class Meta:
         db_table = 'projects_blocks'

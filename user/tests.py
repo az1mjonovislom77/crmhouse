@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from organization.models import Organization
 from user.models import User
 from user.selectors.user_selectors import get_user_stats
 from user.services.auth.auth_service import AuthService
@@ -21,6 +22,8 @@ LOCMEM_CACHE = {
 def make_user(**kwargs):
     password = kwargs.pop("password", "testpass123")
     defaults = {"username": "testuser", "full_name": "Test User", "role": User.UserRoles.SELLER}
+    if "organization" not in kwargs and not kwargs.get("is_staff"):
+        defaults["organization"] = Organization.objects.get_or_create(name="Test Org")[0]
     defaults.update(kwargs)
     user = User(**defaults)
     user.set_password(password)
@@ -335,17 +338,17 @@ class UserViewSetTest(APITestCase):
         self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_create_user(self):
-        data = {"username": "newone", "full_name": "New One", "password": "pass123", "role": "s"}
+        data = {"username": "newone", "full_name": "New One", "password": "Str0ng!Passw0rd", "role": "s"}
         resp = self.client.post(self.list_url, data)
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
         self.assertTrue(User.objects.filter(username="newone").exists())
 
     def test_create_user_password_is_hashed(self):
-        data = {"username": "hashtest", "full_name": "H", "password": "mypassword", "role": "s"}
+        data = {"username": "hashtest", "full_name": "H", "password": "MyS3cret!Pass", "role": "s"}
         self.client.post(self.list_url, data)
         user = User.objects.get(username="hashtest")
-        self.assertNotEqual(user.password, "mypassword")
-        self.assertTrue(user.check_password("mypassword"))
+        self.assertNotEqual(user.password, "MyS3cret!Pass")
+        self.assertTrue(user.check_password("MyS3cret!Pass"))
 
     def test_retrieve_user(self):
         user = make_user(username="retuser", full_name="Ret User")
@@ -357,7 +360,7 @@ class UserViewSetTest(APITestCase):
     def test_update_user(self):
         user = make_user(username="upduser", full_name="Old")
         url = reverse("user-detail", args=[user.id])
-        resp = self.client.put(url, {"username": "upduser", "full_name": "Updated", "password": "newp", "role": "s"})
+        resp = self.client.put(url, {"username": "upduser", "full_name": "Updated", "password": "N3wStrong!Pass", "role": "s"})
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         user.refresh_from_db()
         self.assertEqual(user.full_name, "Updated")

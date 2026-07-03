@@ -3,6 +3,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from client.selectors.client_selectors import get_client_queryset
 from common.base.views_base import BaseUserViewSet
+from common.mixins import filter_by_org
 from client.api.serializers import ClientSerializer
 from common.search import TransliteratedSearchFilter
 
@@ -35,4 +36,7 @@ class ClientViewSet(BaseUserViewSet):
     search_fields = ['full_name', 'phone_number', 'passport', 'address']
 
     def get_queryset(self):
-        return get_client_queryset()
+        return filter_by_org(get_client_queryset(), self.request, field='user__organization')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

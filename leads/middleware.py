@@ -1,5 +1,6 @@
 from urllib.parse import parse_qs
 from channels.db import database_sync_to_async
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
@@ -12,7 +13,7 @@ def _get_user(token_str):
     try:
         token = AccessToken(token_str)
         return User.objects.get(id=token['user_id'])
-    except Exception:
+    except (TokenError, User.DoesNotExist, KeyError):
         return AnonymousUser()
 
 

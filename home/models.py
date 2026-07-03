@@ -70,7 +70,7 @@ class FloorPlan(models.Model):
 
     image = models.ImageField(upload_to='floor_plan/',
                               validators=[FileExtensionValidator(
-                                  allowed_extensions=['jpg', 'jpeg', 'png', 'svg', 'webp', 'heic', 'heif']),
+                                  allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']),
                                   check_image_size])
 
     def save(self, *args, **kwargs):

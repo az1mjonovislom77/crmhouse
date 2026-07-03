@@ -13,14 +13,20 @@ staticfiles/
 
 # Media and Static files
 media/
-static_collected/ # If you collect static files here
+# If you collect static files here
+static_collected/
 
 # Environment variables and sensitive data
 .env
-settings_local.py # Or any other file containing local/sensitive settings
+# Or any other file containing local/sensitive settings
+settings_local.py
+
+# Customer data exports (PII) — never commit
+data/excel_files/
 
 # Log files
 *.log
+logs/
 
 # IDE/OS specific files
 .DS_Store

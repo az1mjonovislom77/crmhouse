@@ -1,5 +1,4 @@
 import time
-
 import requests
 from django.conf import settings
 
@@ -18,7 +17,7 @@ class IssabelService:
                 'password': settings.ISSABEL_API_PASSWORD,
             },
             timeout=20,
-            verify=False,
+            verify=settings.PBX_VERIFY_SSL,
         )
         r.raise_for_status()
         data = r.json()
@@ -37,7 +36,7 @@ class IssabelService:
             headers={'Authorization': f'Bearer {self.access_token}'},
             stream=True,
             timeout=60,
-            verify=False,
+            verify=settings.PBX_VERIFY_SSL,
         )
         if r.status_code != 200:
             raise Exception(f'Recording fetch failed: {r.status_code}')

@@ -1,6 +1,8 @@
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from simple_history.models import HistoricalRecords
 from common.base.models_base import TimeStampedModel
+from common.services.image_service import check_image_size
 from config import settings
 
 
@@ -43,7 +45,14 @@ class Comment(TimeStampedModel):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='comments')
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='comments')
     text = models.TextField()
-    file = models.FileField(upload_to='comments/', null=True, blank=True)
+    file = models.FileField(
+        upload_to='comments/', null=True, blank=True,
+        validators=[
+            FileExtensionValidator(
+                allowed_extensions=['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt',
+                                    'jpg', 'jpeg', 'png', 'webp']),
+            check_image_size,
+        ])
 
     history = HistoricalRecords()
 

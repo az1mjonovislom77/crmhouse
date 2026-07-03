@@ -8,6 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from common.base.views_base import BaseUserViewSet
+from common.mixins import filter_by_org
 from leads.api.serializers import (LeadCreateSerializer, LeadDetailSerializer,
                                    LeadListSerializer, LeadUpdateSerializer,
                                    LeadNotificationSerializer)
@@ -39,9 +40,11 @@ class LeadViewSet(BaseUserViewSet):
     pagination_class = LeadPagination
 
     def get_queryset(self):
-        if self.action == 'retrieve':
-            return get_lead_detail_queryset()
-        return get_lead_list_queryset()
+        if self.action in ('retrieve', 'ai_suggest'):
+            qs = get_lead_detail_queryset()
+        else:
+            qs = get_lead_list_queryset()
+        return filter_by_org(qs, self.request, field='owner__organization')
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -56,9 +59,10 @@ class LeadViewSet(BaseUserViewSet):
         count_params = request.query_params.copy()
         count_params._mutable = True
         count_params.pop('status', None)
-        counts = get_status_counts(filter_leads(self.get_queryset(), count_params))
+        base_qs = self.get_queryset()
+        counts = get_status_counts(filter_leads(base_qs, count_params))
 
-        qs = filter_leads(self.get_queryset(), request.query_params)
+        qs = filter_leads(base_qs, request.query_params)
         page = self.paginate_queryset(qs)
         if page is not None:
             response = self.get_paginated_response(LeadListSerializer(page, many=True).data)
@@ -67,18 +71,20 @@ class LeadViewSet(BaseUserViewSet):
         return Response({'counts': counts, 'data': LeadListSerializer(qs, many=True).data})
 
     def create(self, request, *args, **kwargs):
-        serializer = LeadCreateSerializer(data=request.data)
+        serializer = LeadCreateSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         lead = LeadService.create_lead(serializer.validated_data, request.user)
-        return Response(LeadDetailSerializer(get_lead_detail_queryset().get(pk=lead.pk)).data,
+        return Response(LeadDetailSerializer(get_lead_detail_queryset().get(pk=lead.pk),
+                                             context={'request': request}).data,
                         status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = LeadUpdateSerializer(instance, data=request.data, partial=True)
+        serializer = LeadUpdateSerializer(instance, data=request.data, partial=True, context={'request': request})
         serializer.is_valid(raise_exception=True)
         lead = LeadService.update_lead(instance, serializer.validated_data, request.user)
-        return Response(LeadDetailSerializer(get_lead_detail_queryset().get(pk=lead.pk)).data)
+        return Response(LeadDetailSerializer(get_lead_detail_queryset().get(pk=lead.pk),
+                                             context={'request': request}).data)
 
     @extend_schema(
         request=None,
@@ -90,7 +96,7 @@ class LeadViewSet(BaseUserViewSet):
     )
     @action(detail=True, methods=['post'], url_path='ai-suggest')
     def ai_suggest(self, request, pk=None):
-        lead = get_lead_detail_queryset().get(pk=pk)
+        lead = self.get_object()
 
         events_text = '\n'.join([
             f"- [{e.at.strftime('%Y-%m-%d %H:%M')}] {e.type}"

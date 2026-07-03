@@ -11,6 +11,7 @@ class UserStatsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        stats = get_user_stats()
+        organization = None if request.user.is_staff else request.user.organization
+        stats = get_user_stats(organization=organization)
 
         return Response(stats, status=status.HTTP_200_OK)

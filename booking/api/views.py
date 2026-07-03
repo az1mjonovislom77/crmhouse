@@ -1,14 +1,18 @@
 from decimal import Decimal
+from django.db import transaction
 from django.db.models import Sum, Value, DecimalField, Prefetch, OuterRef, Subquery
 from django.db.models.functions import Coalesce
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import IsAuthenticated
 from booking.models import Booking, PaymentTerm, Payment
 from booking.api.serializers import BookingCreateSerializer, BookingGetSerializer, PaymentTermSerializer, \
     PaymentSerializer
 from booking.services.booking import delete_booking, create_booking
 from common.base.views_base import BaseUserViewSet
+from common.mixins import filter_by_org
+from common.permissions import IsAdminOrReadOnly
 from common.search import TransliteratedSearchFilter
 from home.models import HomeStatusHistory
 from home.services.home import HomeService
@@ -25,29 +29,30 @@ _client_status_history_qs = HomeStatusHistory.objects.select_related('home', 'ho
 class PaymentTermViewSet(BaseUserViewSet):
     queryset = PaymentTerm.objects.all()
     serializer_class = PaymentTermSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
 
 
 @extend_schema(tags=['Booking'],
                parameters=[OpenApiParameter(name='home_id', type=OpenApiTypes.INT, location=OpenApiParameter.QUERY)])
 class BookingViewSet(BaseUserViewSet):
-    queryset = Booking.objects.select_related(
-        'home', 'home__blocks', 'home__floor', 'home__renovation',
-        'company', 'payment_term', 'client',
-    ).prefetch_related(
-        Prefetch('client__bookings', queryset=_client_bookings_qs),
-        Prefetch('client__status_history', queryset=_client_status_history_qs),
-    ).annotate(
-        payments_total=Coalesce(Sum('payments__amount'), Value(Decimal('0')), output_field=DecimalField())
-    )
     filter_backends = [TransliteratedSearchFilter]
     search_fields = ['client__full_name', 'client__phone_number', 'booking_no', 'client__from_who']
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        qs = Booking.objects.select_related(
+            'home', 'home__blocks', 'home__floor', 'home__renovation',
+            'company', 'payment_term', 'client',
+        ).prefetch_related(
+            Prefetch('client__bookings', queryset=_client_bookings_qs),
+            Prefetch('client__status_history', queryset=_client_status_history_qs),
+        ).annotate(
+            payments_total=Coalesce(Sum('payments__amount'), Value(Decimal('0')), output_field=DecimalField())
+        )
+        qs = filter_by_org(qs, self.request, field='home__blocks__projects__user__organization')
         home_id = self.request.query_params.get('home_id')
         if home_id:
-            queryset = queryset.filter(home_id=home_id)
-        return queryset
+            qs = qs.filter(home_id=home_id)
+        return qs
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
@@ -86,33 +91,47 @@ class PaymentViewSet(BaseUserViewSet):
             .annotate(total=Sum('amount'))
             .values('total')
         )
-        queryset = Payment.objects.select_related('booking__home').annotate(
+        qs = Payment.objects.select_related('booking__home').annotate(
             booking_payments_total=Subquery(_booking_total_sq, output_field=DecimalField()))
+        qs = filter_by_org(qs, self.request, field='booking__home__blocks__projects__user__organization')
         booking_id = self.request.query_params.get('booking_id')
         if booking_id:
-            queryset = queryset.filter(booking_id=booking_id)
-        return queryset
+            qs = qs.filter(booking_id=booking_id)
+        return qs
 
     def perform_create(self, serializer):
         booking = serializer.validated_data['booking']
         amount = serializer.validated_data['amount']
-        remaining = booking.remaining_debt
 
-        if remaining <= 0:
-            raise ValidationError({"detail": "Qarz to'liq qoplangan, qo'shimcha to'lov qilib bo'lmaydi."})
-        if amount > remaining:
-            raise ValidationError(
-                {"amount": f"Kiritilgan summa qoldiq qarzdan ({remaining}) ko'p bo'lishi mumkin emas."})
-        serializer.save()
+        with transaction.atomic():
+            locked_booking = (Booking.objects
+                              .select_for_update()
+                              .select_related('home', 'home__renovation')
+                              .get(pk=booking.pk))
+            remaining = locked_booking.remaining_debt
+
+            if remaining <= 0:
+                raise ValidationError({"detail": "Qarz to'liq qoplangan, qo'shimcha to'lov qilib bo'lmaydi."})
+            if amount > remaining:
+                raise ValidationError(
+                    {"amount": f"Kiritilgan summa qoldiq qarzdan ({remaining}) ko'p bo'lishi mumkin emas."})
+            serializer.save()
 
     def perform_update(self, serializer):
         if 'amount' in serializer.validated_data:
             instance = serializer.instance
             new_amount = serializer.validated_data['amount']
             old_amount = instance.amount
-            booking = instance.booking
-            available = booking.remaining_debt + old_amount
-            if new_amount > available:
-                raise ValidationError(
-                    {"amount": f"Kiritilgan summa qoldiq qarzdan ({available}) ko'p bo'lishi mumkin emas."})
-        serializer.save()
+
+            with transaction.atomic():
+                locked_booking = (Booking.objects
+                                  .select_for_update()
+                                  .select_related('home', 'home__renovation')
+                                  .get(pk=instance.booking_id))
+                available = locked_booking.remaining_debt + old_amount
+                if new_amount > available:
+                    raise ValidationError(
+                        {"amount": f"Kiritilgan summa qoldiq qarzdan ({available}) ko'p bo'lishi mumkin emas."})
+                serializer.save()
+        else:
+            serializer.save()

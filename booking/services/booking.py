@@ -9,6 +9,13 @@ from home.services.home import HomeService
 def create_booking(data, user=None, home_status=None):
     data = data.copy()
 
+    home = data.get("home")
+    if home is not None:
+        home = Home.objects.select_for_update().get(pk=home.pk)
+        data["home"] = home
+        if Booking.objects.filter(home=home).exists():
+            raise ValidationError({"home": "Bu uy allaqachon band qilingan."})
+
     if not data.get("company"):
         company = Company.objects.only("id").order_by("id").first()
         if not company:
@@ -30,6 +37,11 @@ def create_booking(data, user=None, home_status=None):
 @transaction.atomic
 def delete_booking(booking_id, user=None):
     booking = Booking.objects.select_related('home', 'client').get(id=booking_id)
+
+    if booking.payments.exists():
+        raise ValidationError(
+            {"detail": "Bu bookingda to'lovlar mavjud. Avval to'lovlar bilan bog'liq masalani hal qiling."})
+
     home = Home.objects.select_for_update().get(id=booking.home_id)
     client = booking.client
 

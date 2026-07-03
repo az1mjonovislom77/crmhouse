@@ -90,12 +90,12 @@ To set up the project locally, follow these steps:
 
 8.  **Start Celery worker (in a separate terminal):**
     ```bash
-    celery -A crm_house worker -l info
+    celery -A config worker -l info
     ```
 
 9.  **Start Celery Beat (for scheduled tasks, in another separate terminal):**
     ```bash
-    celery -A crm_house beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    celery -A config beat -l info
     ```
 
 10. **Run the Telegram Bot (if applicable, in another separate terminal):**

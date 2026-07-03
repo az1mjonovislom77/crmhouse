@@ -6,10 +6,13 @@ def get_user_org(request):
 
 
 def filter_by_org(queryset, request, field='organization'):
-    """Filters queryset to the current user's organization. Staff sees everything."""
-    org = get_user_org(request)
-    if org is None:
+    """Filters queryset to the current user's organization. Staff sees everything.
+    Non-staff users without an organization see nothing (fail closed)."""
+    if request.user.is_staff:
         return queryset
+    org = getattr(request.user, 'organization', None)
+    if org is None:
+        return queryset.none()
     return queryset.filter(**{field: org})
 
 

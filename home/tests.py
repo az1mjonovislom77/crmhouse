@@ -15,7 +15,7 @@ from user.models import User
 
 def make_user(**kwargs):
     password = kwargs.pop("password", "pass123")
-    defaults = {"username": "hm_user", "full_name": "HM User", "role": User.UserRoles.SELLER}
+    defaults = {"username": "hm_user", "full_name": "HM User", "role": User.UserRoles.SELLER, "is_staff": True}
     defaults.update(kwargs)
     u = User(**defaults)
     u.set_password(password)

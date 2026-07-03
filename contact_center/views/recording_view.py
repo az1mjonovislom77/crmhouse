@@ -4,7 +4,6 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from contact_center.models import CallRecord
 from contact_center.services import IssabelService
 
@@ -22,9 +21,6 @@ class RecordingDownloadAPIView(APIView):
         service = IssabelService()
         upstream = service.stream_recording(cdr.recordingfile)
 
-        response = StreamingHttpResponse(
-            upstream.iter_content(chunk_size=8192),
-            content_type='audio/wav',
-        )
+        response = StreamingHttpResponse(upstream.iter_content(chunk_size=8192), content_type='audio/wav')
         response['Content-Disposition'] = f'attachment; filename="{cdr.recordingfile}"'
         return response

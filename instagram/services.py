@@ -1,5 +1,9 @@
+import logging
+
 import requests
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 
 class InstagramAPIError(Exception):
@@ -14,12 +18,15 @@ class InstagramService:
     def _request(self, method, endpoint, params=None, data=None):
         url = f"{self.base_url}/{endpoint}"
 
-        params = params or {}
-        params["access_token"] = self.token
-        response = requests.request(method=method, url=url, params=params, json=data, timeout=10)
+        # Token URL parametri emas, header orqali — access loglarga tushmasin
+        headers = {"Authorization": f"Bearer {self.token}"}
+        response = requests.request(method=method, url=url, params=params, json=data,
+                                    headers=headers, timeout=10)
 
         if response.status_code != 200:
-            raise InstagramAPIError(response.text)
+            # Meta'ning xom xato tanasi mijozga qaytarilmaydi — faqat logga yoziladi
+            logger.error("Instagram API xatosi [%s %s]: %s", method, endpoint, response.text)
+            raise InstagramAPIError("Instagram API bilan ishlashda xato yuz berdi")
 
         return response.json()
 

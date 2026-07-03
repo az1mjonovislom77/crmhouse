@@ -1,27 +1,32 @@
+import logging
 from typing import Dict, List
-
 import requests
 from django.conf import settings
 from django.utils.dateparse import parse_datetime
 from rest_framework.exceptions import APIException
-
 from contact_center.models import CallRecord
 from contact_center.services.dedub_service import CDRDedupService
 
+logger = logging.getLogger(__name__)
+
 
 class ExternalAPIService:
-    BASE_URL = 'https://sip1.createsoft.uz/pbxapi'
     AUTH_ENDPOINT = '/authenticate'
     CDR_ENDPOINT = '/cdr'
+    TIMEOUT = 30
+
+    @classmethod
+    def _base_url(cls):
+        return settings.PBX_BASE_URL or 'https://sip1.createsoft.uz/pbxapi'
 
     @classmethod
     def get_access_token(cls):
-        url = cls.BASE_URL + cls.AUTH_ENDPOINT
+        url = cls._base_url() + cls.AUTH_ENDPOINT
         data = {
             'user': settings.SIP_API_USER,
             'password': settings.SIP_API_PASSWORD,
         }
-        response = requests.post(url, data=data, verify=False)
+        response = requests.post(url, data=data, timeout=cls.TIMEOUT, verify=settings.PBX_VERIFY_SSL)
         if response.status_code != 200:
             raise APIException(f'Token olishda xato: {response.text}')
         return response.json().get('access_token')
@@ -29,12 +34,19 @@ class ExternalAPIService:
     @classmethod
     def fetch_cdr_data(cls, params: dict):
         token = cls.get_access_token()
-        url = cls.BASE_URL + cls.CDR_ENDPOINT
+        url = cls._base_url() + cls.CDR_ENDPOINT
         headers = {'Authorization': f'Bearer {token}'}
-        response = requests.get(url, headers=headers, params=params, verify=False)
-        if response.status_code != 200 or response.json().get('status') != 'success':
+        response = requests.get(url, headers=headers, params=params, timeout=cls.TIMEOUT,
+                                verify=settings.PBX_VERIFY_SSL)
+        if response.status_code != 200:
             raise APIException(f'CDR olishda xato: {response.text}')
-        return response.json().get('results', [])
+        try:
+            payload = response.json()
+        except ValueError:
+            raise APIException('CDR olishda xato: javob JSON emas')
+        if payload.get('status') != 'success':
+            raise APIException(f'CDR olishda xato: {response.text}')
+        return payload.get('results', [])
 
 
 class CDRService:
@@ -48,19 +60,27 @@ class CDRService:
         seen_sessions = set()
 
         for item in data:
-            if CDRDedupService.should_skip(item, seen_sessions):
-                continue
+            try:
+                if CDRDedupService.should_skip(item, seen_sessions):
+                    continue
 
-            calldate = parse_datetime(item['calldate'])
-            record = CallRecord(
-                calldate=calldate,
-                src=item.get('src'),
-                uniqueid=item['uniqueid'],
-                disposition=item.get('disposition'),
-                duration=int(item.get('duration', 0)),
-                billsec=int(item.get('billsec', 0)),
-                recordingfile=item.get('recordingfile'),
-            )
+                calldate = parse_datetime(item['calldate'])
+                if calldate is None:
+                    logger.warning("CDR yozuvi o'tkazib yuborildi: calldate yaroqsiz (%r)", item.get('calldate'))
+                    continue
+
+                record = CallRecord(
+                    calldate=calldate,
+                    src=item.get('src'),
+                    uniqueid=item['uniqueid'],
+                    disposition=item.get('disposition'),
+                    duration=int(item.get('duration') or 0),
+                    billsec=int(item.get('billsec') or 0),
+                    recordingfile=item.get('recordingfile'),
+                )
+            except (KeyError, TypeError, ValueError) as e:
+                logger.warning("CDR yozuvi o'tkazib yuborildi: %s | %r", e, item)
+                continue
             records_to_create.append(record)
             records_map.append((item['uniqueid'], item.get('recordingfile')))
 
@@ -73,10 +93,8 @@ class CDRService:
         from contact_center.tasks import download_recording_task
 
         new_records = CallRecord.objects.filter(
-            uniqueid__in=[uid for uid, _ in records_map],
-            audio_downloaded=False,
-            recordingfile__isnull=False,
-        )
+            uniqueid__in=[uid for uid, _ in records_map], audio_downloaded=False, recordingfile__isnull=False,
+        ).exclude(recordingfile='')
         for record in new_records:
             download_recording_task.delay(record.id)
 
