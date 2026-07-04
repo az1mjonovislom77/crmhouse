@@ -18,6 +18,7 @@ _log = logging.getLogger("api.requests")
 class JsonFormatter(logging.Formatter):
     def format(self, record):
         record.message = record.getMessage()
+
         data = {
             "time": self.formatTime(record, self.datefmt),
             "level": record.levelname,
