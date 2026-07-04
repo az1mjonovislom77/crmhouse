@@ -1,21 +1,15 @@
 import logging
-import re
 from typing import Dict, List, Optional
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils.dateparse import parse_datetime
 from rest_framework.exceptions import APIException
+from common.utils import normalize_phone
 from contact_center.models import CallRecord
 from contact_center.services.dedub_service import CDRDedupService
 
 logger = logging.getLogger(__name__)
-
-
-def normalize_phone(value: Optional[str]) -> str:
-    if not value:
-        return ''
-    return re.sub(r'\D', '', str(value))
 
 
 def build_user_phone_map() -> Dict[str, int]:

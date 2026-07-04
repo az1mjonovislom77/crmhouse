@@ -1,11 +1,14 @@
 from django.db import models
 from django.conf import settings
 
+STATUS_NEW = 'yangi_murojaat'
+STATUS_SUCCESS = 'muvaffaqiyatli'
+
 SALES_STATUSES = {
-    'yangi_murojaat': ['murojaat_qildi', 'kordi_eshitdi'],
+    STATUS_NEW: ['murojaat_qildi', 'kordi_eshitdi'],
     'uchrashuv': ['uchrashuv_belgilandi', 'keldi'],
     'jarayon': ['band_qildi', 'shartnoma_qildi', 'notarius'],
-    'muvaffaqiyatli': ['uy_oldi'],
+    STATUS_SUCCESS: ['uy_oldi'],
     'bekor_qilingan': ['atkaz_qildi', 'nohaq_haqorat'],
 }
 
@@ -22,7 +25,7 @@ BOARD_STATUSES = {
 }
 
 BOARD_FIRST_STATUS = {
-    'sales': 'yangi_murojaat',
+    'sales': STATUS_NEW,
     'cold': 'yangi',
 }
 

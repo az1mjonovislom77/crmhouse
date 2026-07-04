@@ -4,9 +4,11 @@ from django.db import migrations
 
 
 def normalize_phone(value):
+    # Same rule as common.utils.normalize_phone (kept inline so the migration stays self-contained).
     if not value:
         return ''
-    return re.sub(r'\D', '', str(value))
+    digits = re.sub(r'\D', '', str(value))
+    return digits[-9:] if len(digits) >= 9 else digits
 
 
 def backfill_users(apps, schema_editor):

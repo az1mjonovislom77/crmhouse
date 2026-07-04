@@ -1,24 +1,21 @@
-from leads.models import Lead
+from django.db.models import Count, Q
 
-SUCCESS_STATUS = "muvaffaqiyatli"
-
-
-def get_total_success_leads(date_from=None, date_to=None):
-    qs = Lead.objects.filter(board=Lead.BOARD_SALES, status=SUCCESS_STATUS)
-
-    if date_from:
-        qs = qs.filter(created_at__date__gte=date_from)
-    if date_to:
-        qs = qs.filter(created_at__date__lte=date_to)
-    return qs
+from common.utils import date_range_q
+from leads.models import Lead, STATUS_NEW, STATUS_SUCCESS
 
 
-def get_total_meetings(date_from=None, date_to=None):
-    qs = Lead.objects.filter(meeting_at__isnull=False)
+def get_leads():
+    return Lead.objects.all()
 
-    if date_from:
-        qs = qs.filter(meeting_at__date__gte=date_from)
-    if date_to:
-        qs = qs.filter(meeting_at__date__lte=date_to)
-    return qs
 
+def get_lead_stats(qs, date_from=None, date_to=None):
+    """One aggregate query returning total/new/success lead counts and meetings."""
+    created_range = date_range_q('created_at', date_from, date_to)
+    meeting_range = date_range_q('meeting_at', date_from, date_to)
+
+    return qs.aggregate(
+        total=Count('id', filter=created_range or None),
+        new=Count('id', filter=(created_range & Q(board=Lead.BOARD_SALES, status=STATUS_NEW)) or None),
+        success=Count('id', filter=(created_range & Q(board=Lead.BOARD_SALES, status=STATUS_SUCCESS)) or None),
+        meetings=Count('id', filter=(meeting_range & Q(meeting_at__isnull=False)) or None),
+    )

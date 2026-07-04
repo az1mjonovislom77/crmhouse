@@ -9,7 +9,7 @@ from common.mixins import filter_by_org
 from stats.selectors.home_selectors import get_sold_events
 from stats.selectors.booking_selectors import get_total_contract, get_total_contract_price, get_total_payments, \
     get_total_payments_price, get_total_unpaid
-from stats.selectors.lead_selectors import get_total_success_leads, get_total_meetings
+from stats.selectors.lead_selectors import get_leads, get_lead_stats
 from stats.selectors.call_selectors import get_total_calls
 
 
@@ -30,6 +30,8 @@ class StatsAPIView(APIView):
             "success_leads": serializers.IntegerField(),
             "meetings": serializers.IntegerField(),
             "calls": serializers.IntegerField(),
+            "new_clients": serializers.IntegerField(),
+            "leads_count": serializers.IntegerField(),
         }),
     )
     def get(self, request):
@@ -50,27 +52,24 @@ class StatsAPIView(APIView):
             field='booking__home__blocks__projects__user__organization',
         )
 
-        success_leads_qs = filter_by_org(
-            get_total_success_leads(date_from, date_to), request,
-            field='owner__organization',
-        )
-        meetings_qs = filter_by_org(
-            get_total_meetings(date_from, date_to), request,
-            field='owner__organization',
-        )
+        lead_qs = filter_by_org(get_leads(), request, field='owner__organization')
+        lead_stats = get_lead_stats(lead_qs, date_from, date_to)
+
         calls_qs = filter_by_org(
             get_total_calls(date_from, date_to), request,
             field='user__organization',
         )
 
         return Response({
-            "sold_homes": sold_qs.count(),
+            "sold_homes": sold_qs.values('home').distinct().count(),
             "total_contract": get_total_contract_price(booking_qs),
             "collected": get_total_payments_price(payment_qs),
             "debt": get_total_unpaid(booking_qs),
-            "success_leads": success_leads_qs.count(),
-            "meetings": meetings_qs.count(),
+            "success_leads": lead_stats['success'],
+            "meetings": lead_stats['meetings'],
             "calls": calls_qs.count(),
+            "new_clients": lead_stats['new'],
+            "leads_count": lead_stats['total'],
         })
 
     def _parse_date_param(self, name):

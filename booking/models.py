@@ -73,11 +73,11 @@ class Payment(models.Model):
         upload_to='payments/', null=True, blank=True,
         validators=[FileExtensionValidator(allowed_extensions=['pdf', 'jpg', 'jpeg', 'png', 'webp'])]
     )
-    payment_date = models.DateField(default=timezone.now)
+    payment_date = models.DateField(default=timezone.localdate, null=True, blank=True)
     payment_data = models.TextField(null=True, blank=True)
     payment_number = models.CharField(max_length=200, null=True, blank=True)
     note = models.TextField(null=True, blank=True)
-    created_at = models.DateTimeField(default=timezone.localdate)
+    created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return f"Payment {self.id} - {self.amount}"
