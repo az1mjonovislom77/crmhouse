@@ -8,7 +8,6 @@ ALLOWED_HOSTS = [
     if s.strip()
 ]
 
-# HTTPS hardening (nginx TLS termination ortida ishlaydi)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True

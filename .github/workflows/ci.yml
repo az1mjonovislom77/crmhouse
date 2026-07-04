@@ -10,6 +10,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    env:
+      # config/settings/__init__.py fail-secure tarzda production'ni yuklaydi;
+      # CI'da local sozlamalar ishlatilishi uchun ENVIRONMENT majburiy
+      ENVIRONMENT: "local"
+      SECRET_KEY: "dummy-secret-key-for-ci"
+      INSTAGRAM_ACCESS_TOKEN: "dummy-token"
+      IG_USER_ID: "dummy-ig-id"
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -25,15 +33,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Django system check
-        env:
-          SECRET_KEY: "dummy-secret-key-for-ci"
-          INSTAGRAM_ACCESS_TOKEN: "dummy-token"
-          IG_USER_ID: "dummy-ig-id"
         run: python manage.py check --settings=config.settings.local
 
       - name: Run tests
-        env:
-          SECRET_KEY: "dummy-secret-key-for-ci"
-          INSTAGRAM_ACCESS_TOKEN: "dummy-token"
-          IG_USER_ID: "dummy-ig-id"
         run: python manage.py test --settings=config.settings.local --verbosity=2
