@@ -59,10 +59,13 @@ class HomeStatusHistory(models.Model):
     from_status = models.CharField(max_length=30, null=True, blank=True)
     to_status = models.CharField(max_length=30)
     changed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
-    changed_at = models.DateTimeField(auto_now_add=True)
+    changed_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
         ordering = ["-changed_at"]
+        indexes = [
+            models.Index(fields=['to_status', 'changed_at']),
+        ]
 
 
 class FloorPlan(models.Model):

@@ -90,7 +90,16 @@ def _write_log(payload):
     try:
         from user.models import RequestLog
         RequestLog.objects.create(**payload)
+        _trim_logs(RequestLog)
     except Exception:
         _log.exception("RequestLog DB write failed")
     finally:
         connection.close()
+
+
+def _trim_logs(RequestLog):
+    from django.conf import settings
+    max_logs = getattr(settings, 'REQUEST_LOG_MAX', 10_000)
+    threshold = RequestLog.objects.order_by('-id').values_list('id', flat=True)[max_logs - 1:max_logs]
+    if threshold:
+        RequestLog.objects.filter(id__lt=threshold[0]).delete()

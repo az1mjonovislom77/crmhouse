@@ -408,3 +408,32 @@ class UserStatsViewTest(APITestCase):
         self.assertGreaterEqual(resp.data["total_users"], 0)
         self.assertGreaterEqual(resp.data["total_salers"], 0)
         self.assertGreaterEqual(resp.data["total_admins"], 0)
+
+
+class RequestLogTrimTest(TestCase):
+    @staticmethod
+    def make_log():
+        from user.models import RequestLog
+        return RequestLog.objects.create(method='GET', path='/x/', status_code=200, duration_ms=1)
+
+    @override_settings(REQUEST_LOG_MAX=5)
+    def test_trim_keeps_only_latest_max_logs(self):
+        from common.logging import _trim_logs
+        from user.models import RequestLog
+
+        logs = [self.make_log() for _ in range(7)]
+        _trim_logs(RequestLog)
+        self.assertEqual(RequestLog.objects.count(), 5)
+        # eng eski 2 tasi o'chgan, eng yangi 5 tasi qolgan
+        remaining_ids = set(RequestLog.objects.values_list('id', flat=True))
+        self.assertEqual(remaining_ids, {log.id for log in logs[2:]})
+
+    @override_settings(REQUEST_LOG_MAX=5)
+    def test_trim_noop_when_below_limit(self):
+        from common.logging import _trim_logs
+        from user.models import RequestLog
+
+        for _ in range(3):
+            self.make_log()
+        _trim_logs(RequestLog)
+        self.assertEqual(RequestLog.objects.count(), 3)
