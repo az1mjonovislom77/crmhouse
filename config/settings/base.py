@@ -31,6 +31,7 @@ LOCAL_APPS = [
     'tasks',
     'leads',
     'contact_center',
+    'stats',
 ]
 
 THIRD_PARTY_APPS = [

@@ -1,5 +1,4 @@
 import logging
-
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError
 from rest_framework import status
@@ -11,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 def custom_exception_handler(exc, context):
-    # Django'ning ValidationError'i DRF'nikiga o'girilmasa 500 bo'lib ketadi
     if isinstance(exc, DjangoValidationError):
         detail = exc.message_dict if hasattr(exc, 'message_dict') else exc.messages
         exc = DRFValidationError(detail=detail)

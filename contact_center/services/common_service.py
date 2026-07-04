@@ -1,13 +1,40 @@
 import logging
-from typing import Dict, List
+import re
+from typing import Dict, List, Optional
 import requests
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.utils.dateparse import parse_datetime
 from rest_framework.exceptions import APIException
 from contact_center.models import CallRecord
 from contact_center.services.dedub_service import CDRDedupService
 
 logger = logging.getLogger(__name__)
+
+
+def normalize_phone(value: Optional[str]) -> str:
+    if not value:
+        return ''
+    return re.sub(r'\D', '', str(value))
+
+
+def build_user_phone_map() -> Dict[str, int]:
+    User = get_user_model()
+    phone_map = {}
+    for user_id, phone in User.objects.exclude(phone_number__isnull=True).exclude(
+            phone_number='').values_list('id', 'phone_number'):
+        digits = normalize_phone(phone)
+        if digits:
+            phone_map[digits] = user_id
+    return phone_map
+
+
+def match_user_id(phone_map: Dict[str, int], *numbers: Optional[str]) -> Optional[int]:
+    for number in numbers:
+        user_id = phone_map.get(normalize_phone(number))
+        if user_id:
+            return user_id
+    return None
 
 
 class ExternalAPIService:
@@ -55,6 +82,7 @@ class CDRService:
     def fetch_and_save_cdr(params: Dict[str, str]) -> int:
         data: List[Dict] = ExternalAPIService.fetch_cdr_data(params)
 
+        phone_map = build_user_phone_map()
         records_to_create = []
         records_map = []
         seen_sessions = set()
@@ -72,6 +100,8 @@ class CDRService:
                 record = CallRecord(
                     calldate=calldate,
                     src=item.get('src'),
+                    dst=item.get('dst'),
+                    user_id=match_user_id(phone_map, item.get('src'), item.get('dst')),
                     uniqueid=item['uniqueid'],
                     disposition=item.get('disposition'),
                     duration=int(item.get('duration') or 0),
