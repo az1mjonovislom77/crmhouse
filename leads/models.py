@@ -21,7 +21,7 @@ COLD_STATUSES = {
 
 BOARD_STATUSES = {
     'sales': SALES_STATUSES,
-    'cold': COLD_STATUSES,
+    'cold': COLD_STATUSES
 }
 
 BOARD_FIRST_STATUS = {
