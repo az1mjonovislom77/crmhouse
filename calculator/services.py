@@ -96,6 +96,5 @@ def compute_booking_snapshot(*, home, payment_type, guarantee_id=None, guarantee
     )
     return {
         'price_per_m2': Decimal(str(price_per_m2)),
-        'guarantee_percent': guarantee.percent,
-        **result,
+        'guarantee_percent': guarantee.percent, **result,
     }
