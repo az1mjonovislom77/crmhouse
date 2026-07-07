@@ -70,7 +70,7 @@ class ClientSelectorTest(TestCase):
         self.home = make_home()
         self.company = make_company()
         self.booking = Booking.objects.create(
-            home=self.home, client=self.client_obj, company=self.company, cash_payment=0
+            home=self.home, client=self.client_obj, company=self.company
         )
         HomeStatusHistory.objects.create(
             home=self.home,

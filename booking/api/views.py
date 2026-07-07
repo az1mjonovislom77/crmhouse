@@ -5,31 +5,21 @@ from django.db.models.functions import Coalesce
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import IsAuthenticated
-from booking.models import Booking, PaymentTerm, Payment
-from booking.api.serializers import BookingCreateSerializer, BookingGetSerializer, PaymentTermSerializer, \
-    PaymentSerializer
+from booking.models import Booking, Payment
+from booking.api.serializers import BookingCreateSerializer, BookingGetSerializer, PaymentSerializer
 from booking.services.booking import delete_booking, create_booking
 from common.base.views_base import BaseUserViewSet
 from common.mixins import filter_by_org
-from common.permissions import IsAdminOrReadOnly
 from common.search import TransliteratedSearchFilter
 from home.models import HomeStatusHistory
 from home.services.home import HomeService
 
-_client_bookings_qs = (Booking.objects.select_related('home', 'home__renovation', 'payment_term')
+_client_bookings_qs = (Booking.objects.select_related('home', 'home__renovation')
 .annotate(
     payments_total=Coalesce(Sum('payments__amount'), Value(Decimal('0')), output_field=DecimalField())))
 
 _client_status_history_qs = HomeStatusHistory.objects.select_related('home', 'home__blocks', 'home__floor',
                                                                      'changed_by')
-
-
-@extend_schema(tags=['PaymentTerm'])
-class PaymentTermViewSet(BaseUserViewSet):
-    queryset = PaymentTerm.objects.all()
-    serializer_class = PaymentTermSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
 
 
 @extend_schema(tags=['Booking'],
@@ -41,7 +31,7 @@ class BookingViewSet(BaseUserViewSet):
     def get_queryset(self):
         qs = Booking.objects.select_related(
             'home', 'home__blocks', 'home__floor', 'home__renovation',
-            'company', 'payment_term', 'client',
+            'company', 'client',
         ).prefetch_related(
             Prefetch('client__bookings', queryset=_client_bookings_qs),
             Prefetch('client__status_history', queryset=_client_status_history_qs),

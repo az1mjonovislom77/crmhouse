@@ -3,7 +3,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from booking.models import Booking, Company, PaymentTerm
+from booking.models import Booking, Company
 from client.models import Client
 from home.models import Home, HomeStatusHistory, FloorPlan
 from home.selectors.history_selectors import get_home_history

@@ -15,11 +15,6 @@ class HomeGetSerializer(serializers.ModelSerializer):
     floor_number = serializers.SerializerMethodField()
     total_price = serializers.DecimalField(max_digits=50, decimal_places=2, read_only=True,
                                            source='total_price_annotated')
-    initial_payment = serializers.DecimalField(max_digits=50, decimal_places=2, read_only=True,
-                                               source='initial_payment_annotated')
-
-    monthly_payment = serializers.DecimalField(max_digits=50, decimal_places=2, read_only=True,
-                                               source='monthly_payment_annotated')
 
     class Meta:
         model = Home
@@ -72,11 +67,6 @@ class HomeDetailGetSerializer(serializers.ModelSerializer):
     floor_number = serializers.SerializerMethodField()
     total_price = serializers.DecimalField(max_digits=50, decimal_places=2, read_only=True,
                                            source='total_price_annotated')
-    initial_payment = serializers.DecimalField(max_digits=50, decimal_places=2, read_only=True,
-                                               source='initial_payment_annotated')
-
-    monthly_payment = serializers.DecimalField(max_digits=50, decimal_places=2, read_only=True,
-                                               source='monthly_payment_annotated')
 
     class Meta:
         model = Home

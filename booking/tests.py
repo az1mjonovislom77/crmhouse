@@ -1,9 +1,10 @@
+from decimal import Decimal
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
-from booking.models import Booking, Company, PaymentTerm
+from booking.models import Booking, Company
 from booking.services.booking import create_booking, delete_booking
 from client.models import Client
 from home.models import Home, HomeStatusHistory
@@ -48,31 +49,14 @@ def make_company(**kwargs):
     return Company.objects.create(**defaults)
 
 
-def make_payment_term(**kwargs):
-    defaults = {"months": 12}
-    defaults.update(kwargs)
-    return PaymentTerm.objects.create(**defaults)
-
-
 def make_booking(**kwargs):
     defaults = {
         "home": make_home(),
         "client": make_client(),
         "company": make_company(),
-        "cash_payment": 0,
     }
     defaults.update(kwargs)
     return Booking.objects.create(**defaults)
-
-
-class PaymentTermModelTest(TestCase):
-    def test_create_payment_term(self):
-        pt = PaymentTerm.objects.create(months=24)
-        self.assertEqual(pt.months, 24)
-
-    def test_str(self):
-        pt = PaymentTerm.objects.create(months=6)
-        self.assertIn("6", str(pt))
 
 
 class CompanyModelTest(TestCase):
@@ -93,26 +77,23 @@ class BookingModelTest(TestCase):
 
     def test_create_booking(self):
         booking = Booking.objects.create(
-            home=self.home, client=self.client_obj, company=self.company, cash_payment=5000
+            home=self.home, client=self.client_obj, company=self.company
         )
-        self.assertEqual(booking.cash_payment, 5000)
+        self.assertIsNotNone(booking.pk)
         self.assertEqual(booking.home, self.home)
 
     def test_booking_str_is_id(self):
         booking = Booking.objects.create(
-            home=self.home, client=self.client_obj, company=self.company, cash_payment=0
-        )
+            home=self.home, client=self.client_obj, company=self.company        )
         self.assertEqual(str(booking), str(booking.id))
 
     def test_one_home_one_booking_constraint(self):
-        Booking.objects.create(home=self.home, client=self.client_obj, company=self.company, cash_payment=0)
+        Booking.objects.create(home=self.home, client=self.client_obj, company=self.company)
         with self.assertRaises(Exception):
             Booking.objects.create(
                 home=self.home,
                 client=make_client(phone_number="+998911234567"),
-                company=self.company,
-                cash_payment=0,
-            )
+                company=self.company,            )
 
 
 class CreateBookingServiceTest(TestCase):
@@ -124,7 +105,7 @@ class CreateBookingServiceTest(TestCase):
 
     def test_create_booking_basic(self):
         booking = create_booking(
-            data={"home": self.home, "client": self.client_obj, "company": self.company, "cash_payment": 0},
+            data={"home": self.home, "client": self.client_obj, "company": self.company},
             user=self.user,
         )
         self.assertIsNotNone(booking.pk)
@@ -132,7 +113,7 @@ class CreateBookingServiceTest(TestCase):
 
     def test_create_booking_uses_first_company_when_not_provided(self):
         booking = create_booking(
-            data={"home": self.home, "client": self.client_obj, "cash_payment": 0},
+            data={"home": self.home, "client": self.client_obj},
             user=self.user,
         )
         self.assertEqual(booking.company, self.company)
@@ -141,13 +122,13 @@ class CreateBookingServiceTest(TestCase):
         Company.objects.all().delete()
         with self.assertRaises(ValidationError):
             create_booking(
-                data={"home": self.home, "client": self.client_obj, "cash_payment": 0},
+                data={"home": self.home, "client": self.client_obj},
                 user=self.user,
             )
 
     def test_create_booking_changes_home_status(self):
         create_booking(
-            data={"home": self.home, "client": self.client_obj, "company": self.company, "cash_payment": 0},
+            data={"home": self.home, "client": self.client_obj, "company": self.company},
             user=self.user,
             home_status=Home.HomeStatus.RESERVED,
         )
@@ -156,7 +137,7 @@ class CreateBookingServiceTest(TestCase):
 
     def test_create_booking_creates_status_history(self):
         create_booking(
-            data={"home": self.home, "client": self.client_obj, "company": self.company, "cash_payment": 0},
+            data={"home": self.home, "client": self.client_obj, "company": self.company},
             user=self.user,
             home_status=Home.HomeStatus.SOLD,
         )
@@ -165,7 +146,7 @@ class CreateBookingServiceTest(TestCase):
     def test_create_booking_without_home_status_keeps_status(self):
         original = self.home.home_status
         create_booking(
-            data={"home": self.home, "client": self.client_obj, "company": self.company, "cash_payment": 0},
+            data={"home": self.home, "client": self.client_obj, "company": self.company},
             user=self.user,
         )
         self.home.refresh_from_db()
@@ -173,7 +154,7 @@ class CreateBookingServiceTest(TestCase):
 
     def test_create_booking_records_changed_by(self):
         create_booking(
-            data={"home": self.home, "client": self.client_obj, "company": self.company, "cash_payment": 0},
+            data={"home": self.home, "client": self.client_obj, "company": self.company},
             user=self.user,
             home_status=Home.HomeStatus.RESERVED,
         )
@@ -188,8 +169,7 @@ class DeleteBookingServiceTest(TestCase):
         self.client_obj = make_client()
         self.company = make_company()
         self.booking = Booking.objects.create(
-            home=self.home, client=self.client_obj, company=self.company, cash_payment=0
-        )
+            home=self.home, client=self.client_obj, company=self.company        )
 
     def test_delete_booking_removes_record(self):
         bk_id = self.booking.id
@@ -213,42 +193,6 @@ class DeleteBookingServiceTest(TestCase):
         self.assertEqual(history.changed_by, self.user)
 
 
-class PaymentTermViewSetTest(APITestCase):
-    def setUp(self):
-        self.user = make_user(username="pt_api")
-        self.client.force_authenticate(user=self.user)
-        self.url = reverse("payment-term-list")
-
-    def test_list_returns_200(self):
-        resp = self.client.get(self.url)
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-
-    def test_create_payment_term(self):
-        resp = self.client.post(self.url, {"months": 24})
-        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(PaymentTerm.objects.filter(months=24).exists())
-
-    def test_unauthenticated_returns_401(self):
-        self.client.logout()
-        resp = self.client.get(self.url)
-        self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_update_payment_term(self):
-        pt = PaymentTerm.objects.create(months=6)
-        url = reverse("payment-term-detail", args=[pt.id])
-        resp = self.client.put(url, {"months": 9})
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        pt.refresh_from_db()
-        self.assertEqual(pt.months, 9)
-
-    def test_delete_payment_term(self):
-        pt = PaymentTerm.objects.create(months=3)
-        url = reverse("payment-term-detail", args=[pt.id])
-        resp = self.client.delete(url)
-        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(PaymentTerm.objects.filter(id=pt.id).exists())
-
-
 class BookingViewSetTest(APITestCase):
     def setUp(self):
         self.user = make_user(username="bk_api")
@@ -263,14 +207,12 @@ class BookingViewSetTest(APITestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
     def test_filter_by_home_id(self):
-        Booking.objects.create(home=self.home, client=self.client_obj, company=self.company, cash_payment=0)
+        Booking.objects.create(home=self.home, client=self.client_obj, company=self.company)
         other_home = make_home(home_number=99)
         Booking.objects.create(
             home=other_home,
             client=make_client(phone_number="+998991234568"),
-            company=self.company,
-            cash_payment=0,
-        )
+            company=self.company,        )
         resp = self.client.get(self.list_url, {"home_id": self.home.id})
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(len(resp.data), 1)
@@ -280,17 +222,47 @@ class BookingViewSetTest(APITestCase):
             "home": self.home.id,
             "client": self.client_obj.id,
             "company": self.company.id,
-            "cash_payment": "1000.00",
             "home_status": Home.HomeStatus.RESERVED,
         }
         resp = self.client.post(self.list_url, data)
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
         self.assertTrue(Booking.objects.filter(home=self.home).exists())
 
+    def test_create_booking_computes_calculator_on_backend(self):
+        from calculator.models import GuaranteeOption, SubsidyOption
+        self.home.area = Decimal("49.35")
+        self.home.price_per_sqm = Decimal("7700000")
+        self.home.save()
+        guarantee = GuaranteeOption.objects.get(key="kafillik")   # 15%
+        subsidy = SubsidyOption.objects.get(key="oddiy")          # 30 mln
+        data = {
+            "home": self.home.id,
+            "client": self.client_obj.id,
+            "company": self.company.id,
+            "home_status": Home.HomeStatus.RESERVED,
+            "payment_type": Booking.PaymentType.BOSH_TOLOVLI,
+            "guarantee_id": guarantee.id,
+            "subsidy_id": subsidy.id,
+            "credit_years": 20,
+            # mijoz natija yuborsa ham — e'tiborsiz qoldiriladi:
+            "contract_price": "1",
+            "credit_amount": "1",
+        }
+        resp = self.client.post(self.list_url, data)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        booking = Booking.objects.get(home=self.home)
+        self.assertEqual(booking.contract_price, Decimal("379995000"))
+        self.assertEqual(booking.client_payment, Decimal("27000000"))
+        self.assertEqual(booking.credit_amount, Decimal("322995000"))
+        self.assertEqual(booking.subsidy_amount, Decimal("30000000"))
+        self.assertEqual(booking.guarantee_percent, Decimal("15.00"))
+        self.assertEqual(booking.monthly_full, Decimal("4737692"))
+        self.assertEqual(booking.monthly_stage1, Decimal("4016510"))
+        self.assertEqual(booking.gov_monthly, Decimal("721182"))
+
     def test_delete_booking_via_api(self):
         booking = Booking.objects.create(
-            home=self.home, client=self.client_obj, company=self.company, cash_payment=0
-        )
+            home=self.home, client=self.client_obj, company=self.company        )
         url = reverse("booking-detail", args=[booking.id])
         resp = self.client.delete(url)
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
@@ -298,8 +270,7 @@ class BookingViewSetTest(APITestCase):
 
     def test_retrieve_booking(self):
         booking = Booking.objects.create(
-            home=self.home, client=self.client_obj, company=self.company, cash_payment=0
-        )
+            home=self.home, client=self.client_obj, company=self.company        )
         url = reverse("booking-detail", args=[booking.id])
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
@@ -316,7 +287,7 @@ class PaymentViewSetTest(APITestCase):
         self.user = make_user(username='pay_api')
         self.client.force_authenticate(user=self.user)
         self.home = make_home(price_per_sqm=1000, area=50)
-        self.booking = make_booking(home=self.home, cash_payment=0)
+        self.booking = make_booking(home=self.home)
         self.list_url = reverse('payment-list')
 
     def _create_payment(self, amount):
@@ -392,15 +363,19 @@ class PaymentViewSetTest(APITestCase):
         self.booking.refresh_from_db()
         self.assertEqual(self.booking.remaining_debt, total)
 
+    def test_remaining_debt_includes_renovation(self):
+        from booking.models import Booking
+        from projects.models.project_models import Renovation
+        ren = Renovation.objects.create(title="Lux", price=Decimal("7000"))
+        home = make_home(home_number=321, price_per_sqm=1000, area=50, renovation=ren)
+        booking = Booking.objects.create(
+            home=home, client=make_client(phone_number="+998900000321"), company=make_company())
+        # total_price = 50*1000 + 7000(ta'mir) = 57000; to'lovsiz remaining = 57000
+        self.assertEqual(booking.total_price, Decimal("57000"))
+        self.assertEqual(booking.remaining_debt, Decimal("57000"))
+
     def test_cannot_pay_when_debt_fully_covered(self):
         total = int(self.booking.total_price)
         self._create_payment(total)
         resp = self._create_payment(1)
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_down_payment_zero_handled_correctly(self):
-        from booking.models import Booking
-        self.booking.down_payment = Booking.DownPaymentChoice.ZERO
-        self.booking.save()
-        self.booking.refresh_from_db()
-        self.assertEqual(self.booking.remaining_debt, self.booking.total_price)

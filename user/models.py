@@ -42,12 +42,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone_number = models.CharField(max_length=20, null=True, blank=True)
     role = models.CharField(max_length=10, choices=UserRoles.choices, default=UserRoles.SELLER)
     organization = models.ForeignKey(
-        'organization.Organization',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='users',
-    )
+        'organization.Organization', on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now, editable=False)

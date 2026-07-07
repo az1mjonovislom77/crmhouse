@@ -47,8 +47,6 @@ def get_total_unpaid(qs):
 
     remaining = ExpressionWrapper(
         total_price
-        - (total_price * Coalesce(F("down_payment"), Value(0)) / Value(100))
-        - F("cash_payment")
         - Coalesce(Subquery(paid_subquery, output_field=MONEY), ZERO),
         output_field=MONEY,
     )

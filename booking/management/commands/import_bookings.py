@@ -200,18 +200,12 @@ class Command(BaseCommand):
             }
         )
 
-        try:
-            cash_payment = float(row.get('cash_payment') or 0)
-        except (ValueError, TypeError):
-            cash_payment = 0
-
         deadline = parse_deadline(row.get('deadline'))
 
         Booking.objects.create(
             home=home,
             client=client,
             company=company,
-            cash_payment=cash_payment,
             booking_no=to_str(row.get('booking_no')),
             map_key=map_key,
             description=str(row.get('description') or '').strip() or None,
