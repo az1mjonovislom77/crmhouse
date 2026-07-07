@@ -11,7 +11,6 @@ pillow_heif.register_heif_opener()
 
 def optimize_image_to_webp(image_field, quality: int = 80, max_width=1200, ) -> ContentFile:
     img = Image.open(image_field)
-    # RGBA/P rejimlarini saqlab qolamiz — shaffof joylar qora bo'lib qolmasin
     if img.mode not in ('RGB', 'RGBA'):
         img = img.convert('RGBA' if 'A' in img.getbands() or img.mode == 'P' else 'RGB')
 

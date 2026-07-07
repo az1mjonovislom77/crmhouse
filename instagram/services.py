@@ -18,13 +18,11 @@ class InstagramService:
     def _request(self, method, endpoint, params=None, data=None):
         url = f"{self.base_url}/{endpoint}"
 
-        # Token URL parametri emas, header orqali — access loglarga tushmasin
         headers = {"Authorization": f"Bearer {self.token}"}
         response = requests.request(method=method, url=url, params=params, json=data,
                                     headers=headers, timeout=10)
 
         if response.status_code != 200:
-            # Meta'ning xom xato tanasi mijozga qaytarilmaydi — faqat logga yoziladi
             logger.error("Instagram API xatosi [%s %s]: %s", method, endpoint, response.text)
             raise InstagramAPIError("Instagram API bilan ishlashda xato yuz berdi")
 

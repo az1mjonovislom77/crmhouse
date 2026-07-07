@@ -34,7 +34,6 @@ class Booking(models.Model):
     guarantee_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     credit_years = models.PositiveIntegerField(null=True, blank=True)
     manual_down_payment = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
-    rounding = models.BooleanField(default=True)
     annual_rate_pct = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     state_threshold_pct = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     subsidy_years = models.PositiveIntegerField(null=True, blank=True)
@@ -47,7 +46,6 @@ class Booking(models.Model):
     monthly_full = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     monthly_stage1 = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     gov_monthly = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
-
     created_at = models.DateTimeField(default=timezone.now)
 
     @property

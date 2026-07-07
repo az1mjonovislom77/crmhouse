@@ -233,8 +233,8 @@ class BookingViewSetTest(APITestCase):
         self.home.area = Decimal("49.35")
         self.home.price_per_sqm = Decimal("7700000")
         self.home.save()
-        guarantee = GuaranteeOption.objects.get(key="kafillik")   # 15%
-        subsidy = SubsidyOption.objects.get(key="oddiy")          # 30 mln
+        guarantee = GuaranteeOption.objects.get(key="kafillik")
+        subsidy = SubsidyOption.objects.get(key="oddiy")
         data = {
             "home": self.home.id,
             "client": self.client_obj.id,
@@ -244,7 +244,6 @@ class BookingViewSetTest(APITestCase):
             "guarantee_id": guarantee.id,
             "subsidy_id": subsidy.id,
             "credit_years": 20,
-            # mijoz natija yuborsa ham — e'tiborsiz qoldiriladi:
             "contract_price": "1",
             "credit_amount": "1",
         }
@@ -370,7 +369,6 @@ class PaymentViewSetTest(APITestCase):
         home = make_home(home_number=321, price_per_sqm=1000, area=50, renovation=ren)
         booking = Booking.objects.create(
             home=home, client=make_client(phone_number="+998900000321"), company=make_company())
-        # total_price = 50*1000 + 7000(ta'mir) = 57000; to'lovsiz remaining = 57000
         self.assertEqual(booking.total_price, Decimal("57000"))
         self.assertEqual(booking.remaining_debt, Decimal("57000"))
 

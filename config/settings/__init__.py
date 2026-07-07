@@ -1,7 +1,6 @@
 from decouple import config
 from django.core.exceptions import ImproperlyConfigured
 
-# Fail-secure: ENVIRONMENT ko'rsatilmagan bo'lsa production sozlamalari yuklanadi.
 ENVIRONMENT = config('ENVIRONMENT', default='production')
 
 if ENVIRONMENT == 'production':

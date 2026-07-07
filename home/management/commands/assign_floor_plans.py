@@ -12,7 +12,6 @@ ALLOWED_EXT = ('.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif')
 
 
 def natural_sort_key(filename):
-    """3-uy 1, 3-uy 2, ..., 3-uy 10 tartibida saralash uchun."""
     return [int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', filename)]
 
 
@@ -41,7 +40,6 @@ class Command(BaseCommand):
         parser.add_argument('--clear', action='store_true', help='Avval mavjud floor planlarni o\'chirish')
 
     def handle(self, *args, **kwargs):
-        # Block aniqlash
         if kwargs['block_title']:
             try:
                 block = Block.objects.get(title=kwargs['block_title'])
@@ -69,7 +67,6 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f'Papka topilmadi: {images_dir}'))
             return
 
-        # Rasmlarni filter va sort qilish
         image_files = sorted([
             f for f in os.listdir(images_dir)
             if f.lower().endswith(ALLOWED_EXT)
@@ -90,7 +87,6 @@ class Command(BaseCommand):
         self.stdout.write(f'Rasmlar ({images_dir}){f" [prefix={prefix}]" if prefix else ""}: {image_files}')
         self.stdout.write(f'Cycling: {cycle_size} ta rasm bilan')
 
-        # FloorPlan master obyektlarini yaratish
         master_plans = []
         for img_name in image_files:
             img_path = os.path.join(images_dir, img_name)
@@ -100,7 +96,6 @@ class Command(BaseCommand):
             master_plans.append(plan)
             self.stdout.write(f'  Saqlandi: {img_name} → {plan.image.name}')
 
-        # Block homelarini olish
         homes = list(Home.objects.filter(**block_filter).order_by('home_number'))
         if not homes:
             self.stdout.write(self.style.ERROR(f'Block {block_label} da home topilmadi'))
@@ -114,7 +109,6 @@ class Command(BaseCommand):
             deleted, _ = FloorPlan.objects.filter(home__in=homes).delete()
             self.stdout.write(self.style.WARNING(f'  {deleted} ta mavjud floor plan o\'chirildi'))
 
-        # Har bir home ga cycling tartibda floor plan yaratish
         to_create = []
         for i, home in enumerate(homes):
             idx = i % cycle_size

@@ -1,8 +1,3 @@
-"""Bir blokdagi barcha uylarga bitta floor-plan rasmini biriktiruvchi bir martalik skript.
-
-Idempotent: allaqachon plan biriktirilgan uylar o'tkazib yuboriladi.
-Ishga tushirishdan oldin ENVIRONMENT qaysi bazaga qarashini tekshiring!
-"""
 import os
 import sys
 
@@ -42,7 +37,6 @@ def main():
 
         plans = [FloorPlan(home=h, image=master.image.name) for h in homes]
         FloorPlan.objects.bulk_create(plans)
-        # Yordamchi "master" yozuvi endi kerak emas (fayl saqlanib qoladi)
         FloorPlan.objects.filter(pk=master.pk).delete()
 
     print(f"Qo'shildi: {len(plans)} ta uyga {IMG_NAME}")

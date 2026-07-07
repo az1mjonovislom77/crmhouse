@@ -4,7 +4,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 class UserTokenService:
     COOKIE_NAME = "refresh_token"
-    COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 days
+    COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 
     COOKIE_SETTINGS = {
         "httponly": True,
@@ -24,7 +24,6 @@ class UserTokenService:
 
     @staticmethod
     def rotate_refresh_token(refresh_token_str: str):
-        """Eski tokenni blacklist qiladi, yangi access+refresh qaytaradi."""
         try:
             refresh = RefreshToken(refresh_token_str)
             new_access = str(refresh.access_token)

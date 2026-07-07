@@ -59,14 +59,14 @@ class Command(BaseCommand):
         error_count = 0
 
         for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-            bino        = row[1]   # Bino
-            entrance_raw = row[2]  # Pod'ezd
-            floor_raw   = row[3]   # Qavat
-            home_num    = row[4]   # Xonadon raqami
-            rooms_raw   = row[5]   # Xona turi
-            area_raw    = row[6]   # Maydon (m²)
-            price_raw   = row[7]   # 1 m² narx
-            status_raw  = row[11]  # Status
+            bino        = row[1]
+            entrance_raw = row[2]
+            floor_raw   = row[3]
+            home_num    = row[4]
+            rooms_raw   = row[5]
+            area_raw    = row[6]
+            price_raw   = row[7]
+            status_raw  = row[11]
 
             if not home_num:
                 skipped_count += 1
@@ -80,7 +80,6 @@ class Command(BaseCommand):
                 price_per_sqm = float(price_raw or 0)
                 rooms = parse_rooms(rooms_raw)
 
-                # Block topish
                 block_title = f"{block_prefix}{bino}{block_suffix}"
                 block_qs = Block.objects.filter(title=block_title)
                 if project_id:
@@ -96,7 +95,6 @@ class Command(BaseCommand):
 
                 floor_obj, _ = Floors.objects.get_or_create(number=floor_number)
 
-                # Status aniqlash
                 new_status = None
                 if status_raw:
                     new_status = STATUS_MAP.get(str(status_raw).strip().lower())

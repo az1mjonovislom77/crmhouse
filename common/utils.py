@@ -19,7 +19,6 @@ def local_day_start(day):
 
 
 def date_range_q(field, date_from=None, date_to=None):
-    """Inclusive local-date range as sargable __gte/__lt lookups (keeps datetime indexes usable)."""
     q = Q()
     if date_from:
         q &= Q(**{f'{field}__gte': local_day_start(date_from)})
@@ -34,7 +33,6 @@ def apply_date_range(qs, field, date_from=None, date_to=None):
 
 
 def last_months(months):
-    """[(year, month), ...] for the last `months` calendar months, ending with the current local month."""
     today = timezone.localdate()
     last_index = today.year * 12 + today.month - 1
     window = []

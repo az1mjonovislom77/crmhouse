@@ -207,9 +207,8 @@ MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024  # 20 MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024
 
-# ASGI / Channels
 ASGI_APPLICATION = 'config.asgi.application'
 CHANNEL_LAYERS = {
     'default': {
@@ -217,7 +216,6 @@ CHANNEL_LAYERS = {
     }
 }
 
-# Celery
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 CELERY_BEAT_SCHEDULE = {
@@ -238,7 +236,6 @@ IG_USER_ID = config('IG_USER_ID')
 
 GROQ_API_KEY = config('GROQ_API_KEY', default='')
 
-# PBX / Contact Center
 PBX_BASE_URL = config('PBX_BASE_URL', default='')
 PBX_USER = config('PBX_USER', default='')
 PBX_PASSWORD = config('PBX_PASSWORD', default='')

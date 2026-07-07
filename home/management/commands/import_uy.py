@@ -82,7 +82,6 @@ class Command(BaseCommand):
                 else:
                     price_per_sqm = price
 
-                # "2 xona" yoki "1 xona" -> 2 yoki 1
                 room_str = str(row.get('room') or '1')
                 match = re.search(r'\d+', room_str)
                 rooms = int(match.group()) if match else 1

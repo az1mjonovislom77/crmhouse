@@ -22,7 +22,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
         if request is None:
             return value
         actor = request.user
-        # Only a SUPERADMIN (or Django staff) may grant the SUPERADMIN role.
         if value == User.UserRoles.SUPERADMIN and not (
             actor.is_staff or actor.role == User.UserRoles.SUPERADMIN
         ):

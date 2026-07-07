@@ -22,7 +22,6 @@ class ProjectViewSet(BaseUserViewSet):
 
     def perform_create(self, serializer):
         validated_data = dict(serializer.validated_data)
-        # Egasi doim so'rov yuborgan user — clientdan kelgan qiymatga ishonilmaydi.
         validated_data['user'] = self.request.user
         serializer.instance = ProjectService.create_project(validated_data)
 

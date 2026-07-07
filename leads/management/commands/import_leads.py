@@ -11,10 +11,8 @@ from leads.models import Lead, LeadEvent
 
 User = get_user_model()
 
-# Haqiqiy menejer emasligi aniq bo'lgan qatorlar
 FAKE_MANAGERS = {"sms junatildi o'chirilgan", "sms junatildi uchirilgan"}
 
-# ---------- Mapping jadvallar ----------
 
 STATUS_MAP = {
     'Murojaat qildi':         ('yangi_murojaat',  'murojaat_qildi'),
@@ -37,16 +35,13 @@ SOURCE_MAP = {
     "Noma'lum":       'Boshqa',
 }
 
-# [DD.MM.YYYY; HH:MM | Ism] 💬 matn
 COMMENT_RE = re.compile(
     r'\[(\d{2}\.\d{2}\.\d{4});\s*(\d{2}:\d{2})\s*\|\s*([^\]]+)\]\s*💬\s*(.+?)(?=\n\[|\Z)',
     re.DOTALL,
 )
 
-# ---------- Yordamchi funksiyalar ----------
 
 def normalize(val):
-    """Uzbek apostrof variantlarini standart belgiga o'tkazadi."""
     if not val:
         return ''
     s = str(val).strip()
@@ -81,7 +76,6 @@ def make_aware(dt):
 
 
 def parse_comments(text):
-    """Structured commentlarni ajratadi, qolgan matnni qaytaradi."""
     if not text:
         return [], ''
     matches = COMMENT_RE.findall(str(text))
@@ -90,7 +84,6 @@ def parse_comments(text):
 
 
 def create_comment_event(lead, text, by, at=None):
-    """TYPE_COMMENT event yaratadi, ixtiyoriy sanani backdate qiladi."""
     ev = LeadEvent.objects.create(
         lead=lead,
         type=LeadEvent.TYPE_COMMENT,
@@ -102,7 +95,6 @@ def create_comment_event(lead, text, by, at=None):
     return ev
 
 
-# ---------- Asosiy command ----------
 
 class Command(BaseCommand):
     help = 'lead.xlsx dan Lead va LeadEvent larni import qiladi'
@@ -128,13 +120,10 @@ class Command(BaseCommand):
             deleted, _ = Lead.objects.all().delete()
             self.stdout.write(self.style.WARNING(f'{deleted} ta lead o\'chirildi'))
 
-        # full_name → User mapping (katta-kichik harf farqsiz)
         users = {u.full_name.strip().lower(): u for u in User.objects.all()}
 
-        # Topilmagan menejerlarni hisoblaymiz
         unmatched: dict[str, int] = {}
 
-        # Bazada mavjud phone raqamlar — duplicate oldini olish uchun
         existing_phones = set(Lead.objects.values_list('phone', flat=True))
 
         wb = openpyxl.load_workbook(filepath)
@@ -181,8 +170,6 @@ class Command(BaseCommand):
 
                 contact_dt = make_aware(contact_date) if isinstance(contact_date, datetime) else None
 
-                # --- "Uchrashuv belgilandi" ustuni ---
-                # datetime bo'lsa → meeting_at, matn bo'lsa → alohida event
                 if isinstance(meeting_col, datetime):
                     meeting_at = make_aware(meeting_col)
                     uchrashuv_note = None
@@ -193,11 +180,8 @@ class Command(BaseCommand):
                     meeting_at = None
                     uchrashuv_note = None
 
-                # --- "Umumiy ma'lumot" ustuni ---
-                # Structured [sana|ism] 💬 matn va qolgan oddiy matn
                 structured_comments, general_note = parse_comments(note_raw)
 
-                # Bazada bu phone bor bo'lsa — faqat contacted_at ni yangilaymiz
                 if phone in existing_phones:
                     if contact_dt:
                         Lead.objects.filter(phone=phone, contacted_at__isnull=True).update(
@@ -208,7 +192,7 @@ class Command(BaseCommand):
 
                 if dry_run:
                     ev_count = (
-                        1  # created
+                        1
                         + (1 if meeting_at else 0)
                         + (1 if uchrashuv_note else 0)
                         + (1 if general_note else 0)
@@ -224,7 +208,6 @@ class Command(BaseCommand):
                     created_count += 1
                     continue
 
-                # Lead yaratish va phone ni existing ga qo'shamiz (bir fayldagi dublikat uchun)
                 existing_phones.add(phone)
                 lead = Lead.objects.create(
                     full_name=full_name,
@@ -241,18 +224,15 @@ class Command(BaseCommand):
                     score=0,
                 )
 
-                # created_at ni asl sanaga backdate qilamiz
                 if contact_dt:
                     Lead.objects.filter(pk=lead.pk).update(created_at=contact_dt)
 
-                # Event 1: created
                 ev = LeadEvent.objects.create(
                     lead=lead, type=LeadEvent.TYPE_CREATED, by=owner,
                 )
                 if contact_dt:
                     LeadEvent.objects.filter(pk=ev.pk).update(at=contact_dt)
 
-                # Event 2: uchrashuv (datetime bo'lsa)
                 if meeting_at:
                     LeadEvent.objects.create(
                         lead=lead,
@@ -262,15 +242,12 @@ class Command(BaseCommand):
                         by=owner,
                     )
 
-                # Event 3: "Uchrashuv belgilandi" ustunidagi matn → alohida comment
                 if uchrashuv_note:
                     create_comment_event(lead, uchrashuv_note, owner, contact_dt)
 
-                # Event 4: "Umumiy ma'lumot" oddiy qolgan matn → alohida comment
                 if general_note:
                     create_comment_event(lead, general_note, owner, contact_dt)
 
-                # Event 5+: structured [sana|ism] 💬 commentlar
                 for date_str, time_str, commentor_name, text in structured_comments:
                     try:
                         dt = datetime.strptime(f'{date_str} {time_str}', '%d.%m.%Y %H:%M')

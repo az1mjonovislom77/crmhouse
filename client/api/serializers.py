@@ -45,11 +45,10 @@ class ClientSerializer(serializers.ModelSerializer):
 
 class ClientNestSerializer(serializers.ModelSerializer):
     home_status_history = serializers.SerializerMethodField()
-    booking = BookingMiniSerializer(source='bookings', many=True, read_only=True)
 
     class Meta:
         model = Client
-        fields = ['id', 'booking', 'home_status_history', 'full_name', 'phone_number', 'phone_number2', 'passport',
+        fields = ['id', 'home_status_history', 'full_name', 'phone_number', 'phone_number2', 'passport',
                   'passport_date', 'address', 'from_who']
 
     def get_home_status_history(self, obj):

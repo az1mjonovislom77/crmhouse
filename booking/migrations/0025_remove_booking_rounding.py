@@ -1,16 +1,15 @@
-
 from django.db import migrations
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('projects', '0013_project_organization'),
+        ('booking', '0024_delete_paymentterm'),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='project',
-            name='organization',
+            model_name='booking',
+            name='rounding',
         ),
     ]

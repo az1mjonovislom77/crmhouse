@@ -2,7 +2,6 @@ from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
 class IsAdminOrReadOnly(BasePermission):
-    """Read for any authenticated user; write only for ADMIN/SUPERADMIN roles or Django staff."""
 
     def has_permission(self, request, view):
         user = request.user

@@ -95,13 +95,12 @@ class HomeStatsTests(TestCase):
 
     def test_top_sellers_do_not_double_count_resold_home(self):
         now = timezone.now()
-        # home1 sotildi, qaytarildi, yana sotildi — narxi bir marta sanalishi kerak
         make_sold_event(self.home1, now, changed_by=self.seller)
         make_sold_event(self.home1, now, changed_by=self.seller)
         sellers = get_top_sellers(get_sold_events())
         self.assertEqual(len(sellers), 1)
         self.assertEqual(sellers[0]['sold'], 1)
-        self.assertEqual(sellers[0]['revenue'], 50.0)  # 50m2 * 1 mln = 50 mln
+        self.assertEqual(sellers[0]['revenue'], 50.0)
 
     def test_block_occupancy(self):
         blocks = get_block_occupancy(get_homes())
@@ -139,7 +138,6 @@ class LeadStatsTests(TestCase):
             from_value='jarayon', to_value=STATUS_SUCCESS,
         )
         LeadEvent.objects.filter(pk=event.pk).update(at=aware(2026, 7, 2))
-        # lead created_at bugun, lekin konversiya 2-iyulda — iyul oynasida sanaladi
         self.assertEqual(get_success_conversions(get_leads(), date(2026, 7, 1), date(2026, 7, 31)), 1)
         self.assertEqual(get_success_conversions(get_leads(), date(2026, 6, 1), date(2026, 6, 30)), 0)
 
@@ -153,13 +151,11 @@ class LeadStatsTests(TestCase):
         self.assertEqual(get_success_conversions(get_leads(), date(2026, 7, 1), date(2026, 7, 31)), 1)
 
     def test_success_legacy_lead_without_events_falls_back_to_created_at(self):
-        # Import qilingan lead: statusi success, lekin LeadEvent yozuvi yo'q
         legacy = Lead.objects.create(
             full_name='C', phone='3', board=Lead.BOARD_SALES, status=STATUS_SUCCESS, source='Boshqa',
         )
         today = timezone.localdate()
         self.assertEqual(get_success_conversions(get_leads(), today, today), 1)
-        # Eventi bor lead legacy fallback'ka tushmasligi kerak (ikki marta sanalmaydi)
         event = LeadEvent.objects.create(
             lead=legacy, type=LeadEvent.TYPE_STATUS, from_value='jarayon', to_value=STATUS_SUCCESS,
         )

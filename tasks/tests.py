@@ -207,7 +207,6 @@ class UpdateProjectServiceTest(TestCase):
         self.assertEqual(orders, [1, 2, 3])
 
     def test_order_beyond_max_appends_to_end(self):
-        # service clamps new_order to max_order+1 (known behavior)
         update_project(self.p1, new_order=999)
         self.p1.refresh_from_db()
         self.assertGreater(self.p1.order, 0)
@@ -401,7 +400,6 @@ class CommentViewSetTest(APITestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
     def test_create_comment(self):
-        # CommentSerializer includes `user` as required field — must be sent explicitly
         data = {"project": self.project.id, "text": "A comment", "user": self.user.id}
         resp = self.client.post(self.url, data)
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)

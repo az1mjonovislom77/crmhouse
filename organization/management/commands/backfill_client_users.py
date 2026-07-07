@@ -1,11 +1,3 @@
-"""Mavjud mijozlarga user (egasi) qiymatini to'ldiruvchi bir martalik buyruq.
-
-Client.user yangi qo'shilgan maydon — eski mijozlar uchun booking zanjiri
-orqali tiklanadi: client -> booking -> home -> block -> project -> user.
-Tashkilot userdan aniqlanadi, shuning uchun alohida organization saqlanmaydi.
-
-Ishga tushirish: python manage.py backfill_client_users
-"""
 from django.core.management.base import BaseCommand
 
 from booking.models import Booking

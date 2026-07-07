@@ -35,7 +35,6 @@ class CeilStepTest(TestCase):
 
 
 class EngineTest(TestCase):
-    """calculator-api.md 6-bo'limdagi 8 ta tekshirilgan test-holat."""
 
     def setUp(self):
         self.config = CalculatorConfig.load()
@@ -76,11 +75,6 @@ class EngineTest(TestCase):
         r = self._calc('bosh_tolovli', 20, 30000000)
         self.assert_case(r, "379995000", "0", "45999000", "303996000", "4459015",
                          "3780254", "678761")
-
-    # 5/6-holatlar: oylik = round(379994000 × factor) = 5573754.08 → 5573754.
-    # Spetsifikatsiya jadvalida 5573753 ko'rsatilgan (1 so'm farq) — bu 7-bo'lim
-    # 1-savolda "egalari bilan aniqlashtirish kerak" deb belgilangan yaxlitlash
-    # noaniqligi. Dvigatel matematik izchil qiymatni beradi.
     def test_case_5_bosh_tolovsiz_15_yoq(self):
         r = self._calc('bosh_tolovsiz', 15, 0)
         self.assert_case(r, "460043000", "69007000", "11042000", "379994000", "5573754")
@@ -149,7 +143,6 @@ class ConfigApiTest(APITestCase):
 
 
 class TengUlushFormulaTest(TestCase):
-    """2-formula: foizsiz, kreditni teng bo'lib to'lash."""
 
     def test_equal_split(self):
         config = CalculatorConfig.load()
@@ -160,7 +153,6 @@ class TengUlushFormulaTest(TestCase):
         self.assertEqual(r['contract_price'], Decimal("379995000"))
         self.assertEqual(r['client_payment'], Decimal("57000000"))
         self.assertEqual(r['credit_amount'], Decimal("322995000"))
-        # 322995000 / 240 = 1345812.5 → 1345813
         self.assertEqual(r['monthly_full'], Decimal("1345813"))
         self.assertIsNone(r['monthly_stage1'])
 
@@ -171,7 +163,6 @@ class TengUlushFormulaTest(TestCase):
         teng.formula_key = 'teng_ulush'
         kw = dict(area=AREA, price_per_m2=PRICE, payment_type='bosh_tolovli',
                   guarantee_percent=15, subsidy_amount=0, credit_years=20, rounding=True)
-        # bir xil kiritma, formula_key bo'yicha turli oylik
         self.assertNotEqual(calculate(config=std, **kw)['monthly_full'],
                             calculate(config=teng, **kw)['monthly_full'])
 
@@ -200,7 +191,7 @@ class OrgScopedApiTest(APITestCase):
         CalculatorConfig.objects.create(
             organization=orgb, formula_key='teng_ulush', annual_rate_pct=15)
 
-        user_a = make_user(username="orga_user")            # tashkilotsiz → global
+        user_a = make_user(username="orga_user")
         self.client.force_authenticate(user=user_a)
         resp_a = self.client.get(reverse("calculator-config"))
         self.assertEqual(resp_a.data["formula_key"], "standart")

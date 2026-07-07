@@ -195,12 +195,10 @@ class AuthServiceTest(TestCase):
         from rest_framework.exceptions import ValidationError
         refresh = RefreshToken.for_user(self.user)
         AuthService.logout_user(str(refresh))
-        # After logout the token is blacklisted — refresh_user_token must raise
         with self.assertRaises(ValidationError):
             AuthService.refresh_user_token(str(refresh))
 
     def test_logout_invalid_token_no_exception(self):
-        # logout_user silently swallows TokenError — invalid tokens must not raise
         AuthService.logout_user("bad.token")
 
 
@@ -293,7 +291,6 @@ class LogOutAPIViewTest(APITestCase):
         self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_logout_invalid_token_returns_200(self):
-        # Logout view reads refresh from cookie; invalid/missing token is silently ignored
         self.client.force_authenticate(user=self.user)
         resp = self.client.post(self.url, {"refresh": "invalid.token"})
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
@@ -424,7 +421,6 @@ class RequestLogTrimTest(TestCase):
         logs = [self.make_log() for _ in range(7)]
         _trim_logs(RequestLog)
         self.assertEqual(RequestLog.objects.count(), 5)
-        # eng eski 2 tasi o'chgan, eng yangi 5 tasi qolgan
         remaining_ids = set(RequestLog.objects.values_list('id', flat=True))
         self.assertEqual(remaining_ids, {log.id for log in logs[2:]})
 

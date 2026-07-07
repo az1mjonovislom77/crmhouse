@@ -7,8 +7,6 @@ class MeetingNotificationService:
 
     @staticmethod
     def check_and_create():
-        # Drop notifications whose meeting time no longer matches the lead
-        # (rescheduled or cancelled meetings).
         LeadNotification.objects.exclude(meeting_at=F('lead__meeting_at')).delete()
 
         today = timezone.now().date()

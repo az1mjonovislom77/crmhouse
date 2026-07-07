@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 def normalize_phone(value):
-    # Same rule as common.utils.normalize_phone (kept inline so the migration stays self-contained).
     if not value:
         return ''
     digits = re.sub(r'\D', '', str(value))

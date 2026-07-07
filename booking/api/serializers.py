@@ -67,15 +67,10 @@ def _require_same_org(serializer, attrs, home=None, client=None, booking=None):
         raise serializers.ValidationError({"booking": "Bu booking sizning tashkilotingizga tegishli emas."})
 
 
-class DefaultTrueBooleanField(serializers.BooleanField):
-    default_empty_html = True
-
-
 class BookingCreateSerializer(serializers.ModelSerializer):
     home_status = serializers.ChoiceField(choices=Home.HomeStatus.choices, required=False)
     guarantee_id = serializers.IntegerField(required=False, allow_null=True, write_only=True)
     subsidy_id = serializers.IntegerField(required=False, allow_null=True, write_only=True)
-    rounding = DefaultTrueBooleanField(required=False, default=True)
 
     class Meta:
         model = Booking
@@ -116,7 +111,6 @@ class BookingCreateSerializer(serializers.ModelSerializer):
                 subsidy_id=subsidy_id,
                 credit_years=credit_years,
                 manual_down_payment=current('manual_down_payment'),
-                rounding=attrs.get('rounding', current('rounding') if self.instance else True),
                 organization=organization,
             )
             attrs.update(snapshot)
