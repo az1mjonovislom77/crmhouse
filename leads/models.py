@@ -64,6 +64,7 @@ class Lead(models.Model):
     meeting_type = models.CharField(max_length=20, null=True, blank=True)
     subsidiya = models.BooleanField(default=False)
     contacted_at = models.DateTimeField(null=True, blank=True)
+    last_contacted = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

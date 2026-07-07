@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from leads.models import Lead, LeadEvent, BOARD_STATUSES, BOARD_FIRST_STATUS
 
@@ -92,9 +93,11 @@ class LeadService:
 
         if comment:
             LeadEvent.objects.create(lead=instance, type=LeadEvent.TYPE_COMMENT, text=comment, by=user)
+            instance.last_contacted = timezone.now()
 
         if call_result:
             LeadEvent.objects.create(lead=instance, type=LeadEvent.TYPE_CALL, text=call_result, by=user)
+            instance.last_contacted = timezone.now()
 
         if new_subsidiya is not None and new_subsidiya != instance.subsidiya:
             LeadEvent.objects.create(
