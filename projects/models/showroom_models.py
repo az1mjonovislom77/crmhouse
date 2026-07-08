@@ -1,5 +1,7 @@
 from django.db import models
 from projects.models.project_models import Block
+from django.core.validators import FileExtensionValidator
+from common.services.image_service import check_image_size, optimize_image_to_webp
 
 
 class SVG(models.Model):
@@ -13,10 +15,43 @@ class Showroom(models.Model):
     block = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name='showrooms')
     blocks_number = models.IntegerField(default=0)
     path = models.CharField(max_length=500)
-    image = models.ImageField(upload_to='showroom/', blank=True, null=True)
     navigate_to = models.CharField(max_length=200)
     hover_color = models.CharField(max_length=200)
     default_color = models.CharField(max_length=200)
 
     def __str__(self):
         return str(self.id)
+
+
+class Showroom3D(models.Model):
+    title = models.CharField(max_length=200)
+
+    class Meta:
+        verbose_name_plural = 'Showroom 3D'
+
+    def __str__(self):
+        return self.title
+
+
+class ShowroomImage(models.Model):
+    showroom = models.ForeignKey(Showroom3D, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='showroom_images/',
+                              validators=[FileExtensionValidator(
+                                  allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']),
+                                  check_image_size])
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old = ShowroomImage.objects.only("image").filter(pk=self.pk).first()
+            if old and old.image == self.image:
+                super().save(*args, **kwargs)
+                return
+
+        if self.image and not self.image.name.lower().endswith(".webp"):
+            optimized_image = optimize_image_to_webp(self.image, quality=80)
+            self.image.save(optimized_image.name, optimized_image, save=False)
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"ShowroomImage {self.pk}"

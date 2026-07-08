@@ -1,5 +1,5 @@
 from common.base.serializers_base import BaseReadSerializer
-from projects.models.showroom_models import SVG, Showroom
+from projects.models.showroom_models import SVG, Showroom, Showroom3D, ShowroomImage
 from rest_framework import serializers
 
 
@@ -19,7 +19,7 @@ class ShowroomSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Showroom
-        fields = ['id', 'label', 'blocks_number', 'path', 'image', 'navigate_to', 'hover_color', 'default_color',
+        fields = ['id', 'label', 'blocks_number', 'path', 'navigate_to', 'hover_color', 'default_color',
                   'homes_count', 'available_homes', 'sold_homes', 'reserved_homes', 'project_title', 'project_id']
 
     def get_label(self, obj):
@@ -30,3 +30,17 @@ class ShowroomSerializer(serializers.ModelSerializer):
 
     def get_project_id(self, obj):
         return obj.block.projects.id if obj.block and obj.block.projects else None
+
+
+class ShowroomImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShowroomImage
+        fields = ['id', 'image']
+
+
+class Showroom3DSerializer(serializers.ModelSerializer):
+    images = ShowroomImageSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Showroom3D
+        fields = ['id', 'title', 'images']
