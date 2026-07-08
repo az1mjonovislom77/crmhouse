@@ -15,9 +15,7 @@ class IssabelService:
             data={
                 'user': settings.ISSABEL_API_USER,
                 'password': settings.ISSABEL_API_PASSWORD,
-            },
-            timeout=20,
-            verify=settings.PBX_VERIFY_SSL,
+            }, timeout=20, verify=settings.PBX_VERIFY_SSL,
         )
         r.raise_for_status()
         data = r.json()

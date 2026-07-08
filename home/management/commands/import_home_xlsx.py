@@ -30,6 +30,11 @@ class Command(BaseCommand):
         parser.add_argument('--file', default='home.xlsx')
         parser.add_argument('--block-prefix', default='', help='Block title prefiks, masalan "Block "')
         parser.add_argument('--block-suffix', default='', help='Block title suffiks, masalan " - Block"')
+        parser.add_argument(
+            '--block-title',
+            default=None,
+            help="Barcha qatorlarni shu bitta blokka bog'laydi (Bino ustuni e'tiborga olinmaydi), masalan \"4A - Block\"",
+        )
         parser.add_argument('--project-id', type=int, default=None)
         parser.add_argument('--dry-run', action='store_true')
 
@@ -48,6 +53,7 @@ class Command(BaseCommand):
         dry_run = options['dry_run']
         block_prefix = options['block_prefix']
         block_suffix = options['block_suffix']
+        fixed_block_title = options['block_title']
         project_id = options['project_id']
 
         wb = openpyxl.load_workbook(file_path)
@@ -80,7 +86,10 @@ class Command(BaseCommand):
                 price_per_sqm = float(price_raw or 0)
                 rooms = parse_rooms(rooms_raw)
 
-                block_title = f"{block_prefix}{bino}{block_suffix}"
+                if fixed_block_title:
+                    block_title = fixed_block_title
+                else:
+                    block_title = f"{block_prefix}{bino}{block_suffix}"
                 block_qs = Block.objects.filter(title=block_title)
                 if project_id:
                     block_qs = block_qs.filter(projects_id=project_id)

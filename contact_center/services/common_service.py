@@ -108,11 +108,7 @@ class CDRService:
             records_to_create.append(record)
             records_map.append((item['uniqueid'], item.get('recordingfile')))
 
-        CallRecord.objects.bulk_create(
-            records_to_create,
-            ignore_conflicts=True,
-            batch_size=500,
-        )
+        CallRecord.objects.bulk_create(records_to_create, ignore_conflicts=True, batch_size=500)
 
         from contact_center.tasks import download_recording_task
 
