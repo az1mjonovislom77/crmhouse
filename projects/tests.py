@@ -4,9 +4,9 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from home.models import Home
 from projects.models.project_models import Block, Floors, Project, Renovation
-from projects.models.showroom_models import Showroom, SVG
+from projects.models.showroom_models import Showroom, ShowroomImage, SVG
 from projects.selectors.projects_selectors import get_projects_with_stats
-from projects.selectors.showroom_selectors import get_blocks_stats
+from projects.selectors.showroom_selectors import get_showroom_images
 from projects.services.project_service import ProjectService
 from user.models import User
 
@@ -151,7 +151,9 @@ class ShowroomSelectorTest(TestCase):
     def setUp(self):
         self.project = make_project(title="SR Project")
         self.blocks = make_blocks(projects=self.project, title="SR Block")
+        self.image = ShowroomImage.objects.create(image="fake.webp")
         self.showroom = Showroom.objects.create(
+            image=self.image,
             block=self.blocks,
             blocks_number=1,
             path="M0,0",
@@ -160,14 +162,14 @@ class ShowroomSelectorTest(TestCase):
             default_color="#000",
         )
 
-    def test_returns_showrooms(self):
-        qs = get_blocks_stats()
-        pks = [s.pk for s in qs]
-        self.assertIn(self.showroom.pk, pks)
+    def test_returns_showroom_images(self):
+        pks = [i.pk for i in get_showroom_images()]
+        self.assertIn(self.image.pk, pks)
 
-    def test_select_related_blocks_projects(self):
-        showroom = get_blocks_stats().get(pk=self.showroom.pk)
+    def test_prefetches_showrooms_with_related_blocks(self):
+        image = get_showroom_images().get(pk=self.image.pk)
         with self.assertNumQueries(0):
+            showroom = image.showrooms.all()[0]
             _ = showroom.block.projects.title
 
 
