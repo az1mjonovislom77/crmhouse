@@ -36,7 +36,7 @@ class ClientViewSet(BaseUserViewSet):
     search_fields = ['full_name', 'phone_number', 'passport', 'address']
 
     def get_queryset(self):
-        return filter_by_org(get_client_queryset(), self.request, field='user__organization')
+        return filter_by_org(get_client_queryset(), self.request)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        serializer.save(user=self.request.user, organization=self.request.user.organization)

@@ -51,7 +51,6 @@ def calculate_from_payload(data, organization=None):
     from home.models import Home
 
     config = CalculatorConfig.for_org(organization)
-
     home = Home.objects.filter(pk=data['home_id']).first()
     if home is None:
         raise ValidationError({'home_id': 'Uy topilmadi.'})
@@ -79,7 +78,6 @@ def compute_booking_snapshot(*, home, payment_type, guarantee_id=None, guarantee
     config = CalculatorConfig.for_org(organization)
     guarantee = resolve_guarantee(guarantee_id, guarantee_key)
     subsidy = resolve_subsidy(subsidy_id, subsidy_key)
-
     area = home.area or 0
     price_per_m2 = home.price_per_sqm or config.default_price_per_m2
 

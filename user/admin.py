@@ -12,7 +12,6 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ("username", "full_name", "phone_number")
     ordering = ("-id",)
     list_filter = ("role", "is_staff", "is_active", "organization")
-
     readonly_fields = ("id",)
 
     fieldsets = (

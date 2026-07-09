@@ -1,16 +1,14 @@
 import os
 import sys
-
 import django
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
-django.setup()
-
 from django.conf import settings
 from django.core.files import File
 from django.db import transaction
 from home.models import FloorPlan, Home
 from projects.models.project_models import Block
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+django.setup()
 
 IMG_NAME = '1-uy 0.jpg'
 BLOCK_TITLE = '1 - Block'
