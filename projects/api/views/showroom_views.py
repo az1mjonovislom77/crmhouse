@@ -1,9 +1,9 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
-from projects.api.serializers.showroom_serializers import SVGSerializer, ShowroomSerializer
+from projects.api.serializers.showroom_serializers import SVGSerializer, ShowroomImageSerializer
 from projects.models.showroom_models import SVG
-from projects.selectors.showroom_selectors import get_blocks_stats
+from projects.selectors.showroom_selectors import get_showroom_images
 
 
 @extend_schema(tags=['SVG'])
@@ -16,9 +16,9 @@ class SVGView(ListAPIView):
 
 @extend_schema(tags=['Showroom'])
 class ShowroomView(ListAPIView):
-    serializer_class = ShowroomSerializer
+    serializer_class = ShowroomImageSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = None
 
     def get_queryset(self):
-        return get_blocks_stats()
+        return get_showroom_images()

@@ -14,8 +14,8 @@ class HomeInline(admin.TabularInline):
     extra = 1
 
 
-class ShowroomImageInline(admin.TabularInline):
-    model = ShowroomImage
+class ShowroomInline(admin.TabularInline):
+    model = Showroom
     extra = 1
 
 
@@ -40,7 +40,12 @@ class SVGAdmin(admin.ModelAdmin):
     list_display = ['id']
 
 
+@admin.register(ShowroomImage)
+class ShowroomImageAdmin(admin.ModelAdmin):
+    list_display = ['id']
+    inlines = [ShowroomInline]
+
+
 @admin.register(Showroom)
 class ShowroomAdmin(admin.ModelAdmin):
-    list_display = ['id', 'title', 'block']
-    inlines = [ShowroomImageInline]
+    list_display = ['id', 'title', 'block', 'image']

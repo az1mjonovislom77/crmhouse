@@ -8,12 +8,6 @@ class SVGSerializer(BaseReadSerializer):
         model = SVG
 
 
-class ShowroomImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ShowroomImage
-        fields = ['id', 'image']
-
-
 class ShowroomSerializer(serializers.ModelSerializer):
     label = serializers.SerializerMethodField()
     homes_count = serializers.IntegerField(read_only=True)
@@ -22,13 +16,12 @@ class ShowroomSerializer(serializers.ModelSerializer):
     reserved_homes = serializers.IntegerField(read_only=True)
     project_title = serializers.SerializerMethodField()
     project_id = serializers.SerializerMethodField()
-    images = ShowroomImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Showroom
-        fields = ['id', 'title', 'images', 'label', 'blocks_number', 'path', 'navigate_to', 'hover_color',
-                  'default_color', 'homes_count', 'available_homes', 'sold_homes', 'reserved_homes', 'project_title',
-                  'project_id']
+        fields = ['id', 'title', 'label', 'blocks_number', 'path', 'navigate_to', 'hover_color',
+                  'default_color', 'homes_count', 'available_homes', 'sold_homes', 'reserved_homes',
+                  'project_title', 'project_id']
 
     def get_label(self, obj):
         return obj.block.title if obj.block else None
@@ -38,3 +31,11 @@ class ShowroomSerializer(serializers.ModelSerializer):
 
     def get_project_id(self, obj):
         return obj.block.projects.id if obj.block and obj.block.projects else None
+
+
+class ShowroomImageSerializer(serializers.ModelSerializer):
+    showrooms = ShowroomSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ShowroomImage
+        fields = ['id', 'image', 'showrooms']

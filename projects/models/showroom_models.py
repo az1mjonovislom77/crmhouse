@@ -11,21 +11,7 @@ class SVG(models.Model):
         return str(self.id)
 
 
-class Showroom(models.Model):
-    title = models.CharField(max_length=200, null=True, blank=True)
-    block = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name='showrooms')
-    blocks_number = models.IntegerField(default=0)
-    path = models.CharField(max_length=500)
-    navigate_to = models.CharField(max_length=200)
-    hover_color = models.CharField(max_length=200)
-    default_color = models.CharField(max_length=200)
-
-    def __str__(self):
-        return str(self.title)
-
-
 class ShowroomImage(models.Model):
-    showroom = models.ForeignKey(Showroom, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='showroom_images/',
                               validators=[FileExtensionValidator(
                                   allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']),
@@ -46,3 +32,18 @@ class ShowroomImage(models.Model):
 
     def __str__(self):
         return f"ShowroomImage {self.pk}"
+
+
+class Showroom(models.Model):
+    image = models.ForeignKey(ShowroomImage, on_delete=models.CASCADE, null=True, blank=True,
+                              related_name='showrooms')
+    title = models.CharField(max_length=200, null=True, blank=True)
+    block = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name='showrooms')
+    blocks_number = models.IntegerField(default=0)
+    path = models.CharField(max_length=500)
+    navigate_to = models.CharField(max_length=200)
+    hover_color = models.CharField(max_length=200)
+    default_color = models.CharField(max_length=200)
+
+    def __str__(self):
+        return str(self.title)
