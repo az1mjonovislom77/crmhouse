@@ -1,7 +1,7 @@
 from django.contrib import admin
 from home.models import Home
 from projects.models.project_models import Project, Block, Floors, Renovation
-from projects.models.showroom_models import SVG, Showroom, Showroom3D, ShowroomImage
+from projects.models.showroom_models import SVG, Showroom, ShowroomImage
 
 
 @admin.register(Project)
@@ -42,10 +42,5 @@ class SVGAdmin(admin.ModelAdmin):
 
 @admin.register(Showroom)
 class ShowroomAdmin(admin.ModelAdmin):
-    list_display = ['id', 'block']
-
-
-@admin.register(Showroom3D)
-class Showroom3DAdmin(admin.ModelAdmin):
-    list_display = ['id', 'title']
+    list_display = ['id', 'title', 'block']
     inlines = [ShowroomImageInline]

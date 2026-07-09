@@ -7,6 +7,7 @@ def get_blocks_stats():
     return (
         Showroom.objects
         .select_related('block', 'block__projects')
+        .prefetch_related('images')
         .annotate(
             homes_count=Count('block__homes'),
             available_homes=Count('block__homes', filter=Q(block__homes__home_status=Home.HomeStatus.AVAILABLE)),

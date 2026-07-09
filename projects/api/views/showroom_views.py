@@ -1,8 +1,8 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
-from projects.api.serializers.showroom_serializers import SVGSerializer, ShowroomSerializer, Showroom3DSerializer
-from projects.models.showroom_models import SVG, Showroom3D
+from projects.api.serializers.showroom_serializers import SVGSerializer, ShowroomSerializer
+from projects.models.showroom_models import SVG
 from projects.selectors.showroom_selectors import get_blocks_stats
 
 
@@ -22,13 +22,3 @@ class ShowroomView(ListAPIView):
 
     def get_queryset(self):
         return get_blocks_stats()
-
-
-@extend_schema(tags=['Showroom3D'])
-class Showroom3DView(ListAPIView):
-    queryset = Showroom3D.objects.prefetch_related('images').all()
-    serializer_class = Showroom3DSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = None
-
-

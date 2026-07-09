@@ -12,6 +12,7 @@ class SVG(models.Model):
 
 
 class Showroom(models.Model):
+    title = models.CharField(max_length=200, null=True, blank=True)
     block = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name='showrooms')
     blocks_number = models.IntegerField(default=0)
     path = models.CharField(max_length=500)
@@ -20,21 +21,11 @@ class Showroom(models.Model):
     default_color = models.CharField(max_length=200)
 
     def __str__(self):
-        return str(self.id)
-
-
-class Showroom3D(models.Model):
-    title = models.CharField(max_length=200)
-
-    class Meta:
-        verbose_name_plural = 'Showroom 3D'
-
-    def __str__(self):
-        return self.title
+        return str(self.title)
 
 
 class ShowroomImage(models.Model):
-    showroom = models.ForeignKey(Showroom3D, on_delete=models.CASCADE, related_name='images')
+    showroom = models.ForeignKey(Showroom, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='showroom_images/',
                               validators=[FileExtensionValidator(
                                   allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']),
