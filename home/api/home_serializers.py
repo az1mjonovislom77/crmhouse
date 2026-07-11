@@ -37,6 +37,7 @@ class HomeCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Home
         fields = '__all__'
+        read_only_fields = ['organization']
 
 
 class HomeStatusHistorySerializer(serializers.ModelSerializer):

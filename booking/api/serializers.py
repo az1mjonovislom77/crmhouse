@@ -77,7 +77,7 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
         read_only_fields = [
-            'created_at',
+            'created_at', 'organization',
             'price_per_m2', 'guarantee_percent', 'subsidy_amount',
             'annual_rate_pct', 'state_threshold_pct', 'subsidy_years', 'firm_markup_pct',
             'contract_price', 'firm_covers', 'client_payment', 'credit_amount',

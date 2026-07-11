@@ -23,7 +23,7 @@ class CardViewSet(OrganizationMixin, AuditMixin, HistoryMixin, BaseUserViewSet):
     history_serializer_class = CardHistorySerializer
     filter_backends = [TransliteratedSearchFilter]
     search_fields = ['title']
-    organization_field = 'created_by__organization'
+    organization_field = 'organization'
 
 
 @extend_schema(tags=['Comment'])
@@ -33,7 +33,7 @@ class CommentViewSet(OrganizationMixin, AuditMixin, HistoryMixin, BaseUserViewSe
     history_serializer_class = CommentHistorySerializer
     filter_backends = [TransliteratedSearchFilter]
     search_fields = ['text']
-    organization_field = 'project__card__created_by__organization'
+    organization_field = 'project__card__organization'
 
 
 @extend_schema(tags=['Project'])
@@ -48,7 +48,7 @@ class ProjectViewSet(OrganizationMixin, AuditMixin, HistoryMixin, PartialPutMixi
     pagination_class = None
     filter_backends = [TransliteratedSearchFilter]
     search_fields = ['title', 'description']
-    organization_field = 'card__created_by__organization'
+    organization_field = 'card__organization'
 
     def get_serializer_class(self):
         if self.action == 'create':

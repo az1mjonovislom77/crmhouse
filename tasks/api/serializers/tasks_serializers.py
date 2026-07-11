@@ -12,7 +12,7 @@ class CardSerializer(BaseReadSerializer):
 
     class Meta(BaseReadSerializer.Meta):
         model = Card
-        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by']
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by', 'organization']
 
 
 class CommentSerializer(BaseReadSerializer):

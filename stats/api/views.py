@@ -74,20 +74,20 @@ class StatsAPIView(APIView):
 
         sold_qs = filter_by_org(
             get_sold_events(date_from, date_to), request,
-            field='home__blocks__projects__user__organization',
+            field='home__organization',
         )
         all_sold_qs = filter_by_org(
             get_sold_events(), request,
-            field='home__blocks__projects__user__organization',
+            field='home__organization',
         )
 
         booking_qs = filter_by_org(
             get_total_contract(date_from, date_to), request,
-            field='home__blocks__projects__user__organization',
+            field='organization',
         )
         payment_qs = filter_by_org(
             get_total_payments(date_from, date_to), request,
-            field='booking__home__blocks__projects__user__organization',
+            field='booking__organization',
         )
 
         lead_qs = filter_by_org(get_leads(), request, field='owner__organization')
@@ -99,15 +99,15 @@ class StatsAPIView(APIView):
         )
         home_qs = filter_by_org(
             get_homes(), request,
-            field='blocks__projects__user__organization',
+            field='organization',
         )
         all_booking_qs = filter_by_org(
             get_total_contract(), request,
-            field='home__blocks__projects__user__organization',
+            field='organization',
         )
         all_payment_qs = filter_by_org(
             get_total_payments(), request,
-            field='booking__home__blocks__projects__user__organization',
+            field='booking__organization',
         )
 
         return Response({

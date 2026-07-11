@@ -38,7 +38,7 @@ class BookingViewSet(BaseUserViewSet):
         ).annotate(
             payments_total=Coalesce(Sum('payments__amount'), Value(Decimal('0')), output_field=DecimalField())
         )
-        qs = filter_by_org(qs, self.request, field='home__blocks__projects__user__organization')
+        qs = filter_by_org(qs, self.request, field='organization')
         home_id = self.request.query_params.get('home_id')
         if home_id:
             qs = qs.filter(home_id=home_id)
@@ -52,6 +52,7 @@ class BookingViewSet(BaseUserViewSet):
     def perform_create(self, serializer):
         validated_data = serializer.validated_data.copy()
         home_status = validated_data.pop('home_status', None)
+        validated_data['organization'] = getattr(self.request.user, 'organization', None)
         booking = create_booking(data=validated_data, user=self.request.user, home_status=home_status)
         serializer.instance = booking
 
@@ -83,7 +84,7 @@ class PaymentViewSet(BaseUserViewSet):
         )
         qs = Payment.objects.select_related('booking__home').annotate(
             booking_payments_total=Subquery(_booking_total_sq, output_field=DecimalField()))
-        qs = filter_by_org(qs, self.request, field='booking__home__blocks__projects__user__organization')
+        qs = filter_by_org(qs, self.request, field='booking__organization')
         booking_id = self.request.query_params.get('booking_id')
         if booking_id:
             qs = qs.filter(booking_id=booking_id)

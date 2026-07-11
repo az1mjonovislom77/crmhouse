@@ -43,7 +43,7 @@ class HomeViewSet(BaseUserViewSet):
 
     def get_queryset(self):
         qs = get_homes_with_finance()
-        return filter_by_org(qs, self.request, field='blocks__projects__user__organization')
+        return filter_by_org(qs, self.request, field='organization')
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -53,7 +53,9 @@ class HomeViewSet(BaseUserViewSet):
         return HomeGetSerializer
 
     def perform_create(self, serializer):
-        serializer.instance = HomeService.create_home(serializer.validated_data)
+        data = serializer.validated_data
+        data['organization'] = getattr(self.request.user, 'organization', None)
+        serializer.instance = HomeService.create_home(data)
 
     def perform_update(self, serializer):
         instance = self.get_object()
@@ -84,7 +86,7 @@ class HomeHistoryListAPIView(ListAPIView):
         qs = HomeStatusHistory.objects.select_related(
             "home", "home__blocks", "home__floor", "changed_by"
         ).order_by("-changed_at")
-        qs = filter_by_org(qs, self.request, field='home__blocks__projects__user__organization')
+        qs = filter_by_org(qs, self.request, field='home__organization')
         date_from = self.request.query_params.get("from")
         date_to = self.request.query_params.get("to")
         if date_from:

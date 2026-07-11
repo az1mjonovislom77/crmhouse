@@ -4,8 +4,11 @@ class AuditMixin:
         extra_kwargs = {"created_by": self.request.user}
 
         model = serializer.Meta.model
-        if any(f.name == "user" for f in model._meta.get_fields() if hasattr(f, "name")):
+        field_names = {f.name for f in model._meta.get_fields() if hasattr(f, "name")}
+        if "user" in field_names:
             extra_kwargs["user"] = self.request.user
+        if "organization" in field_names:
+            extra_kwargs["organization"] = getattr(self.request.user, "organization", None)
 
         serializer.save(**extra_kwargs)
 

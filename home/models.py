@@ -38,6 +38,8 @@ class Home(models.Model):
         NINE = 9, "9 xona"
         TEN = 10, "10 xona"
 
+    organization = models.ForeignKey(
+        'organization.Organization', on_delete=models.SET_NULL, null=True, blank=True, related_name='homes')
     home_number = models.PositiveIntegerField(default=0)
     blocks = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name='homes')
     floor = models.ForeignKey(Floors, on_delete=models.SET_NULL, null=True, blank=True)
