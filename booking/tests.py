@@ -106,7 +106,7 @@ class CreateBookingServiceTest(TestCase):
     def test_create_booking_basic(self):
         booking = create_booking(
             data={"home": self.home, "client": self.client_obj, "company": self.company},
-            user=self.user,
+            user=self.user
         )
         self.assertIsNotNone(booking.pk)
         self.assertEqual(booking.home, self.home)
