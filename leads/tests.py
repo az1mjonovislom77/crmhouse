@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from datetime import datetime
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
@@ -360,6 +361,35 @@ class LeadViewSetTest(APITestCase):
             'assignee_to': assignee.id,
         }, format='json')
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_filter_by_last_contacted_range(self):
+        make_lead(phone='lc_old', owner=self.user, last_contacted=timezone.make_aware(
+            datetime(2026, 1, 10, 12, 0)))
+        mid = make_lead(phone='lc_mid', owner=self.user, last_contacted=timezone.make_aware(
+            datetime(2026, 2, 15, 12, 0)))
+        make_lead(phone='lc_new', owner=self.user, last_contacted=timezone.make_aware(
+            datetime(2026, 3, 20, 12, 0)))
+        resp = self.client.get(self.list_url, {
+            'last_contacted_from': '2026-02-01',
+            'last_contacted_to': '2026-02-28',
+        })
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual([item['id'] for item in resp.data['data']], [mid.id])
+
+    def test_order_by_last_contacted(self):
+        lead_old = make_lead(phone='ord_old', owner=self.user, last_contacted=timezone.make_aware(
+            datetime(2026, 1, 1, 10, 0)))
+        lead_new = make_lead(phone='ord_new', owner=self.user, last_contacted=timezone.make_aware(
+            datetime(2026, 3, 1, 10, 0)))
+        resp = self.client.get(self.list_url, {'ordering': 'last_contacted'})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        ids = [item['id'] for item in resp.data['data'] if item['id'] in (lead_old.id, lead_new.id)]
+        self.assertEqual(ids, [lead_old.id, lead_new.id])
+
+        resp = self.client.get(self.list_url, {'ordering': '-last_contacted'})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        ids = [item['id'] for item in resp.data['data'] if item['id'] in (lead_old.id, lead_new.id)]
+        self.assertEqual(ids, [lead_new.id, lead_old.id])
 
     def test_unauthenticated_returns_401(self):
         self.client.logout()

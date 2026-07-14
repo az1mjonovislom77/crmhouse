@@ -1,5 +1,11 @@
 from django.db.models import Q, Prefetch, Count
+from django.utils.dateparse import parse_date
+from rest_framework.exceptions import ValidationError
+
+from common.utils import apply_date_range
 from leads.models import Lead, LeadEvent
+
+LEAD_ORDERING_FIELDS = {'last_contacted', '-last_contacted', 'created_at', '-created_at'}
 
 
 def get_lead_list_queryset():
@@ -29,6 +35,9 @@ def filter_leads(queryset, params, user=None):
     assignee = params.get('assignee')
     source = params.get('source')
     search = params.get('search')
+    last_contacted_from = params.get('last_contacted_from')
+    last_contacted_to = params.get('last_contacted_to')
+    ordering = params.get('ordering')
 
     if board:
         queryset = queryset.filter(board=board)
@@ -48,4 +57,25 @@ def filter_leads(queryset, params, user=None):
             Q(full_name__icontains=search) |
             Q(phone__icontains=search) |
             Q(email__icontains=search))
+
+    if last_contacted_from or last_contacted_to:
+        date_from = parse_date(last_contacted_from) if last_contacted_from else None
+        date_to = parse_date(last_contacted_to) if last_contacted_to else None
+        if last_contacted_from and date_from is None:
+            raise ValidationError({
+                'last_contacted_from': "Noto'g'ri sana formati, YYYY-MM-DD bo'lishi kerak.",
+            })
+        if last_contacted_to and date_to is None:
+            raise ValidationError({
+                'last_contacted_to': "Noto'g'ri sana formati, YYYY-MM-DD bo'lishi kerak.",
+            })
+        queryset = apply_date_range(queryset, 'last_contacted', date_from, date_to)
+
+    if ordering:
+        if ordering not in LEAD_ORDERING_FIELDS:
+            raise ValidationError({
+                'ordering': f"Ruxsat etilgan qiymatlar: {', '.join(sorted(LEAD_ORDERING_FIELDS))}",
+            })
+        queryset = queryset.order_by(ordering, '-id')
+
     return queryset
