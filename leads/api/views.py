@@ -15,7 +15,7 @@ from leads.api.serializers import (LeadCreateSerializer, LeadDetailSerializer,
 from django.utils import timezone
 from leads.models import LeadNotification
 from leads.selectors.lead_selectors import filter_leads, get_lead_detail_queryset, get_lead_list_queryset, \
-    get_status_counts
+    get_status_counts, scope_leads_for_user
 from leads.services.lead_service import LeadService
 
 
@@ -44,7 +44,8 @@ class LeadViewSet(BaseUserViewSet):
             qs = get_lead_detail_queryset()
         else:
             qs = get_lead_list_queryset()
-        return filter_by_org(qs, self.request, field='owner__organization')
+        qs = filter_by_org(qs, self.request, field='owner__organization')
+        return scope_leads_for_user(qs, self.request.user)
 
     def get_serializer_class(self):
         if self.action == 'create':

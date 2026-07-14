@@ -330,6 +330,39 @@ class LeadViewSetTest(APITestCase):
         self.assertEqual([item['id'] for item in resp.data['data']], [my_lead.id])
         self.assertEqual(resp.data['counts']['topshiriqlar'], 1)
 
+    def test_seller_list_shows_only_own_leads(self):
+        org = Organization.objects.create(name='Scope Org')
+        seller = make_user(username='scope_seller', role=User.UserRoles.SELLER,
+                           is_staff=False, organization=org)
+        other = make_user(username='scope_other', is_staff=False, organization=org)
+        my_lead = make_lead(phone='scope1', owner=seller)
+        make_lead(phone='scope2', owner=other)
+        self.client.force_authenticate(user=seller)
+        resp = self.client.get(self.list_url)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual([item['id'] for item in resp.data['data']], [my_lead.id])
+
+    def test_admin_list_shows_all_org_leads(self):
+        org = Organization.objects.create(name='Admin Scope Org')
+        admin = make_user(username='scope_admin', role=User.UserRoles.ADMIN, organization=org)
+        seller = make_user(username='scope_seller2', is_staff=False, organization=org)
+        lead1 = make_lead(phone='adm1', owner=admin)
+        lead2 = make_lead(phone='adm2', owner=seller)
+        self.client.force_authenticate(user=admin)
+        resp = self.client.get(self.list_url)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual({item['id'] for item in resp.data['data']}, {lead1.id, lead2.id})
+
+    def test_seller_cannot_retrieve_other_lead(self):
+        org = Organization.objects.create(name='Retrieve Scope Org')
+        seller = make_user(username='retrieve_seller', role=User.UserRoles.SELLER,
+                           is_staff=False, organization=org)
+        other = make_user(username='retrieve_other', is_staff=False, organization=org)
+        lead = make_lead(phone='ret1', owner=other)
+        self.client.force_authenticate(user=seller)
+        resp = self.client.get(reverse('leads-detail', args=[lead.id]))
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_transfer_via_api_sets_topshiriqlar_and_keeps_owner(self):
         admin = make_user(username='transfer_admin', role=User.UserRoles.ADMIN)
         self.client.force_authenticate(user=admin)

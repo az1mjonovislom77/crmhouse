@@ -17,6 +17,14 @@ def get_lead_detail_queryset():
         Prefetch('events', queryset=LeadEvent.objects.select_related('by').order_by('at')))
 
 
+def scope_leads_for_user(queryset, user):
+    """Superadmin/admin see all leads; a seller sees only their own (owned or assigned)."""
+    from leads.permissions import is_lead_admin
+    if is_lead_admin(user):
+        return queryset
+    return queryset.filter(Q(owner_id=user.id) | Q(assignee_id=user.id))
+
+
 def get_status_counts(queryset, user=None):
     rows = queryset.values('status').annotate(n=Count('id'))
     counts = {r['status']: r['n'] for r in rows}
