@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from leads.models import Lead, LeadEvent, LeadNotification
+from leads.permissions import can_assign_leads
 
 User = get_user_model()
 
@@ -94,6 +95,12 @@ class LeadBulkAssignSerializer(serializers.Serializer):
                 raise serializers.ValidationError("Bu foydalanuvchi sizning tashkilotingizga tegishli emas.")
         return value
 
+    def validate(self, data):
+        request = self.context.get('request')
+        if request is not None and not can_assign_leads(request.user):
+            raise serializers.ValidationError('Faqat admin lead topshira oladi.')
+        return data
+
     def validate_lead_ids(self, value):
         if len(value) != len(set(value)):
             raise serializers.ValidationError("Takroriy lead id lar yuborilgan.")
@@ -128,4 +135,7 @@ class LeadUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'meeting_type': 'Bu maydon majburiy'})
         if data.get('meeting_type') and not data.get('meeting_at'):
             raise serializers.ValidationError({'meeting_at': 'Bu maydon majburiy'})
+        request = self.context.get('request')
+        if 'assignee' in data and request is not None and not can_assign_leads(request.user):
+            raise serializers.ValidationError({'assignee': 'Faqat admin lead topshira oladi.'})
         return data

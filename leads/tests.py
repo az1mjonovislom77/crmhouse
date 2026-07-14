@@ -268,16 +268,31 @@ class LeadViewSetTest(APITestCase):
         self.assertEqual(lead.status, 'uchrashuv')
 
     def test_update_lead_assignee_keeps_owner(self):
-        lead = make_lead(owner=self.user)
+        admin = make_user(username='lead_admin', role=User.UserRoles.ADMIN)
+        self.client.force_authenticate(user=admin)
+        lead = make_lead(owner=admin)
         assignee = make_user(username='api_assignee')
         url = reverse('leads-detail', args=[lead.id])
         resp = self.client.put(url, {'assignee': assignee.id})
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         lead.refresh_from_db()
-        self.assertEqual(lead.owner, self.user)
+        self.assertEqual(lead.owner, admin)
         self.assertEqual(lead.assignee, assignee)
-        self.assertEqual(resp.data['owner_id'], self.user.id)
+        self.assertEqual(resp.data['owner_id'], admin.id)
         self.assertEqual(resp.data['assignee_id'], assignee.id)
+
+    def test_seller_cannot_assign_lead(self):
+        seller = make_user(username='lead_seller', role=User.UserRoles.SELLER, is_staff=False)
+        org = Organization.objects.create(name='Seller Org')
+        seller.organization = org
+        seller.save(update_fields=['organization'])
+        self.client.force_authenticate(user=seller)
+        lead = make_lead(owner=seller)
+        assignee = make_user(username='blocked_assignee', organization=org)
+        url = reverse('leads-detail', args=[lead.id])
+        resp = self.client.put(url, {'assignee': assignee.id})
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('assignee', resp.data)
 
     def test_list_with_board_filter(self):
         make_lead(phone='111', board=Lead.BOARD_SALES)
@@ -316,24 +331,28 @@ class LeadViewSetTest(APITestCase):
         self.assertEqual(resp.data['counts']['topshiriqlar'], 1)
 
     def test_transfer_via_api_sets_topshiriqlar_and_keeps_owner(self):
-        lead = make_lead(owner=self.user)
+        admin = make_user(username='transfer_admin', role=User.UserRoles.ADMIN)
+        self.client.force_authenticate(user=admin)
+        lead = make_lead(owner=admin)
         assignee = make_user(username='api_task_user')
         url = reverse('leads-detail', args=[lead.id])
         resp = self.client.put(url, {'assignee': assignee.id})
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         lead.refresh_from_db()
-        self.assertEqual(lead.owner, self.user)
+        self.assertEqual(lead.owner, admin)
         self.assertEqual(lead.assignee, assignee)
         self.assertEqual(lead.status, STATUS_TOPSHIRIQLAR)
         transfer = LeadEvent.objects.filter(lead=lead, type=LeadEvent.TYPE_TRANSFER).latest('at')
-        self.assertEqual(transfer.by, self.user)
-        self.assertEqual(transfer.from_value, self.user.full_name)
+        self.assertEqual(transfer.by, admin)
+        self.assertEqual(transfer.from_value, admin.full_name)
         self.assertEqual(transfer.to_value, assignee.full_name)
 
     def test_bulk_assign_multiple_leads(self):
+        admin = make_user(username='bulk_admin', role=User.UserRoles.ADMIN)
+        self.client.force_authenticate(user=admin)
         assignee = make_user(username='bulk_assignee')
-        lead1 = make_lead(phone='777', owner=self.user)
-        lead2 = make_lead(phone='888', owner=self.user)
+        lead1 = make_lead(phone='777', owner=admin)
+        lead2 = make_lead(phone='888', owner=admin)
         url = reverse('leads-bulk-assign')
         resp = self.client.post(url, {
             'lead_ids': [lead1.id, lead2.id],
@@ -349,12 +368,29 @@ class LeadViewSetTest(APITestCase):
         self.assertEqual(lead2.assignee, assignee)
         self.assertEqual(lead1.status, STATUS_TOPSHIRIQLAR)
         self.assertEqual(lead2.status, STATUS_TOPSHIRIQLAR)
-        self.assertEqual(lead1.owner, self.user)
-        self.assertEqual(lead2.owner, self.user)
+        self.assertEqual(lead1.owner, admin)
+        self.assertEqual(lead2.owner, admin)
+
+    def test_seller_cannot_bulk_assign(self):
+        seller = make_user(username='bulk_seller', role=User.UserRoles.SELLER, is_staff=False)
+        org = Organization.objects.create(name='Bulk Seller Org')
+        seller.organization = org
+        seller.save(update_fields=['organization'])
+        self.client.force_authenticate(user=seller)
+        assignee = make_user(username='bulk_blocked_assignee', organization=org)
+        lead = make_lead(phone='bulk_one', owner=seller)
+        url = reverse('leads-bulk-assign')
+        resp = self.client.post(url, {
+            'lead_ids': [lead.id],
+            'assignee_to': assignee.id,
+        }, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_bulk_assign_invalid_lead_id(self):
+        admin = make_user(username='bulk_invalid_admin', role=User.UserRoles.ADMIN)
+        self.client.force_authenticate(user=admin)
         assignee = make_user(username='bulk_invalid_assignee')
-        lead = make_lead(phone='999', owner=self.user)
+        lead = make_lead(phone='999', owner=admin)
         url = reverse('leads-bulk-assign')
         resp = self.client.post(url, {
             'lead_ids': [lead.id, 99999],
