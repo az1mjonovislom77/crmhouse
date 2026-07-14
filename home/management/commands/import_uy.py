@@ -20,8 +20,8 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             '--block-prefix',
-            default='',
-            help='Block title prefiks (masalan: "Block " -> "Block 1"). Default: bo\'sh',
+            default='Block - ',
+            help='Block title prefiks (masalan: "Block - " -> "Block - A"). Default: "Block - "',
         )
         parser.add_argument(
             '--project-id',
@@ -72,7 +72,6 @@ class Command(BaseCommand):
                 floor_number = int(row['floor'])
                 home_number = int(row['home_number'])
                 area = float(row['area'])
-                department = int(row['department'])
                 entrance = int(row['entrance'])
 
                 raw_price = row.get('price') or 0
@@ -88,7 +87,8 @@ class Command(BaseCommand):
 
                 floor_obj, _ = Floors.objects.get_or_create(number=floor_number)
 
-                block_title = f"{block_prefix}{department}"
+                block_letter = str(row.get('block') or '').strip()
+                block_title = f"{block_prefix}{block_letter}"
                 block_qs = Block.objects.filter(title=block_title)
                 if project_id:
                     block_qs = block_qs.filter(projects_id=project_id)
