@@ -72,5 +72,5 @@ class MeAPIView(APIView):
     serializer_class = MeSerializer
 
     def get(self, request):
-        serializer = self.serializer_class(request.user)
+        serializer = self.serializer_class(request.user, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
