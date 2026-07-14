@@ -14,7 +14,7 @@ class SignInSerializer(serializers.Serializer):
 
 class MeSerializer(serializers.ModelSerializer):
     organization_name = serializers.CharField(read_only=True, source="organization.name")
-    organization_logo = serializers.SerializerMethodField(source="organization.logo", read_only=True)
+    organization_logo = serializers.ImageField(source="organization.logo", read_only=True, allow_null=True)
 
     class Meta:
         model = User
