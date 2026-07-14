@@ -11,7 +11,7 @@ from common.base.views_base import BaseUserViewSet
 from common.mixins import filter_by_org
 from leads.api.serializers import (LeadCreateSerializer, LeadDetailSerializer,
                                    LeadListSerializer, LeadUpdateSerializer,
-                                   LeadNotificationSerializer)
+                                   LeadNotificationSerializer, LeadBulkAssignSerializer)
 from django.utils import timezone
 from leads.models import LeadNotification
 from leads.selectors.lead_selectors import filter_leads, get_lead_detail_queryset, get_lead_list_queryset, \
@@ -53,6 +53,8 @@ class LeadViewSet(BaseUserViewSet):
             return LeadUpdateSerializer
         if self.action == 'retrieve':
             return LeadDetailSerializer
+        if self.action == 'bulk_assign':
+            return LeadBulkAssignSerializer
         return LeadListSerializer
 
     def list(self, request, *args, **kwargs):
@@ -85,6 +87,31 @@ class LeadViewSet(BaseUserViewSet):
         lead = LeadService.update_lead(instance, serializer.validated_data, request.user)
         return Response(LeadDetailSerializer(get_lead_detail_queryset().get(pk=lead.pk),
                                              context={'request': request}).data)
+
+    @extend_schema(
+        request=LeadBulkAssignSerializer,
+        responses={200: inline_serializer('LeadBulkAssignResponse', fields={
+            'updated': serializers.IntegerField(),
+            'lead_ids': serializers.ListField(child=serializers.IntegerField()),
+            'assignee_id': serializers.IntegerField(),
+            'assignee_name': serializers.CharField(),
+        })},
+    )
+    @action(detail=False, methods=['post'], url_path='bulk-assign')
+    def bulk_assign(self, request):
+        serializer = LeadBulkAssignSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        assignee_to = serializer.validated_data['assignee_to']
+        lead_ids = serializer.validated_data['lead_ids']
+        updated_ids = LeadService.bulk_assign_leads(
+            lead_ids, assignee_to, request.user, self.get_queryset(),
+        )
+        return Response({
+            'updated': len(updated_ids),
+            'lead_ids': updated_ids,
+            'assignee_id': assignee_to.id,
+            'assignee_name': assignee_to.full_name,
+        })
 
     @extend_schema(
         request=None,

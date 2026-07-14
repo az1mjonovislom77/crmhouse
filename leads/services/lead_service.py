@@ -140,3 +140,20 @@ class LeadService:
         instance.score = _compute_score(instance)
         instance.save()
         return instance
+
+    @staticmethod
+    @transaction.atomic
+    def bulk_assign_leads(lead_ids, assignee_to, user, queryset):
+        leads = list(queryset.filter(pk__in=lead_ids))
+        found_ids = {lead.pk for lead in leads}
+        missing = set(lead_ids) - found_ids
+        if missing:
+            raise ValidationError({
+                'lead_ids': f"Leadlar topilmadi yoki ruxsat yo'q: {sorted(missing)}",
+            })
+
+        updated_ids = []
+        for lead in leads:
+            LeadService.update_lead(lead, {'assignee': assignee_to}, user)
+            updated_ids.append(lead.pk)
+        return updated_ids

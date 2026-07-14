@@ -329,6 +329,38 @@ class LeadViewSetTest(APITestCase):
         self.assertEqual(transfer.from_value, self.user.full_name)
         self.assertEqual(transfer.to_value, assignee.full_name)
 
+    def test_bulk_assign_multiple_leads(self):
+        assignee = make_user(username='bulk_assignee')
+        lead1 = make_lead(phone='777', owner=self.user)
+        lead2 = make_lead(phone='888', owner=self.user)
+        url = reverse('leads-bulk-assign')
+        resp = self.client.post(url, {
+            'lead_ids': [lead1.id, lead2.id],
+            'assignee_to': assignee.id,
+        }, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['updated'], 2)
+        self.assertEqual(set(resp.data['lead_ids']), {lead1.id, lead2.id})
+        self.assertEqual(resp.data['assignee_id'], assignee.id)
+        lead1.refresh_from_db()
+        lead2.refresh_from_db()
+        self.assertEqual(lead1.assignee, assignee)
+        self.assertEqual(lead2.assignee, assignee)
+        self.assertEqual(lead1.status, STATUS_TOPSHIRIQLAR)
+        self.assertEqual(lead2.status, STATUS_TOPSHIRIQLAR)
+        self.assertEqual(lead1.owner, self.user)
+        self.assertEqual(lead2.owner, self.user)
+
+    def test_bulk_assign_invalid_lead_id(self):
+        assignee = make_user(username='bulk_invalid_assignee')
+        lead = make_lead(phone='999', owner=self.user)
+        url = reverse('leads-bulk-assign')
+        resp = self.client.post(url, {
+            'lead_ids': [lead.id, 99999],
+            'assignee_to': assignee.id,
+        }, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_unauthenticated_returns_401(self):
         self.client.logout()
         resp = self.client.get(self.list_url)

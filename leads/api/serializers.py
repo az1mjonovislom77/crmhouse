@@ -80,6 +80,26 @@ class LeadNotificationSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'lead_id', 'lead_name', 'lead_phone', 'meeting_at', 'created_at']
 
 
+class LeadBulkAssignSerializer(serializers.Serializer):
+    lead_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        allow_empty=False,
+    )
+    assignee_to = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+
+    def validate_assignee_to(self, value):
+        request = self.context.get('request')
+        if request is not None and not request.user.is_staff:
+            if value.organization_id != request.user.organization_id:
+                raise serializers.ValidationError("Bu foydalanuvchi sizning tashkilotingizga tegishli emas.")
+        return value
+
+    def validate_lead_ids(self, value):
+        if len(value) != len(set(value)):
+            raise serializers.ValidationError("Takroriy lead id lar yuborilgan.")
+        return value
+
+
 class LeadUpdateSerializer(serializers.ModelSerializer):
     assignee = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False)
 
