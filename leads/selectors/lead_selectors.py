@@ -29,8 +29,7 @@ def get_status_counts(queryset, user=None):
     counts = {r['status']: r['n'] for r in rows}
     if user and not is_lead_admin(user):
         counts['topshiriqlar'] = queryset.filter(
-            status='topshiriqlar', assignee_id=user.id,
-        ).count()
+            status='topshiriqlar', assignee_id=user.id).count()
     counts['all'] = sum(counts.values())
     return counts
 
