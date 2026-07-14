@@ -1,7 +1,7 @@
 from django.core.validators import FileExtensionValidator
 from django.db import models
 
-from common.services.image_service import check_image_size
+from common.services.image_service import check_image_size, optimize_image_to_webp
 
 
 class Organization(models.Model):
@@ -12,6 +12,19 @@ class Organization(models.Model):
                                  check_image_size], null=True, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old = Organization.objects.only("logo").filter(pk=self.pk).first()
+            if old and old.logo == self.logo:
+                super().save(*args, **kwargs)
+                return
+
+        if self.logo and not self.logo.name.lower().endswith(".webp"):
+            optimized_image = optimize_image_to_webp(self.logo, quality=80)
+            self.logo.save(optimized_image.name, optimized_image, save=False)
+
+        super().save(*args, **kwargs)
 
     class Meta:
         db_table = 'organizations'
