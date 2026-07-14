@@ -19,7 +19,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = '__all__'
-        read_only_fields = ['user']
+        read_only_fields = ['user', 'organization']
 
     def get_sold_percent(self, obj):
         return round(getattr(obj, 'sold_percent', 0) or 0, 2)

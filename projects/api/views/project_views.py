@@ -18,11 +18,12 @@ class ProjectViewSet(BaseUserViewSet):
     search_fields = ['title', 'description']
 
     def get_queryset(self):
-        return filter_by_org(get_projects_with_stats(), self.request, field='user__organization')
+        return filter_by_org(get_projects_with_stats(), self.request, field='organization')
 
     def perform_create(self, serializer):
         validated_data = dict(serializer.validated_data)
         validated_data['user'] = self.request.user
+        validated_data['organization'] = getattr(self.request.user, 'organization', None)
         serializer.instance = ProjectService.create_project(validated_data)
 
     def perform_update(self, serializer):
@@ -38,7 +39,7 @@ class BlockViewSet(BaseUserViewSet):
 
     def get_queryset(self):
         qs = Block.objects.select_related('projects')
-        return filter_by_org(qs, self.request, field='projects__user__organization')
+        return filter_by_org(qs, self.request, field='projects__organization')
 
     def get_serializer_class(self):
         if self.action == 'create':

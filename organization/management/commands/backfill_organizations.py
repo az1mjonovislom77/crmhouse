@@ -2,14 +2,22 @@ from django.core.management.base import BaseCommand
 
 from booking.models import Booking
 from home.models import Home
+from projects.models.project_models import Project
 from tasks.models import Card
 
 
 class Command(BaseCommand):
-    help = ("Home, Booking va Card yozuvlariga organization qiymatini mavjud "
+    help = ("Home, Booking, Card va Project yozuvlariga organization qiymatini mavjud "
             "bog'lanish zanjiri orqali to'ldiradi (bir marta ishga tushiriladi)")
 
     def handle(self, *args, **options):
+        project_updated = 0
+        rows = Project.objects.filter(
+            organization__isnull=True, user__organization__isnull=False
+        ).values_list('pk', 'user__organization_id')
+        for project_id, org_id in rows:
+            project_updated += Project.objects.filter(pk=project_id).update(organization_id=org_id)
+
         home_updated = 0
         rows = Home.objects.filter(
             organization__isnull=True, blocks__projects__user__organization__isnull=False
@@ -32,5 +40,5 @@ class Command(BaseCommand):
             card_updated += Card.objects.filter(pk=card_id).update(organization_id=org_id)
 
         self.stdout.write(self.style.SUCCESS(
-            f"Backfill: Home {home_updated} ta, Booking {booking_updated} ta, "
-            f"Card {card_updated} ta organization to'ldirildi"))
+            f"Backfill: Project {project_updated} ta, Home {home_updated} ta, "
+            f"Booking {booking_updated} ta, Card {card_updated} ta organization to'ldirildi"))
