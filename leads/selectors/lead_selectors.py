@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 
 from common.utils import apply_date_range
 from leads.models import Lead, LeadEvent
+from leads.permissions import is_lead_admin
 
 LEAD_ORDERING_FIELDS = {'last_contacted', '-last_contacted', 'created_at', '-created_at'}
 
@@ -18,8 +19,6 @@ def get_lead_detail_queryset():
 
 
 def scope_leads_for_user(queryset, user):
-    """Superadmin/admin see all leads; a seller sees only their own (owned or assigned)."""
-    from leads.permissions import is_lead_admin
     if is_lead_admin(user):
         return queryset
     return queryset.filter(Q(owner_id=user.id) | Q(assignee_id=user.id))
@@ -28,7 +27,7 @@ def scope_leads_for_user(queryset, user):
 def get_status_counts(queryset, user=None):
     rows = queryset.values('status').annotate(n=Count('id'))
     counts = {r['status']: r['n'] for r in rows}
-    if user and not user.is_staff:
+    if user and not is_lead_admin(user):
         counts['topshiriqlar'] = queryset.filter(
             status='topshiriqlar', assignee_id=user.id,
         ).count()
@@ -50,7 +49,7 @@ def filter_leads(queryset, params, user=None):
     if board:
         queryset = queryset.filter(board=board)
     if status:
-        if status == 'topshiriqlar' and user and not user.is_staff:
+        if status == 'topshiriqlar' and user and not is_lead_admin(user):
             queryset = queryset.filter(status='topshiriqlar', assignee_id=user.id)
         else:
             queryset = queryset.filter(status=status)
