@@ -69,11 +69,11 @@ def filter_leads(queryset, params, user=None):
         date_to = parse_date(last_contacted_to) if last_contacted_to else None
         if last_contacted_from and date_from is None:
             raise ValidationError({
-                'last_contacted_from': "Noto'g'ri sana formati, YYYY-MM-DD bo'lishi kerak.",
+                'last_contacted_from': "Noto'g'ri sana formati, YYYY-MM-DD bo'lishi kerak",
             })
         if last_contacted_to and date_to is None:
             raise ValidationError({
-                'last_contacted_to': "Noto'g'ri sana formati, YYYY-MM-DD bo'lishi kerak.",
+                'last_contacted_to': "Noto'g'ri sana formati, YYYY-MM-DD bo'lishi kerak",
             })
         queryset = apply_date_range(queryset, 'last_contacted', date_from, date_to)
 
