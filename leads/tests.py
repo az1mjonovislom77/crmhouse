@@ -5,8 +5,10 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
-from leads.models import Lead, LeadEvent, LeadNotification, BOARD_STATUSES
+from leads.models import Lead, LeadEvent, LeadNotification, BOARD_STATUSES, STATUS_TOPSHIRIQLAR
 from leads.services.lead_service import LeadService
+from leads.services.notification_service import MeetingNotificationService
+from organization.models import Organization
 from user.models import User
 
 
@@ -30,6 +32,8 @@ def make_lead(**kwargs):
         'score': 0,
     }
     defaults.update(kwargs)
+    if defaults.get('owner') and not defaults.get('assignee'):
+        defaults['assignee'] = defaults['owner']
     return Lead.objects.create(**defaults)
 
 
@@ -138,6 +142,7 @@ class LeadServiceCreateTest(TestCase):
             'source': 'Instagram',
         }, self.user)
         self.assertEqual(lead.owner, self.user)
+        self.assertEqual(lead.assignee, self.user)
 
 
 class LeadServiceUpdateTest(TestCase):
@@ -164,13 +169,41 @@ class LeadServiceUpdateTest(TestCase):
         )
 
     def test_transfer_creates_event(self):
-        new_owner = make_user(username='new_owner_user')
-        LeadService.update_lead(self.lead, {'owner': new_owner}, self.user)
+        new_assignee = make_user(username='new_assignee_user')
+        LeadService.update_lead(self.lead, {'assignee': new_assignee}, self.user)
         self.assertTrue(
             LeadEvent.objects.filter(lead=self.lead, type=LeadEvent.TYPE_TRANSFER).exists()
         )
         self.lead.refresh_from_db()
-        self.assertEqual(self.lead.owner, new_owner)
+        self.assertEqual(self.lead.owner, self.user)
+        self.assertEqual(self.lead.assignee, new_assignee)
+
+    def test_transfer_moves_to_topshiriqlar_for_assignee(self):
+        new_assignee = make_user(username='delegated_user')
+        LeadService.update_lead(self.lead, {'assignee': new_assignee}, self.user)
+        self.lead.refresh_from_db()
+        self.assertEqual(self.lead.status, STATUS_TOPSHIRIQLAR)
+        self.assertEqual(self.lead.sub_status, 'yangi_topshiriq')
+
+    def test_transfer_back_to_owner_leaves_topshiriqlar(self):
+        assignee = make_user(username='temp_assignee')
+        LeadService.update_lead(self.lead, {'assignee': assignee}, self.user)
+        LeadService.update_lead(self.lead, {'assignee': self.user}, self.user)
+        self.lead.refresh_from_db()
+        self.assertEqual(self.lead.status, 'yangi_murojaat')
+        self.assertEqual(self.lead.assignee, self.user)
+
+    def test_assignee_status_change_visible_in_history(self):
+        assignee = make_user(username='worker_user')
+        LeadService.update_lead(self.lead, {'assignee': assignee}, self.user)
+        LeadService.update_lead(self.lead, {'status': 'uchrashuv'}, assignee)
+        self.lead.refresh_from_db()
+        self.assertEqual(self.lead.owner, self.user)
+        self.assertEqual(self.lead.status, 'uchrashuv')
+        status_event = LeadEvent.objects.filter(
+            lead=self.lead, type=LeadEvent.TYPE_STATUS, to_value='uchrashuv',
+        ).latest('at')
+        self.assertEqual(status_event.by, assignee)
 
     def test_update_subsidiya_creates_event(self):
         LeadService.update_lead(self.lead, {'subsidiya': True}, self.user)
@@ -233,6 +266,18 @@ class LeadViewSetTest(APITestCase):
         lead.refresh_from_db()
         self.assertEqual(lead.status, 'uchrashuv')
 
+    def test_update_lead_assignee_keeps_owner(self):
+        lead = make_lead(owner=self.user)
+        assignee = make_user(username='api_assignee')
+        url = reverse('leads-detail', args=[lead.id])
+        resp = self.client.put(url, {'assignee': assignee.id})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        lead.refresh_from_db()
+        self.assertEqual(lead.owner, self.user)
+        self.assertEqual(lead.assignee, assignee)
+        self.assertEqual(resp.data['owner_id'], self.user.id)
+        self.assertEqual(resp.data['assignee_id'], assignee.id)
+
     def test_list_with_board_filter(self):
         make_lead(phone='111', board=Lead.BOARD_SALES)
         make_lead(phone='222', board=Lead.BOARD_COLD, status='yangi', sub_status='yangi')
@@ -240,6 +285,49 @@ class LeadViewSetTest(APITestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         for item in resp.data['data']:
             self.assertEqual(item['board'], Lead.BOARD_COLD)
+
+    def test_list_with_assignee_filter(self):
+        assignee = make_user(username='assigned_user')
+        other = make_user(username='other_assigned_user')
+        lead = make_lead(phone='333', owner=self.user, assignee=assignee)
+        make_lead(phone='444', owner=self.user, assignee=other)
+        resp = self.client.get(self.list_url, {'assignee': assignee.id})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual([item['id'] for item in resp.data['data']], [lead.id])
+
+    def test_topshiriqlar_list_shows_only_current_assignee_leads(self):
+        org = Organization.objects.create(name='Tasks Org')
+        owner = make_user(username='task_owner', is_staff=False, organization=org)
+        assignee = make_user(username='my_tasks_user', is_staff=False, organization=org)
+        other = make_user(username='other_tasks_user', is_staff=False, organization=org)
+        my_lead = make_lead(
+            phone='555', owner=owner, assignee=assignee,
+            status=STATUS_TOPSHIRIQLAR, sub_status='yangi_topshiriq',
+        )
+        make_lead(
+            phone='666', owner=owner, assignee=other,
+            status=STATUS_TOPSHIRIQLAR, sub_status='yangi_topshiriq',
+        )
+        self.client.force_authenticate(user=assignee)
+        resp = self.client.get(self.list_url, {'status': STATUS_TOPSHIRIQLAR})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual([item['id'] for item in resp.data['data']], [my_lead.id])
+        self.assertEqual(resp.data['counts']['topshiriqlar'], 1)
+
+    def test_transfer_via_api_sets_topshiriqlar_and_keeps_owner(self):
+        lead = make_lead(owner=self.user)
+        assignee = make_user(username='api_task_user')
+        url = reverse('leads-detail', args=[lead.id])
+        resp = self.client.put(url, {'assignee': assignee.id})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        lead.refresh_from_db()
+        self.assertEqual(lead.owner, self.user)
+        self.assertEqual(lead.assignee, assignee)
+        self.assertEqual(lead.status, STATUS_TOPSHIRIQLAR)
+        transfer = LeadEvent.objects.filter(lead=lead, type=LeadEvent.TYPE_TRANSFER).latest('at')
+        self.assertEqual(transfer.by, self.user)
+        self.assertEqual(transfer.from_value, self.user.full_name)
+        self.assertEqual(transfer.to_value, assignee.full_name)
 
     def test_unauthenticated_returns_401(self):
         self.client.logout()
@@ -277,3 +365,17 @@ class LeadNotificationViewSetTest(APITestCase):
         LeadNotification.objects.create(lead=lead, owner=other, meeting_at=timezone.now())
         resp = self.client.get(reverse('lead-notifications-list'))
         self.assertEqual(len(resp.data), 0)
+
+
+class MeetingNotificationServiceTest(TestCase):
+    def test_notifications_are_created_for_assignee(self):
+        owner = make_user(username='meeting_owner')
+        assignee = make_user(username='meeting_assignee')
+        meeting_at = timezone.now()
+        lead = make_lead(owner=owner, assignee=assignee, meeting_at=meeting_at)
+
+        created_ids = MeetingNotificationService.check_and_create()
+
+        self.assertEqual(len(created_ids), 1)
+        notification = LeadNotification.objects.get(lead=lead)
+        self.assertEqual(notification.owner, assignee)

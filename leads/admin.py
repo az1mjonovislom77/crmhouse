@@ -11,8 +11,8 @@ class LeadEventInline(admin.TabularInline):
 
 @admin.register(Lead)
 class LeadAdmin(admin.ModelAdmin):
-    list_display  = ['id', 'full_name', 'phone', 'board', 'status', 'sub_status', 'owner', 'score', 'created_at']
-    list_filter   = ['board', 'status', 'source']
+    list_display  = ['id', 'full_name', 'phone', 'board', 'status', 'sub_status', 'owner', 'assignee', 'score', 'created_at']
+    list_filter   = ['board', 'status', 'source', 'owner', 'assignee']
     search_fields = ['full_name', 'phone', 'email']
     inlines       = [LeadEventInline]
 

@@ -1,7 +1,7 @@
 from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
-from leads.models import Lead, LeadEvent, BOARD_STATUSES, BOARD_FIRST_STATUS
+from leads.models import Lead, LeadEvent, BOARD_STATUSES, BOARD_FIRST_STATUS, STATUS_NEW, STATUS_TOPSHIRIQLAR
 
 
 def _compute_score(lead):
@@ -31,7 +31,7 @@ class LeadService:
         status = BOARD_FIRST_STATUS[board]
         sub = BOARD_STATUSES[board][status][0]
         lead = Lead.objects.create(
-            **data, owner=user, status=status, sub_status=sub, score=0,
+            **data, owner=user, assignee=user, status=status, sub_status=sub, score=0,
             meeting_at=meeting_at, meeting_type=meeting_type,
         )
         LeadEvent.objects.create(lead=lead, type=LeadEvent.TYPE_CREATED, by=user)
@@ -53,7 +53,8 @@ class LeadService:
         meeting_type = data.pop('meeting_type', None)
         new_status = data.pop('status', None)
         new_sub = data.pop('sub_status', None)
-        new_owner = data.pop('owner', None)
+        data.pop('owner', None)
+        new_assignee = data.pop('assignee', None)
         new_subsidiya = data.pop('subsidiya', None)
 
         for attr, value in data.items():
@@ -83,13 +84,29 @@ class LeadService:
             )
             instance.sub_status = new_sub
 
-        if new_owner and new_owner != instance.owner:
+        if new_assignee and new_assignee != instance.assignee:
             LeadEvent.objects.create(
                 lead=instance, type=LeadEvent.TYPE_TRANSFER,
-                from_value=instance.owner.full_name if instance.owner else '',
-                to_value=new_owner.full_name, by=user,
+                from_value=instance.assignee.full_name if instance.assignee else '',
+                to_value=new_assignee.full_name, by=user,
             )
-            instance.owner = new_owner
+            instance.assignee = new_assignee
+            if instance.board == Lead.BOARD_SALES:
+                if new_assignee != instance.owner:
+                    if instance.status != STATUS_TOPSHIRIQLAR:
+                        LeadEvent.objects.create(
+                            lead=instance, type=LeadEvent.TYPE_STATUS,
+                            from_value=instance.status, to_value=STATUS_TOPSHIRIQLAR, by=user,
+                        )
+                    instance.status = STATUS_TOPSHIRIQLAR
+                    instance.sub_status = board_statuses[STATUS_TOPSHIRIQLAR][0]
+                elif instance.status == STATUS_TOPSHIRIQLAR:
+                    LeadEvent.objects.create(
+                        lead=instance, type=LeadEvent.TYPE_STATUS,
+                        from_value=instance.status, to_value=STATUS_NEW, by=user,
+                    )
+                    instance.status = STATUS_NEW
+                    instance.sub_status = board_statuses[STATUS_NEW][0]
 
         if comment:
             LeadEvent.objects.create(lead=instance, type=LeadEvent.TYPE_COMMENT, text=comment, by=user)

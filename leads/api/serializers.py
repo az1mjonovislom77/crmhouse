@@ -16,31 +16,39 @@ class LeadEventSerializer(serializers.ModelSerializer):
 
 class LeadListSerializer(serializers.ModelSerializer):
     owner_name = serializers.SerializerMethodField()
+    assignee_name = serializers.SerializerMethodField()
 
     def get_owner_name(self, obj):
         return obj.owner.full_name if obj.owner else None
+
+    def get_assignee_name(self, obj):
+        return obj.assignee.full_name if obj.assignee else None
 
     class Meta:
         model = Lead
         fields = [
             'id', 'full_name', 'phone', 'email', 'source', 'board', 'status', 'sub_status',
-            'owner_id', 'owner_name', 'score', 'note',
+            'owner_id', 'owner_name', 'assignee_id', 'assignee_name', 'score', 'note',
             'meeting_at', 'meeting_type', 'subsidiya', 'contacted_at', 'last_contacted', 'created_at', 'updated_at',
         ]
 
 
 class LeadDetailSerializer(serializers.ModelSerializer):
     owner_name = serializers.SerializerMethodField()
+    assignee_name = serializers.SerializerMethodField()
     events = LeadEventSerializer(many=True, read_only=True)
 
     def get_owner_name(self, obj):
         return obj.owner.full_name if obj.owner else None
 
+    def get_assignee_name(self, obj):
+        return obj.assignee.full_name if obj.assignee else None
+
     class Meta:
         model = Lead
         fields = [
             'id', 'full_name', 'phone', 'email', 'source', 'board', 'status', 'sub_status',
-            'owner_id', 'owner_name', 'score', 'note', 'meeting_at', 'meeting_type', 'subsidiya',
+            'owner_id', 'owner_name', 'assignee_id', 'assignee_name', 'score', 'note', 'meeting_at', 'meeting_type', 'subsidiya',
             'contacted_at', 'last_contacted', 'created_at', 'updated_at', 'events']
 
 
@@ -73,9 +81,9 @@ class LeadNotificationSerializer(serializers.ModelSerializer):
 
 
 class LeadUpdateSerializer(serializers.ModelSerializer):
-    owner = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False)
+    assignee = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False)
 
-    def validate_owner(self, value):
+    def validate_assignee(self, value):
         request = self.context.get('request')
         if request is not None and not request.user.is_staff:
             if value.organization_id != request.user.organization_id:
@@ -91,7 +99,7 @@ class LeadUpdateSerializer(serializers.ModelSerializer):
         model = Lead
         fields = [
             'full_name', 'phone', 'email', 'source', 'note', 'subsidiya',
-            'status', 'sub_status', 'owner',
+            'status', 'sub_status', 'assignee',
             'comment', 'call_result', 'meeting_at', 'meeting_type',
         ]
 

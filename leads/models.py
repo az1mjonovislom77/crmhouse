@@ -2,10 +2,12 @@ from django.db import models
 from django.conf import settings
 
 STATUS_NEW = 'yangi_murojaat'
+STATUS_TOPSHIRIQLAR = 'topshiriqlar'
 STATUS_SUCCESS = 'muvaffaqiyatli'
 
 SALES_STATUSES = {
     STATUS_NEW: ['murojaat_qildi', 'kordi_eshitdi'],
+    STATUS_TOPSHIRIQLAR: ['yangi_topshiriq'],
     'uchrashuv': ['uchrashuv_belgilandi', 'keldi'],
     'jarayon': ['band_qildi', 'shartnoma_qildi', 'notarius'],
     STATUS_SUCCESS: ['uy_oldi'],
@@ -65,6 +67,8 @@ class Lead(models.Model):
     subsidiya = models.BooleanField(default=False)
     contacted_at = models.DateTimeField(null=True, blank=True)
     last_contacted = models.DateTimeField(null=True, blank=True)
+    assignee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                 related_name='assigned_leads')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -73,6 +77,7 @@ class Lead(models.Model):
         indexes = [
             models.Index(fields=['board', 'status']),
             models.Index(fields=['owner']),
+            models.Index(fields=['assignee'], name='leads_lead_assignee_idx'),
         ]
 
     def __str__(self):

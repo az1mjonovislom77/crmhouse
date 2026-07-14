@@ -217,6 +217,7 @@ class Command(BaseCommand):
                     status=status,
                     sub_status=sub_status,
                     owner=owner,
+                    assignee=owner,
                     subsidiya=subsidiya,
                     note=general_note or None,
                     meeting_at=meeting_at,

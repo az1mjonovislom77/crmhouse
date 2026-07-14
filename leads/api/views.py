@@ -60,9 +60,9 @@ class LeadViewSet(BaseUserViewSet):
         count_params._mutable = True
         count_params.pop('status', None)
         base_qs = self.get_queryset()
-        counts = get_status_counts(filter_leads(base_qs, count_params))
+        counts = get_status_counts(filter_leads(base_qs, count_params, user=request.user), user=request.user)
 
-        qs = filter_leads(base_qs, request.query_params)
+        qs = filter_leads(base_qs, request.query_params, user=request.user)
         page = self.paginate_queryset(qs)
         if page is not None:
             response = self.get_paginated_response(LeadListSerializer(page, many=True).data)
