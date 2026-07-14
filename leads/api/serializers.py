@@ -136,6 +136,11 @@ class LeadUpdateSerializer(serializers.ModelSerializer):
         if data.get('meeting_type') and not data.get('meeting_at'):
             raise serializers.ValidationError({'meeting_at': 'Bu maydon majburiy'})
         request = self.context.get('request')
-        if 'assignee' in data and request is not None and not can_assign_leads(request.user):
+        new_assignee = data.get('assignee')
+        assignee_changed = (
+            new_assignee is not None
+            and (self.instance is None or new_assignee != self.instance.assignee)
+        )
+        if assignee_changed and request is not None and not can_assign_leads(request.user):
             raise serializers.ValidationError({'assignee': 'Faqat admin lead topshira oladi.'})
         return data
