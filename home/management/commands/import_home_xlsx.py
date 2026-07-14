@@ -23,6 +23,18 @@ def parse_rooms(val):
     return int(match.group()) if match else 1
 
 
+# Kirill homoglif harflarni lotinga o'giradi (masalan "4А"(kirill) -> "4A"(lotin))
+CYR_TO_LAT = str.maketrans({
+    'А': 'A', 'В': 'B', 'С': 'C', 'Е': 'E', 'Н': 'H', 'К': 'K',
+    'М': 'M', 'О': 'O', 'Р': 'P', 'Т': 'T', 'Х': 'X', 'У': 'Y',
+    'а': 'a', 'е': 'e', 'о': 'o', 'р': 'p', 'с': 'c', 'х': 'x',
+})
+
+
+def normalize_block(val):
+    return str(val).strip().translate(CYR_TO_LAT)
+
+
 class Command(BaseCommand):
     help = 'home.xlsx dan Home larni import qiladi / statusni yangilaydi'
 
@@ -56,7 +68,7 @@ class Command(BaseCommand):
         fixed_block_title = options['block_title']
         project_id = options['project_id']
 
-        wb = openpyxl.load_workbook(file_path)
+        wb = openpyxl.load_workbook(file_path, data_only=True)
         ws = wb.active
 
         created_count = 0
@@ -89,7 +101,7 @@ class Command(BaseCommand):
                 if fixed_block_title:
                     block_title = fixed_block_title
                 else:
-                    block_title = f"{block_prefix}{bino}{block_suffix}"
+                    block_title = f"{block_prefix}{normalize_block(bino)}{block_suffix}"
                 block_qs = Block.objects.filter(title=block_title)
                 if project_id:
                     block_qs = block_qs.filter(projects_id=project_id)
