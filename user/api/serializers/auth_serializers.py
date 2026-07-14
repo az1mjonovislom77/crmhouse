@@ -13,6 +13,10 @@ class SignInSerializer(serializers.Serializer):
 
 
 class MeSerializer(serializers.ModelSerializer):
+    organization_name = serializers.CharField(read_only=True, source="organization.name")
+    organization_logo = serializers.SerializerMethodField(source="organization.logo", read_only=True)
+
     class Meta:
         model = User
-        fields = ("id", "full_name", "username", "phone_number", "role", "is_active")
+        fields = ("id", "full_name", "organization_name", "organization_logo", "username", "phone_number", "role",
+                  "is_active")

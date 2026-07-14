@@ -72,43 +72,16 @@ class StatsAPIView(APIView):
         date_from = self._parse_date_param("from")
         date_to = self._parse_date_param("to")
 
-        sold_qs = filter_by_org(
-            get_sold_events(date_from, date_to), request,
-            field='home__organization',
-        )
-        all_sold_qs = filter_by_org(
-            get_sold_events(), request,
-            field='home__organization',
-        )
-
-        booking_qs = filter_by_org(
-            get_total_contract(date_from, date_to), request,
-            field='organization',
-        )
-        payment_qs = filter_by_org(
-            get_total_payments(date_from, date_to), request,
-            field='booking__organization',
-        )
-
+        sold_qs = filter_by_org(get_sold_events(date_from, date_to), request, field='home__organization')
+        all_sold_qs = filter_by_org(get_sold_events(), request, field='home__organization')
+        booking_qs = filter_by_org(get_total_contract(date_from, date_to), request, field='organization')
+        payment_qs = filter_by_org(get_total_payments(date_from, date_to), request, field='booking__organization')
         lead_qs = filter_by_org(get_leads(), request, field='owner__organization')
         lead_stats = get_lead_stats(lead_qs, date_from, date_to)
-
-        calls_qs = filter_by_org(
-            get_total_calls(date_from, date_to), request,
-            field='user__organization',
-        )
-        home_qs = filter_by_org(
-            get_homes(), request,
-            field='organization',
-        )
-        all_booking_qs = filter_by_org(
-            get_total_contract(), request,
-            field='organization',
-        )
-        all_payment_qs = filter_by_org(
-            get_total_payments(), request,
-            field='booking__organization',
-        )
+        calls_qs = filter_by_org(get_total_calls(date_from, date_to), request, field='user__organization')
+        home_qs = filter_by_org(get_homes(), request, field='organization')
+        all_booking_qs = filter_by_org(get_total_contract(), request, field='organization')
+        all_payment_qs = filter_by_org(get_total_payments(), request, field='booking__organization')
 
         return Response({
             "sold_homes": sold_qs.values('home').distinct().count(),
