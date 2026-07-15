@@ -7,7 +7,7 @@ from django.utils import timezone
 MONTH_LABELS_UZ = ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyun', 'Iyul', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek']
 
 
-def normalize_phone(phone: str) -> str:
+def normalize_phone(phone: str | None) -> str:
     if not phone:
         return ''
     digits = re.sub(r'\D', '', phone)

@@ -4,6 +4,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from contact_center.models import CallRecord
 from contact_center.services import IssabelService
 

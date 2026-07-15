@@ -1,4 +1,5 @@
 from django.urls import path
+
 from stats.api.views import StatsAPIView
 
 urlpatterns = [

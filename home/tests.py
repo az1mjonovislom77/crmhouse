@@ -3,73 +3,11 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from booking.models import Booking, Company
-from client.models import Client
-from home.models import Home, HomeStatusHistory, FloorPlan
+from common.factories import make_blocks, make_client, make_floors, make_home, make_renovation, make_user
+from home.models import Home, HomeStatusHistory
 from home.selectors.history_selectors import get_home_history
 from home.selectors.home_selectors import get_homes_with_finance
 from home.services.home import HomeService
-from projects.models.project_models import Block, Floors, Project, Renovation
-from user.models import User
-
-
-def make_user(**kwargs):
-    password = kwargs.pop("password", "pass123")
-    defaults = {"username": "hm_user", "full_name": "HM User", "role": User.UserRoles.SELLER, "is_staff": True}
-    defaults.update(kwargs)
-    u = User(**defaults)
-    u.set_password(password)
-    u.save()
-    return u
-
-
-def make_project(**kwargs):
-    defaults = {"title": "Proj", "description": "D", "floors": 1}
-    defaults.update(kwargs)
-    return Project.objects.create(**defaults)
-
-
-def make_blocks(**kwargs):
-    if "projects" not in kwargs:
-        kwargs["projects"] = make_project()
-    defaults = {"title": "Block"}
-    defaults.update(kwargs)
-    return Block.objects.create(**defaults)
-
-
-def make_floors(**kwargs):
-    defaults = {"number": 1}
-    defaults.update(kwargs)
-    return Floors.objects.create(**defaults)
-
-
-def make_renovation(**kwargs):
-    defaults = {"title": "Std", "price": 2000}
-    defaults.update(kwargs)
-    return Renovation.objects.create(**defaults)
-
-
-def make_home(**kwargs):
-    defaults = {
-        "home_number": 1,
-        "home_status": Home.HomeStatus.AVAILABLE,
-        "price_per_sqm": 500,
-        "area": 60,
-    }
-    defaults.update(kwargs)
-    return Home.objects.create(**defaults)
-
-
-def make_client(**kwargs):
-    defaults = {"full_name": "Cl", "phone_number": "+998901234567", "passport": "AA1", "address": "T"}
-    defaults.update(kwargs)
-    return Client.objects.create(**defaults)
-
-
-def make_company(**kwargs):
-    defaults = {"name": "Co", "address": "A", "phone": "+998"}
-    defaults.update(kwargs)
-    return Company.objects.create(**defaults)
 
 
 class HomeModelTest(TestCase):

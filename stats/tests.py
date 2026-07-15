@@ -4,16 +4,24 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
 
-from common.utils import last_months, to_millions, MONTH_LABELS_UZ
+from common.utils import MONTH_LABELS_UZ, last_months, to_millions
 from home.models import Home, HomeStatusHistory
-from leads.models import Lead, LeadEvent, STATUS_NEW, STATUS_SUCCESS
+from leads.models import STATUS_NEW, STATUS_SUCCESS, Lead, LeadEvent
 from projects.models.project_models import Block, Floors
 from stats.selectors.home_selectors import (
-    get_block_occupancy, get_home_status_counts, get_homes, get_monthly_sales,
-    get_sold_events, get_top_sellers,
+    get_block_occupancy,
+    get_home_status_counts,
+    get_homes,
+    get_monthly_sales,
+    get_sold_events,
+    get_top_sellers,
 )
 from stats.selectors.lead_selectors import (
-    get_lead_funnel, get_lead_sources, get_lead_stats, get_leads, get_success_conversions,
+    get_lead_funnel,
+    get_lead_sources,
+    get_lead_stats,
+    get_leads,
+    get_success_conversions,
 )
 
 User = get_user_model()
@@ -39,7 +47,7 @@ class MonthWindowTests(TestCase):
         self.assertEqual(window[-1], (today.year, today.month))
 
     def test_consecutive_months_roll_over_year(self):
-        for (y1, m1), (y2, m2) in zip(last_months(14), last_months(14)[1:]):
+        for (y1, m1), (y2, m2) in zip(last_months(14), last_months(14)[1:], strict=False):
             if m1 == 12:
                 self.assertEqual((y2, m2), (y1 + 1, 1))
             else:

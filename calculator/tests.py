@@ -1,4 +1,5 @@
 from decimal import Decimal
+
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
@@ -6,21 +7,10 @@ from rest_framework.test import APITestCase
 
 from calculator.engine import calculate, ceil_step
 from calculator.models import CalculatorConfig, GuaranteeOption, SubsidyOption
-from user.models import User
+from common.factories import make_user
 
 AREA = Decimal("49.35")
 PRICE = Decimal("7700000")
-
-
-def make_user(**kwargs):
-    password = kwargs.pop("password", "pass123")
-    defaults = {"username": "calc_user", "full_name": "Calc User",
-                "role": User.UserRoles.SELLER, "is_staff": True}
-    defaults.update(kwargs)
-    u = User(**defaults)
-    u.set_password(password)
-    u.save()
-    return u
 
 
 class CeilStepTest(TestCase):

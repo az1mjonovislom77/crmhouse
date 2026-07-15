@@ -1,9 +1,11 @@
 from decimal import Decimal
-from django.db.models import Prefetch, Sum, Value, DecimalField
+
+from django.db.models import DecimalField, Prefetch, Sum, Value
 from django.db.models.functions import Coalesce
+
 from booking.models import Booking
-from home.models import HomeStatusHistory
 from client.models import Client
+from home.models import HomeStatusHistory
 
 
 def get_client_queryset():

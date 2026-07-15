@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, RequestLog
+
 from .forms import UserAdminCreateForm
+from .models import RequestLog, User
 
 
 @admin.register(User)

@@ -1,9 +1,11 @@
 import os
-from django.conf import settings
+
 import pandas as pd
+from django.conf import settings
 from django.core.management.base import BaseCommand
+
 from home.models import Home
-from projects.models.project_models import Floors, Block
+from projects.models.project_models import Block, Floors
 
 
 class Command(BaseCommand):

@@ -1,21 +1,33 @@
 import json
 import re
+
 import httpx
 from django.conf import settings
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+
 from common.base.views_base import BaseUserViewSet
 from common.mixins import filter_by_org
-from leads.api.serializers import (LeadCreateSerializer, LeadDetailSerializer,
-                                   LeadListSerializer, LeadUpdateSerializer,
-                                   LeadNotificationSerializer, LeadBulkAssignSerializer)
-from django.utils import timezone
+from leads.api.serializers import (
+    LeadBulkAssignSerializer,
+    LeadCreateSerializer,
+    LeadDetailSerializer,
+    LeadListSerializer,
+    LeadNotificationSerializer,
+    LeadUpdateSerializer,
+)
 from leads.models import LeadNotification
-from leads.selectors.lead_selectors import filter_leads, get_lead_detail_queryset, get_lead_list_queryset, \
-    get_status_counts, scope_leads_for_user
+from leads.selectors.lead_selectors import (
+    filter_leads,
+    get_lead_detail_queryset,
+    get_lead_list_queryset,
+    get_status_counts,
+    scope_leads_for_user,
+)
 from leads.services.lead_service import LeadService
 
 

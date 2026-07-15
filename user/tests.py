@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from rest_framework import status
@@ -70,7 +71,7 @@ class UserModelTest(TestCase):
 
     def test_username_is_unique(self):
         make_user(username="unique1")
-        with self.assertRaises(Exception):
+        with self.assertRaises(IntegrityError):
             make_user(username="unique1")
 
 

@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
+
 from common.base.serializers_base import BaseReadSerializer
-from tasks.models import Card, Project, Comment
+from tasks.models import Card, Comment, Project
 from tasks.services.project import create_project, update_project
 from user.api.serializers.user_serializers import UserMiniSerializer
 
@@ -62,7 +63,7 @@ class ProjectUpdateSerializer(serializers.ModelSerializer):
         model = Project
         fields = ('users', 'description', 'card', 'title', 'order')
         read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by']
-        validators = []
+        validators: list = []
 
     def validate_order(self, value):
         if value is not None and value < 1:

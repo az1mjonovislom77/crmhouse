@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from user.models import RequestLog
+
 from user.api.serializers.user_serializers import UserMiniSerializer
+from user.models import RequestLog
 
 
 class RequestLogSerializer(serializers.ModelSerializer):

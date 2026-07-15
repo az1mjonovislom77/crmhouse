@@ -1,5 +1,6 @@
 from django.contrib import admin
-from home.models import Home, FloorPlan, HomeStatusHistory
+
+from home.models import FloorPlan, Home, HomeStatusHistory
 
 
 @admin.register(FloorPlan)

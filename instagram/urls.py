@@ -1,4 +1,5 @@
 from django.urls import path
+
 from .views import InstagramViewSet
 
 media_view = InstagramViewSet.as_view({"get": "media"})

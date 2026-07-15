@@ -1,4 +1,5 @@
 from django.urls import path
+
 from contact_center.views import CDRListView, RecordingDownloadAPIView
 
 urlpatterns = [

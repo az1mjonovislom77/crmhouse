@@ -1,5 +1,6 @@
 from django.contrib import admin
-from projects.models.project_models import Project, Block, Floors, Renovation
+
+from projects.models.project_models import Block, Floors, Project, Renovation
 from projects.models.showroom_models import SVG, Showroom, ShowroomImage
 
 

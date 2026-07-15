@@ -1,7 +1,8 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from projects.api.views.project_views import ProjectViewSet, BlockViewSet, FloorsViewSet, RenovationViewSet
-from projects.api.views.showroom_views import SVGView, ShowroomView
+
+from projects.api.views.project_views import BlockViewSet, FloorsViewSet, ProjectViewSet, RenovationViewSet
+from projects.api.views.showroom_views import ShowroomView, SVGView
 
 router = DefaultRouter()
 router.register('projects', ProjectViewSet, basename='projects')

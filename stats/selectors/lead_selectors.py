@@ -1,6 +1,7 @@
 from django.db.models import Count, Q
+
 from common.utils import apply_date_range, date_range_q
-from leads.models import Lead, LeadEvent, STATUS_NEW, STATUS_SUCCESS
+from leads.models import STATUS_NEW, STATUS_SUCCESS, Lead, LeadEvent
 
 FUNNEL_STAGES = [
     (STATUS_NEW, 'Yangi murojaat'),

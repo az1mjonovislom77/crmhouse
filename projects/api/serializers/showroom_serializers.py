@@ -1,6 +1,7 @@
+from rest_framework import serializers
+
 from common.base.serializers_base import BaseReadSerializer
 from projects.models.showroom_models import SVG, Showroom, ShowroomImage
-from rest_framework import serializers
 
 
 class SVGSerializer(BaseReadSerializer):
@@ -9,7 +10,7 @@ class SVGSerializer(BaseReadSerializer):
 
 
 class ShowroomSerializer(serializers.ModelSerializer):
-    label = serializers.SerializerMethodField()
+    label = serializers.SerializerMethodField()  # type: ignore[assignment]
     homes_count = serializers.IntegerField(read_only=True)
     available_homes = serializers.IntegerField(read_only=True)
     sold_homes = serializers.IntegerField(read_only=True)

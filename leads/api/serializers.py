@@ -8,7 +8,7 @@ User = get_user_model()
 
 
 class LeadEventSerializer(serializers.ModelSerializer):
-    by = serializers.StringRelatedField()
+    by = serializers.StringRelatedField()  # type: ignore[var-annotated]
 
     class Meta:
         model = LeadEvent

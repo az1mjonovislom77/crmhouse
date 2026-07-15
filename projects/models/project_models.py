@@ -1,7 +1,8 @@
-from common.services.image_service import optimize_image_to_webp, check_image_size
-from user.models import User
-from django.db import models
 from django.core.validators import FileExtensionValidator
+from django.db import models
+
+from common.services.image_service import check_image_size, optimize_image_to_webp
+from user.models import User
 
 
 class Project(models.Model):
@@ -43,6 +44,9 @@ class BlockImage(models.Model):
                                   allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']),
                                   check_image_size])
 
+    def __str__(self):
+        return f"BlockImage {self.pk}"
+
     def save(self, *args, **kwargs):
         if self.pk:
             old = BlockImage.objects.only("image").filter(pk=self.pk).first()
@@ -55,9 +59,6 @@ class BlockImage(models.Model):
             self.image.save(optimized_image.name, optimized_image, save=False)
 
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"BlockImage {self.pk}"
 
 
 class Floors(models.Model):

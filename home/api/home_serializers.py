@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
+
 from home.models import FloorPlan, Home, HomeStatusHistory
 
 
@@ -41,7 +42,7 @@ class HomeCreateSerializer(serializers.ModelSerializer):
 
 
 class HomeStatusHistorySerializer(serializers.ModelSerializer):
-    changed_by = serializers.StringRelatedField()
+    changed_by = serializers.StringRelatedField()  # type: ignore[var-annotated]
     home_number = SerializerMethodField()
     home_block = SerializerMethodField()
     home_floor = SerializerMethodField()

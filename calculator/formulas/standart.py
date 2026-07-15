@@ -1,4 +1,4 @@
-from calculator.engine import _d, ceil_step, annuity_factor, round_som
+from calculator.engine import _d, annuity_factor, ceil_step, round_som
 
 
 def calculate(*, area, price_per_m2, payment_type, guarantee_percent, subsidy_amount,

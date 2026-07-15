@@ -1,7 +1,8 @@
 from django.db import transaction
 from django.db.models import F, Max
-from tasks.models import Project, Card
 from rest_framework.exceptions import ValidationError
+
+from tasks.models import Card, Project
 
 
 def _shift_orders(qs, *, delta):

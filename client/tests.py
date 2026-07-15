@@ -2,44 +2,12 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from booking.models import Booking, Company
+
+from booking.models import Booking
 from client.models import Client
 from client.selectors.client_selectors import get_client_queryset
+from common.factories import make_client, make_company, make_home, make_user
 from home.models import Home, HomeStatusHistory
-from user.models import User
-
-
-def make_user(**kwargs):
-    password = kwargs.pop("password", "pass123")
-    defaults = {"username": "cl_user", "full_name": "CL User", "role": User.UserRoles.SELLER, "is_staff": True}
-    defaults.update(kwargs)
-    u = User(**defaults)
-    u.set_password(password)
-    u.save()
-    return u
-
-
-def make_client(**kwargs):
-    defaults = {
-        "full_name": "Test Client",
-        "phone_number": "+998901234567",
-        "passport": "AA123456",
-        "address": "Toshkent",
-    }
-    defaults.update(kwargs)
-    return Client.objects.create(**defaults)
-
-
-def make_home(**kwargs):
-    defaults = {"home_number": 1, "home_status": Home.HomeStatus.AVAILABLE, "price_per_sqm": 0, "area": 0}
-    defaults.update(kwargs)
-    return Home.objects.create(**defaults)
-
-
-def make_company(**kwargs):
-    defaults = {"name": "Co", "address": "Addr", "phone": "+998"}
-    defaults.update(kwargs)
-    return Company.objects.create(**defaults)
 
 
 class ClientModelTest(TestCase):

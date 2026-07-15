@@ -1,9 +1,9 @@
-from celery import shared_task
 from asgiref.sync import async_to_sync
+from celery import shared_task
 from channels.layers import get_channel_layer
 
-from leads.models import LeadNotification
 from leads.api.serializers import LeadNotificationSerializer
+from leads.models import LeadNotification
 from leads.services.notification_service import MeetingNotificationService
 
 

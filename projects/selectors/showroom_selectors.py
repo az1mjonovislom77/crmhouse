@@ -1,6 +1,7 @@
-from django.db.models import Count, Q, Prefetch
+from django.db.models import Count, Prefetch, Q
+
 from home.models import Home
-from projects.models.showroom_models import ShowroomImage, Showroom
+from projects.models.showroom_models import Showroom, ShowroomImage
 
 
 def get_showroom_images():

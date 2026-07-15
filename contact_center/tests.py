@@ -1,21 +1,16 @@
 from unittest.mock import MagicMock, patch
+
+from django.db import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
+
+from common.factories import make_user
 from contact_center.models import CallRecord
 from contact_center.services.common_service import CDRService
 from contact_center.services.dedub_service import CDRDedupService
 from user.models import User
-
-
-def make_user(**kwargs):
-    defaults = {'username': 'cc_user', 'full_name': 'CC User', 'role': User.UserRoles.ADMIN, 'is_staff': True}
-    defaults.update(kwargs)
-    u = User(**defaults)
-    u.set_password('pass123')
-    u.save()
-    return u
 
 
 def make_call_record(**kwargs):
@@ -43,7 +38,7 @@ class CallRecordModelTest(TestCase):
 
     def test_uniqueid_unique_constraint(self):
         make_call_record(uniqueid='dup-001')
-        with self.assertRaises(Exception):
+        with self.assertRaises(IntegrityError):
             make_call_record(uniqueid='dup-001')
 
 class CDRDedupServiceTest(TestCase):
@@ -114,7 +109,7 @@ class CDRServiceTest(TestCase):
 
 class CDRListViewTest(APITestCase):
     def setUp(self):
-        self.user = make_user()
+        self.user = make_user(role=User.UserRoles.ADMIN)
         self.client.force_authenticate(user=self.user)
 
     def test_empty_db_triggers_sync_and_returns_200(self):

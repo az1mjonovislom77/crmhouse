@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from tasks.models import Project, Card, Comment
+
+from tasks.models import Card, Comment, Project
 
 
 class BaseHistorySerializer(serializers.ModelSerializer):

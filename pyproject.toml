@@ -1,0 +1,61 @@
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["**/migrations/**", ".venv"]
+
+[tool.ruff.lint]
+
+select = ["E", "W", "F", "I", "B", "DJ"]
+ignore = [
+    "E501",
+    "DJ001",
+    "DJ008",
+    "B904",
+]
+
+[tool.ruff.lint.per-file-ignores]
+
+"config/settings/*" = ["F403", "F405", "E402"]
+"config/asgi.py" = ["E402"]
+"contact_center/services/__init__.py" = ["F403"]
+"contact_center/views/__init__.py" = ["F403", "F405"]
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "booking", "calculator", "client", "common", "config", "contact_center",
+    "home", "instagram", "leads", "organization", "projects", "stats", "tasks", "user",
+]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+exclude = ["migrations", ".venv"]
+ignore_missing_imports = true
+check_untyped_defs = true
+disallow_untyped_defs = false
+warn_unused_ignores = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings.local"
+
+[[tool.mypy.overrides]]
+module = "*.tests"
+disable_error_code = ["attr-defined", "union-attr", "assignment", "var-annotated"]
+
+[[tool.mypy.overrides]]
+module = [
+    "client.api.views",
+    "user.api.views.*",
+    "leads.api.views",
+    "home.api.home_views",
+    "contact_center.views.*",
+]
+disable_error_code = ["union-attr", "operator", "arg-type", "misc"]
+
+[[tool.mypy.overrides]]
+module = "config.settings.*"
+disable_error_code = ["index", "dict-item"]
+
+[[tool.mypy.overrides]]
+module = ["*.management.commands.*", "add_image"]
+disable_error_code = ["assignment", "operator", "var-annotated"]

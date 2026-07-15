@@ -1,7 +1,8 @@
 from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
-from leads.models import Lead, LeadEvent, BOARD_STATUSES, BOARD_FIRST_STATUS, STATUS_NEW, STATUS_TOPSHIRIQLAR
+
+from leads.models import BOARD_FIRST_STATUS, BOARD_STATUSES, STATUS_NEW, STATUS_TOPSHIRIQLAR, Lead, LeadEvent
 
 
 def _compute_score(lead):

@@ -1,10 +1,11 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+
+from client.api.serializers import ClientSerializer
 from client.selectors.client_selectors import get_client_queryset
 from common.base.views_base import BaseUserViewSet
 from common.mixins import filter_by_org
-from client.api.serializers import ClientSerializer
 from common.search import TransliteratedSearchFilter
 
 

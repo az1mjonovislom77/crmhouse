@@ -2,9 +2,11 @@ import logging
 import os
 import tempfile
 from datetime import date, timedelta
+
 from celery import shared_task
 from django.core.cache import cache
 from django.core.files import File
+
 from .services import CDRService
 
 logger = logging.getLogger(__name__)

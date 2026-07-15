@@ -3,13 +3,22 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
 from common.base.views_base import BaseUserViewSet, PartialPutMixin
 from common.mixins import OrganizationMixin
 from common.search import TransliteratedSearchFilter
-from tasks.api.serializers.tasks_serializers import CardSerializer, CommentSerializer, ProjectGetSerializer, \
-    ProjectCreateSerializer, ProjectUpdateSerializer
-from tasks.api.serializers.tasks_history_serializers import ProjectHistorySerializer, CardHistorySerializer, \
-    CommentHistorySerializer
+from tasks.api.serializers.tasks_history_serializers import (
+    CardHistorySerializer,
+    CommentHistorySerializer,
+    ProjectHistorySerializer,
+)
+from tasks.api.serializers.tasks_serializers import (
+    CardSerializer,
+    CommentSerializer,
+    ProjectCreateSerializer,
+    ProjectGetSerializer,
+    ProjectUpdateSerializer,
+)
 from tasks.mixins.audit import AuditMixin
 from tasks.mixins.history import HistoryMixin
 from tasks.models import Card, Comment, Project

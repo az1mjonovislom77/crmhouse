@@ -1,6 +1,7 @@
 import os
-from pathlib import Path
 from datetime import timedelta
+from pathlib import Path
+
 from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -9,9 +10,6 @@ SECRET_KEY = config('SECRET_KEY')
 
 AUTH_USER_MODEL = 'user.User'
 
-# Argon2 birinchi — yangi/qayta hashlanadigan parollar uchun (tezroq va xavfsizroq).
-# PBKDF2 ro'yxatда qoladi: eski parollar tekshirilaveradi va muvaffaqiyatli
-# loginда avtomatik Argon2 ga qayta hashlanadi. Migration/DB o'zgarishi shart emas.
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.Argon2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',

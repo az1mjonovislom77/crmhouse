@@ -1,26 +1,19 @@
 import unittest
-from django.db import connection
+
+from django.db import IntegrityError, connection
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
+
+from common.factories import make_user
 from tasks.models import Card, Comment, Project
 from tasks.permissions import IsProjectMemberOrAdmin
 from tasks.services.project import create_project, delete_project, update_project
 from user.models import User
 
 IS_SQLITE = connection.vendor == "sqlite"
-
-
-def make_user(**kwargs):
-    password = kwargs.pop("password", "pass123")
-    defaults = {"username": "tk_user", "full_name": "TK User", "role": User.UserRoles.SELLER, "is_staff": True}
-    defaults.update(kwargs)
-    u = User(**defaults)
-    u.set_password(password)
-    u.save()
-    return u
 
 
 def make_card(**kwargs):
@@ -63,7 +56,7 @@ class ProjectModelTest(TestCase):
 
     def test_unique_order_per_card_constraint(self):
         Project.objects.create(card=self.card, title="P1", description="D", order=1)
-        with self.assertRaises(Exception):
+        with self.assertRaises(IntegrityError):
             Project.objects.create(card=self.card, title="P2", description="D", order=1)
 
     def test_ordered_by_order_field(self):

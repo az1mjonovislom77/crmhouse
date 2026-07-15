@@ -1,5 +1,6 @@
 from django.contrib import admin
-from tasks.models import Card, Project, Comment
+
+from tasks.models import Card, Comment, Project
 
 
 @admin.register(Card)

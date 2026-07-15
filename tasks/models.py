@@ -1,6 +1,7 @@
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from simple_history.models import HistoricalRecords
+
 from common.base.models_base import TimeStampedModel
 from common.services.image_service import check_image_size
 from config import settings
@@ -18,7 +19,7 @@ class Card(TimeStampedModel):
 
 
 class Project(TimeStampedModel):
-    users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='task_projects', blank=True)
+    users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='task_projects', blank=True)  # type: ignore[var-annotated]
     card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name='projects')
     title = models.CharField(max_length=200)
     description = models.TextField()

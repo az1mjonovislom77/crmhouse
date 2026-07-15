@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+
 from common.base.models_base import TimeStampedModel
 
 

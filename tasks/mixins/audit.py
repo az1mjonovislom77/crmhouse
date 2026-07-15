@@ -1,7 +1,11 @@
+from typing import Any
+
+
 class AuditMixin:
+    request: Any
 
     def perform_create(self, serializer):
-        extra_kwargs = {"created_by": self.request.user}
+        extra_kwargs: dict = {"created_by": self.request.user}
 
         model = serializer.Meta.model
         field_names = {f.name for f in model._meta.get_fields() if hasattr(f, "name")}

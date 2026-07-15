@@ -1,34 +1,34 @@
 from collections import defaultdict
 from io import BytesIO
+from typing import Any
 
 import pillow_heif
-from PIL import Image
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand
+from PIL import Image
 
 from home.models import FloorPlan
-from projects.models.project_models import Project, Block
+from projects.models.project_models import BlockImage, Project
 from projects.models.showroom_models import ShowroomImage
 
 pillow_heif.register_heif_opener()
 
-# (model, image field name) — bazadagi barcha haqiqiy rasm maydonlari
-TARGETS = [
+TARGETS: list[tuple[Any, str]] = [
     (FloorPlan, 'image'),
     (Project, 'image'),
-    (Block, 'image'),
+    (BlockImage, 'image'),
     (ShowroomImage, 'image'),
 ]
 
 
 def reencode(raw_bytes, quality, max_width):
-    img = Image.open(BytesIO(raw_bytes))
+    img: Image.Image = Image.open(BytesIO(raw_bytes))
     if img.mode not in ('RGB', 'RGBA'):
         img = img.convert('RGBA' if 'A' in img.getbands() or img.mode == 'P' else 'RGB')
     if img.width > max_width:
         ratio = max_width / float(img.width)
-        img = img.resize((max_width, int(img.height * ratio)), Image.LANCZOS)
+        img = img.resize((max_width, int(img.height * ratio)), Image.Resampling.LANCZOS)
     out = BytesIO()
     img.save(out, format='WEBP', quality=quality)
     return out.getvalue()
@@ -50,7 +50,6 @@ class Command(BaseCommand):
             return self._repair(dry=opts['dry_run'])
         return self._reoptimize(opts['quality'], opts['max_width'], opts['dry_run'])
 
-    # --- buzilgan yo'llarni tuzatish (qayta siqmasdan) ---
     def _repair(self, dry):
         repaired = still_missing = 0
         for model, field_name in TARGETS:
@@ -73,7 +72,6 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f"{prefix}Tuzatildi: {repaired} | hali yo'q (.webp topilmadi): {still_missing}"))
 
-    # --- qayta siqish (faylni bir marta, uni ulashgan barcha yozuvni yangilaydi) ---
     def _reoptimize(self, quality, max_width, dry):
         total_before = total_after = 0
         files_done = records = missing = errors = 0
@@ -82,7 +80,6 @@ class Command(BaseCommand):
             qs = (model.objects
                   .exclude(**{field_name: ''})
                   .exclude(**{f'{field_name}__isnull': True}))
-            # bir faylni ulashgan yozuvlarni guruhlash
             groups = defaultdict(list)
             for obj in qs.iterator():
                 name = getattr(obj, field_name).name
@@ -104,11 +101,9 @@ class Command(BaseCommand):
                     records += len(pks)
                     if dry:
                         continue
-                    # o'rniga yozish (webp->webp bo'lsa ham)
                     if default_storage.exists(new_name):
                         default_storage.delete(new_name)
                     default_storage.save(new_name, ContentFile(webp))
-                    # faylni ulashgan BARCHA yozuvni yangilash
                     model.objects.filter(pk__in=pks).update(**{field_name: new_name})
                     if new_name != old_name and default_storage.exists(old_name):
                         default_storage.delete(old_name)

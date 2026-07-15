@@ -1,5 +1,6 @@
-from user.models import User
 from rest_framework import serializers
+
+from user.models import User
 from user.services.user.user_service import UserService
 
 

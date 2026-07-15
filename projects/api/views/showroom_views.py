@@ -1,7 +1,8 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
-from projects.api.serializers.showroom_serializers import SVGSerializer, ShowroomImageSerializer
+
+from projects.api.serializers.showroom_serializers import ShowroomImageSerializer, SVGSerializer
 from projects.models.showroom_models import SVG
 from projects.selectors.showroom_selectors import get_showroom_images
 

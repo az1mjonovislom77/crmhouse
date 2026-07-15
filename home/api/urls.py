@@ -1,6 +1,7 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from home.api.home_views import HomeViewSet, HomeHistoryListAPIView
+
+from home.api.home_views import HomeHistoryListAPIView, HomeViewSet
 
 router = DefaultRouter()
 router.register('home', HomeViewSet, basename='home')

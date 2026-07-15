@@ -1,10 +1,12 @@
 import logging
 from typing import Dict, List, Optional
+
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils.dateparse import parse_datetime
 from rest_framework.exceptions import APIException
+
 from common.utils import normalize_phone
 from contact_center.models import CallRecord
 from contact_center.services.dedub_service import CDRDedupService
@@ -79,7 +81,7 @@ class CDRService:
         phone_map = build_user_phone_map()
         records_to_create = []
         records_map = []
-        seen_sessions = set()
+        seen_sessions: set = set()
 
         for item in data:
             try:

@@ -1,10 +1,11 @@
 from django.conf import settings
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import ViewSet
-from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.viewsets import ViewSet
+
 from .serializers import CommentQuerySerializer, ReplySerializer
-from .services import InstagramService, InstagramAPIError
+from .services import InstagramAPIError, InstagramService
 
 instagram_service = InstagramService()
 

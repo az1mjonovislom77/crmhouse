@@ -1,8 +1,10 @@
 from datetime import date
 from decimal import Decimal
+
 from django.db.models import Count, ExpressionWrapper, Q
 from django.db.models.functions import TruncMonth
-from common.utils import apply_date_range, last_months, local_day_start, to_millions, MONTH_LABELS_UZ
+
+from common.utils import MONTH_LABELS_UZ, apply_date_range, last_months, local_day_start, to_millions
 from home.models import Home, HomeStatusHistory
 from stats.selectors.booking_selectors import CONTRACT_PRICE, MONEY
 
@@ -49,7 +51,7 @@ def get_top_sellers(qs, limit=5):
         .values('changed_by', 'changed_by__full_name', 'home', 'price')
         .distinct()
     )
-    sellers = {}
+    sellers: dict = {}
     for row in rows:
         seller = sellers.setdefault(
             row['changed_by'], {'name': row['changed_by__full_name'], 'sold': 0, 'revenue': Decimal(0)},

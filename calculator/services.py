@@ -1,5 +1,7 @@
 from decimal import Decimal
+
 from rest_framework.exceptions import ValidationError
+
 from calculator.engine import calculate
 from calculator.models import CalculatorConfig, GuaranteeOption, SubsidyOption
 

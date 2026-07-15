@@ -1,12 +1,17 @@
+from typing import Any
+
 from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from calculator.api.serializers import (
-    CalculateInputSerializer, CalculatorConfigSerializer,
-    GuaranteeOptionSerializer, SubsidyOptionSerializer,
+    CalculateInputSerializer,
+    CalculatorConfigSerializer,
+    GuaranteeOptionSerializer,
+    SubsidyOptionSerializer,
 )
 from calculator.models import CalculatorConfig, GuaranteeOption, SubsidyOption
 from calculator.services import calculate_from_payload
@@ -28,6 +33,7 @@ class CalculatorConfigView(RetrieveUpdateAPIView):
 
 
 class _OrgScopedOptionViewSet(viewsets.ModelViewSet):
+    model: Any
     permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
     http_method_names = ['get', 'post', 'put', 'delete']
     pagination_class = None

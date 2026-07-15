@@ -1,11 +1,13 @@
 from datetime import date
 from decimal import Decimal
-from django.db.models import F, Sum, Value, DecimalField, ExpressionWrapper, OuterRef, Subquery
-from django.db.models.functions import Coalesce, TruncMonth
-from booking.models import Booking, Payment
-from common.utils import apply_date_range, last_months, local_day_start, to_millions, MONTH_LABELS_UZ
 
-MONEY = DecimalField(max_digits=16, decimal_places=2)
+from django.db.models import DecimalField, ExpressionWrapper, F, OuterRef, Subquery, Sum, Value
+from django.db.models.functions import Coalesce, TruncMonth
+
+from booking.models import Booking, Payment
+from common.utils import MONTH_LABELS_UZ, apply_date_range, last_months, local_day_start, to_millions
+
+MONEY: DecimalField = DecimalField(max_digits=16, decimal_places=2)
 ZERO = Value(Decimal("0"), output_field=MONEY)
 
 CONTRACT_PRICE = (Coalesce(F("home__area") * F("home__price_per_sqm"), ZERO)

@@ -3,9 +3,10 @@ from rest_framework import filters
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
-from user.models import RequestLog
+
 from user.api.serializers.log_serializers import RequestLogSerializer
 from user.api.views.user_views import UserPagination
+from user.models import RequestLog
 
 
 class IsAdminOrSuperAdmin(IsAuthenticated):

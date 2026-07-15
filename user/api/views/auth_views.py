@@ -1,11 +1,12 @@
-from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
 from drf_spectacular.utils import extend_schema
+from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from user.api.serializers.auth_serializers import MeSerializer, SignInSerializer
 from user.services.auth.auth_service import AuthService
 from user.services.auth.token_service import UserTokenService
-from user.api.serializers.auth_serializers import SignInSerializer, MeSerializer
 from user.services.common.request_service import get_client_ip
 
 

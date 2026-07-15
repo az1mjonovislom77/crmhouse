@@ -1,11 +1,12 @@
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models import Sum
-from django.core.validators import FileExtensionValidator
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils import timezone
-from home.models import Home
+
 from client.models import Client
+from home.models import Home
 
 
 class Company(models.Model):
@@ -50,6 +51,9 @@ class Booking(models.Model):
     gov_monthly = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 
+    def __str__(self):
+        return str(self.id)
+
     @property
     def total_price(self):
         total = (self.home.price_per_sqm or 0) * (self.home.area or 0)
@@ -64,9 +68,6 @@ class Booking(models.Model):
         else:
             paid = self.payments.aggregate(total=Sum('amount'))['total'] or 0
         return self.total_price - paid
-
-    def __str__(self):
-        return str(self.id)
 
 
 class Payment(models.Model):

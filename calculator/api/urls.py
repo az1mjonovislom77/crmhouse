@@ -1,8 +1,11 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
+
 from calculator.api.views import (
-    CalculateView, CalculatorConfigView,
-    GuaranteeOptionViewSet, SubsidyOptionViewSet,
+    CalculateView,
+    CalculatorConfigView,
+    GuaranteeOptionViewSet,
+    SubsidyOptionViewSet,
 )
 
 router = DefaultRouter()

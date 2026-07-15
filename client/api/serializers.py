@@ -1,4 +1,5 @@
 from rest_framework import serializers
+
 from booking.models import Booking
 from client.models import Client
 from home.api.home_serializers import HomeStatusHistorySerializer
@@ -33,9 +34,9 @@ class BookingMiniSerializer(serializers.ModelSerializer):
 class ClientSerializer(serializers.ModelSerializer):
     booking = BookingNestSerializer(source='bookings', many=True, read_only=True)
     home_status_history = serializers.SerializerMethodField()
-    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(read_only=True)  # type: ignore[var-annotated]
     user_full_name = serializers.CharField(source='user.full_name', read_only=True, default=None)
-    organization = serializers.PrimaryKeyRelatedField(read_only=True)
+    organization = serializers.PrimaryKeyRelatedField(read_only=True)  # type: ignore[var-annotated]
 
     class Meta:
         model = Client

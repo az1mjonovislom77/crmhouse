@@ -1,6 +1,7 @@
 from rest_framework import serializers
+
 from common.base.serializers_base import BaseReadSerializer
-from projects.models.project_models import Block, Project, Floors, Renovation, BlockImage
+from projects.models.project_models import Block, BlockImage, Floors, Project, Renovation
 
 
 class BlockImageSerializer(serializers.ModelSerializer):

@@ -13,6 +13,13 @@ class Organization(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        db_table = 'organizations'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         if self.pk:
             old = Organization.objects.only("logo").filter(pk=self.pk).first()
@@ -25,10 +32,3 @@ class Organization(models.Model):
             self.logo.save(optimized_image.name, optimized_image, save=False)
 
         super().save(*args, **kwargs)
-
-    class Meta:
-        db_table = 'organizations'
-        ordering = ['name']
-
-    def __str__(self):
-        return self.name

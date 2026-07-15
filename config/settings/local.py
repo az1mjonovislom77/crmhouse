@@ -22,6 +22,7 @@ CACHES = {
 REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = []
 
 import sys
+
 if 'test' in sys.argv:
     MIDDLEWARE = [m for m in MIDDLEWARE if m != 'common.logging.RequestLoggingMiddleware']
 

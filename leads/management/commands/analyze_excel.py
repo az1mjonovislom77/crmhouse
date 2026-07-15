@@ -1,4 +1,5 @@
 import warnings
+
 import openpyxl
 from django.core.management.base import BaseCommand
 
@@ -25,7 +26,6 @@ class Command(BaseCommand):
         skipped_no_name = 0
         skipped_no_phone = 0
         has_data = 0
-        formula_id = 0
         completely_empty = 0
 
         examples_skipped = []

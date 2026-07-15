@@ -2,49 +2,14 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+
+from common.factories import make_blocks, make_project, make_user
 from home.models import Home
-from projects.models.project_models import Block, Floors, Project, Renovation
-from projects.models.showroom_models import Showroom, ShowroomImage, SVG
+from projects.models.project_models import Floors, Project, Renovation
+from projects.models.showroom_models import Showroom, ShowroomImage
 from projects.selectors.projects_selectors import get_projects_with_stats
 from projects.selectors.showroom_selectors import get_showroom_images
 from projects.services.project_service import ProjectService
-from user.models import User
-
-
-def make_user(**kwargs):
-    password = kwargs.pop("password", "pass123")
-    defaults = {"username": "pr_user", "full_name": "PR User", "role": User.UserRoles.SELLER, "is_staff": True}
-    defaults.update(kwargs)
-    u = User(**defaults)
-    u.set_password(password)
-    u.save()
-    return u
-
-
-def make_project(**kwargs):
-    defaults = {"title": "Test Project", "description": "Desc", "floors": 5}
-    defaults.update(kwargs)
-    return Project.objects.create(**defaults)
-
-
-def make_blocks(**kwargs):
-    if "projects" not in kwargs:
-        kwargs["projects"] = make_project()
-    defaults = {"title": "Block A"}
-    defaults.update(kwargs)
-    return Block.objects.create(**defaults)
-
-
-def make_floors(**kwargs):
-    defaults = {"number": 1}
-    defaults.update(kwargs)
-    return Floors.objects.create(**defaults)
-
-
-def make_renovation(**kwargs):
-    defaults = {"title": "Standard", "price": 1000}
-    defaults.update(kwargs)
-    return Renovation.objects.create(**defaults)
 
 
 class ProjectsModelTest(TestCase):
@@ -53,7 +18,7 @@ class ProjectsModelTest(TestCase):
         self.assertEqual(str(project), "Hero Project")
 
     def test_project_ordered_by_newest(self):
-        p1 = make_project(title="P1")
+        make_project(title="P1")
         p2 = make_project(title="P2")
         projects = list(Project.objects.all())
         self.assertEqual(projects[0].pk, p2.pk)
@@ -87,7 +52,7 @@ class ProjectServiceTest(TestCase):
 
     def test_update_project_fields(self):
         project = make_project(title="Old Title")
-        updated = ProjectService.update_project(project, {"title": "New Title", "description": "D", "floors": 2})
+        ProjectService.update_project(project, {"title": "New Title", "description": "D", "floors": 2})
         project.refresh_from_db()
         self.assertEqual(project.title, "New Title")
 

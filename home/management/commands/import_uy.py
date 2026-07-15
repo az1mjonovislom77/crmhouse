@@ -94,8 +94,6 @@ class Command(BaseCommand):
                 home_number = int(row['home_number'])
                 area = float(row['area'])
                 base_entrance = int(row['entrance'])
-                # department har bir bo'lim uchun entranceni siljitadi:
-                # dept 1 -> entrance 1,2 ; dept 2 -> entrance 3,4 ; ...
                 department = int(row.get('department') or 1)
                 entrance = base_entrance + (department - 1) * 2
 

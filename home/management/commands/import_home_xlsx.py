@@ -1,5 +1,6 @@
-import re
 import os
+import re
+
 import openpyxl
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -23,7 +24,6 @@ def parse_rooms(val):
     return int(match.group()) if match else 1
 
 
-# Kirill homoglif harflarni lotinga o'giradi (masalan "4А"(kirill) -> "4A"(lotin))
 CYR_TO_LAT = str.maketrans({
     'А': 'A', 'В': 'B', 'С': 'C', 'Е': 'E', 'Н': 'H', 'К': 'K',
     'М': 'M', 'О': 'O', 'Р': 'P', 'Т': 'T', 'Х': 'X', 'У': 'Y',

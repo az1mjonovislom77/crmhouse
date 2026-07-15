@@ -1,6 +1,7 @@
+from django.core.management.base import BaseCommand
+
 from booking.models import Booking
 from client.models import Client
-from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):

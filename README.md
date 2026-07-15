@@ -32,7 +32,7 @@ The project is built using modern web technologies and best practices:
     *   [djangorestframework-simplejwt](https://pypi.org/project/djangorestframework-simplejwt/): JWT authentication for DRF.
     *   [django-modeltranslation](https://django-modeltranslation.readthedocs.io/en/latest/): Translate model fields in Django.
     *   [django-jazzmin](https://django-jazzmin.readthedocs.io/): Jazzy and configurable Django admin.
-    *   [drf-spectacular](https://drf-spectacular.readthedocs.io/en/latest/) / [drf-yasg](https://drf-yasg.readthedocs.io/en/stable/): API documentation generation (OpenAPI/Swagger).
+    *   [drf-spectacular](https://drf-spectacular.readthedocs.io/en/latest/): API documentation generation (OpenAPI/Swagger).
     *   [django-cors-headers](https://pypi.org/project/django-cors-headers/): Handles Cross-Origin Resource Sharing (CORS).
     *   [Pillow](https://python-pillow.org/): Image processing library.
     *   [openpyxl](https://openpyxl.readthedocs.io/en/stable/) / [python-docx](https://python-docx.readthedocs.io/en/latest/): Libraries for reading/writing Excel and Word files.

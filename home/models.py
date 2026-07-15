@@ -1,6 +1,7 @@
+from django.conf import settings
 from django.core.validators import FileExtensionValidator
 from django.db import models
-from django.conf import settings
+
 from client.models import Client
 from common.services.image_service import check_image_size, optimize_image_to_webp
 from projects.models.project_models import Block, Floors, Renovation
@@ -78,6 +79,9 @@ class FloorPlan(models.Model):
                                   allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']),
                                   check_image_size])
 
+    def __str__(self):
+        return f"FloorPlan {self.pk}"
+
     def save(self, *args, **kwargs):
         if self.pk:
             old = FloorPlan.objects.only("image").filter(pk=self.pk).first()
@@ -90,6 +94,3 @@ class FloorPlan(models.Model):
             self.image.save(optimized_image.name, optimized_image, save=False)
 
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"FloorPlan {self.pk}"

@@ -1,7 +1,7 @@
 from rest_framework import serializers
+
 from booking.models import Booking
-from calculator.models import (
-    CalculatorConfig, GuaranteeOption, SubsidyOption, active_guarantees, active_subsidies)
+from calculator.models import CalculatorConfig, GuaranteeOption, SubsidyOption, active_guarantees, active_subsidies
 
 
 class GuaranteeOptionSerializer(serializers.ModelSerializer):

@@ -1,14 +1,20 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework.permissions import IsAuthenticated
-from projects.api.serializers.project_serializers import ProjectSerializer, BlockGetSerializer, \
-    BlockCreateSerializer, FloorsSerializer, RenovationSerializer
-from projects.models.project_models import Block, Floors, Renovation
-from projects.selectors.projects_selectors import get_projects_with_stats
-from projects.services.project_service import ProjectService
+
 from common.base.views_base import BaseUserViewSet
 from common.mixins import filter_by_org
 from common.permissions import IsAdminOrReadOnly
 from common.search import TransliteratedSearchFilter
+from projects.api.serializers.project_serializers import (
+    BlockCreateSerializer,
+    BlockGetSerializer,
+    FloorsSerializer,
+    ProjectSerializer,
+    RenovationSerializer,
+)
+from projects.models.project_models import Block, Floors, Renovation
+from projects.selectors.projects_selectors import get_projects_with_stats
+from projects.services.project_service import ProjectService
 
 
 @extend_schema(tags=['Projects'])

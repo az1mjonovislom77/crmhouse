@@ -1,7 +1,7 @@
+from django.contrib.auth.base_user import AbstractBaseUser
+from django.contrib.auth.models import BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils import timezone
-from django.contrib.auth.base_user import AbstractBaseUser
-from django.contrib.auth.models import PermissionsMixin, BaseUserManager
 
 
 class UserManager(BaseUserManager):
@@ -10,12 +10,12 @@ class UserManager(BaseUserManager):
     def create_user(self, username, password=None, **extra_fields):
         if not username:
             raise ValueError("Username is required")
-        username = self.model.normalize_username(username)
+        username = self.model.normalize_username(username)  # type: ignore[attr-defined]
         user = self.model(username=username, **extra_fields)
         if password:
-            user.set_password(password)
+            user.set_password(password)  # type: ignore[attr-defined]
         else:
-            user.set_unusable_password()
+            user.set_unusable_password()  # type: ignore[attr-defined]
         user.save(using=self._db)
         return user
 

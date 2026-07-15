@@ -5,16 +5,34 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from common.mixins import filter_by_org
 from common.utils import to_millions
 from home.models import Home
-from stats.selectors.home_selectors import get_sold_events, get_homes, get_home_status_counts, get_monthly_sales, \
-    get_top_sellers, get_block_occupancy
-from stats.selectors.booking_selectors import get_total_contract, get_total_contract_price, get_total_payments, \
-    get_total_payments_price, get_total_unpaid, get_monthly_revenue
-from stats.selectors.lead_selectors import get_leads, get_lead_stats, get_lead_funnel, get_lead_sources, \
-    get_success_conversions
+from stats.selectors.booking_selectors import (
+    get_monthly_revenue,
+    get_total_contract,
+    get_total_contract_price,
+    get_total_payments,
+    get_total_payments_price,
+    get_total_unpaid,
+)
 from stats.selectors.call_selectors import get_total_calls
+from stats.selectors.home_selectors import (
+    get_block_occupancy,
+    get_home_status_counts,
+    get_homes,
+    get_monthly_sales,
+    get_sold_events,
+    get_top_sellers,
+)
+from stats.selectors.lead_selectors import (
+    get_lead_funnel,
+    get_lead_sources,
+    get_lead_stats,
+    get_leads,
+    get_success_conversions,
+)
 
 
 @extend_schema(tags=["Stats"])

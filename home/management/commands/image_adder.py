@@ -1,5 +1,6 @@
-from django.core.management.base import BaseCommand
 from django.core.files import File
+from django.core.management.base import BaseCommand
+
 from home.models import FloorPlan, Home
 from projects.models.project_models import Block
 

@@ -1,6 +1,7 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from leads.api.views import LeadViewSet, LeadNotificationViewSet
+
+from leads.api.views import LeadNotificationViewSet, LeadViewSet
 
 router = DefaultRouter()
 router.register('notifications', LeadNotificationViewSet, basename='lead-notifications')

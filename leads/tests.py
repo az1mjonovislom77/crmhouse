@@ -1,25 +1,18 @@
+from datetime import datetime
+
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
-from datetime import datetime
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
-from leads.models import Lead, LeadEvent, LeadNotification, BOARD_STATUSES, STATUS_TOPSHIRIQLAR
+from common.factories import make_user
+from leads.models import STATUS_TOPSHIRIQLAR, Lead, LeadEvent, LeadNotification
 from leads.services.lead_service import LeadService
 from leads.services.notification_service import MeetingNotificationService
 from organization.models import Organization
 from user.models import User
-
-
-def make_user(**kwargs):
-    defaults = {'username': 'lead_user', 'full_name': 'Lead User', 'role': User.UserRoles.SELLER, 'is_staff': True}
-    defaults.update(kwargs)
-    u = User(**defaults)
-    u.set_password('pass123')
-    u.save()
-    return u
 
 
 def make_lead(**kwargs):
