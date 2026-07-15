@@ -30,7 +30,7 @@ def make_project(**kwargs):
 def make_blocks(**kwargs):
     if "projects" not in kwargs:
         kwargs["projects"] = make_project()
-    defaults = {"title": "Block A", "image": "fake.webp"}
+    defaults = {"title": "Block A"}
     defaults.update(kwargs)
     return Block.objects.create(**defaults)
 
