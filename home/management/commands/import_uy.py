@@ -26,8 +26,13 @@ class Command(BaseCommand):
         parser.add_argument(
             '--project-id',
             type=int,
-            default=None,
-            help='Block qidirishda cheklash uchun Project ID',
+            default=3,
+            help='Block qidirishda cheklash uchun Project ID. Default: 3',
+        )
+        parser.add_argument(
+            '--organization',
+            default='Qamashi Xonadonlar',
+            help='Block qidirishda faqat shu organizationga tegishli bloklar. Default: "Qamashi Xonadonlar"',
         )
         parser.add_argument(
             '--total-price',
@@ -54,6 +59,7 @@ class Command(BaseCommand):
 
         block_prefix = options['block_prefix']
         project_id = options['project_id']
+        organization_name = options['organization']
         use_total_price = options['total_price']
 
         created_count = 0
@@ -90,6 +96,8 @@ class Command(BaseCommand):
                 block_letter = str(row.get('block') or '').strip()
                 block_title = f"{block_prefix}{block_letter}"
                 block_qs = Block.objects.filter(title=block_title)
+                if organization_name:
+                    block_qs = block_qs.filter(projects__organization__name=organization_name)
                 if project_id:
                     block_qs = block_qs.filter(projects_id=project_id)
                 block_obj = block_qs.first()
@@ -97,7 +105,8 @@ class Command(BaseCommand):
                 if not block_obj:
                     self.stdout.write(
                         self.style.WARNING(
-                            f"Qator {row_idx}: Block '{block_title}' topilmadi, o'tkazib yuborildi"
+                            f"Qator {row_idx}: Block '{block_title}' "
+                            f"('{organization_name}' organizationida) topilmadi, o'tkazib yuborildi"
                         )
                     )
                     skipped_count += 1
