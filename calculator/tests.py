@@ -8,6 +8,7 @@ from rest_framework.test import APITestCase
 from calculator.engine import calculate, ceil_step
 from calculator.models import CalculatorConfig, GuaranteeOption, SubsidyOption
 from common.factories import make_user
+from user.models import User
 
 AREA = Decimal("49.35")
 PRICE = Decimal("7700000")
@@ -225,3 +226,117 @@ class CalculateApiTest(APITestCase):
             "credit_years": 20,
         }, format="json")
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class OrgScopedOptionsTest(APITestCase):
+    """Kafillik/subsidiya turlari org bo'yicha to'liq izolyatsiya qilinganini tekshiradi."""
+
+    def setUp(self):
+        from organization.models import Organization
+        self.org_a = Organization.objects.create(name="Opt Org A")
+        self.org_b = Organization.objects.create(name="Opt Org B")
+        self.admin_a = make_user(username="opt_admin_a", role=User.UserRoles.ADMIN,
+                                 is_staff=False, organization=self.org_a)
+        self.admin_b = make_user(username="opt_admin_b", role=User.UserRoles.ADMIN,
+                                 is_staff=False, organization=self.org_b)
+        self.global_kafillik = GuaranteeOption.objects.get(key="kafillik", organization__isnull=True)
+
+    def test_org_without_own_options_sees_global_list(self):
+        self.client.force_authenticate(user=self.admin_a)
+        resp = self.client.get(reverse("guarantee-option-list"))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual({item["key"] for item in resp.data},
+                         set(GuaranteeOption.objects.filter(
+                             organization__isnull=True).values_list("key", flat=True)))
+
+    def test_org_update_creates_copy_and_does_not_touch_global(self):
+        old_percent = self.global_kafillik.percent
+        self.client.force_authenticate(user=self.admin_a)
+        resp = self.client.put(
+            reverse("guarantee-option-detail", args=[self.global_kafillik.id]),
+            {"key": "kafillik", "label": "Kafillik A", "percent": "35.00"}, format="json")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # global o'zgarmagan
+        self.global_kafillik.refresh_from_db()
+        self.assertEqual(self.global_kafillik.percent, old_percent)
+        # org A uchun butun to'plam nusxalangan va nusxada yangi qiymat
+        copy = GuaranteeOption.objects.get(organization=self.org_a, key="kafillik")
+        self.assertEqual(copy.percent, Decimal("35.00"))
+        self.assertEqual(
+            GuaranteeOption.objects.filter(organization=self.org_a).count(),
+            GuaranteeOption.objects.filter(organization__isnull=True).count())
+
+    def test_two_orgs_do_not_affect_each_other(self):
+        self.client.force_authenticate(user=self.admin_a)
+        self.client.put(reverse("guarantee-option-detail", args=[self.global_kafillik.id]),
+                        {"key": "kafillik", "label": "A", "percent": "35.00"}, format="json")
+
+        self.client.force_authenticate(user=self.admin_b)
+        self.client.put(reverse("guarantee-option-detail", args=[self.global_kafillik.id]),
+                        {"key": "kafillik", "label": "B", "percent": "25.00"}, format="json")
+
+        self.assertEqual(GuaranteeOption.objects.get(organization=self.org_a, key="kafillik").percent,
+                         Decimal("35.00"))
+        self.assertEqual(GuaranteeOption.objects.get(organization=self.org_b, key="kafillik").percent,
+                         Decimal("25.00"))
+
+    def test_org_cannot_use_other_orgs_option_in_calculate(self):
+        from home.models import Home
+        home = Home.objects.create(home_number=1, area=AREA, price_per_sqm=PRICE,
+                                   organization=self.org_b)
+        # org A o'z nusxasini yaratadi
+        self.client.force_authenticate(user=self.admin_a)
+        self.client.put(reverse("guarantee-option-detail", args=[self.global_kafillik.id]),
+                        {"key": "kafillik", "label": "A", "percent": "35.00"}, format="json")
+        option_a = GuaranteeOption.objects.get(organization=self.org_a, key="kafillik")
+
+        # org B useri org A'ning option id'sini yuboradi — o'tmasligi kerak
+        self.client.force_authenticate(user=self.admin_b)
+        resp = self.client.post(reverse("calculator-calculate"), {
+            "home_id": home.id,
+            "payment_type": "bosh_tolovli",
+            "guarantee_id": option_a.id,
+            "credit_years": 20,
+        }, format="json")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_option_materializes_default_set(self):
+        self.client.force_authenticate(user=self.admin_a)
+        resp = self.client.post(reverse("guarantee-option-list"),
+                                {"key": "yangi", "label": "Yangi tur", "percent": "10.00"},
+                                format="json")
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        keys = set(GuaranteeOption.objects.filter(
+            organization=self.org_a).values_list("key", flat=True))
+        self.assertIn("yangi", keys)
+        self.assertIn("kafillik", keys)  # default'lar ham nusxalangan
+
+    def test_staff_edits_global_directly(self):
+        staff = make_user(username="opt_staff")
+        self.client.force_authenticate(user=staff)
+        resp = self.client.put(
+            reverse("guarantee-option-detail", args=[self.global_kafillik.id]),
+            {"key": "kafillik", "label": "Global", "percent": "18.00"}, format="json")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.global_kafillik.refresh_from_db()
+        self.assertEqual(self.global_kafillik.percent, Decimal("18.00"))
+        self.assertIsNone(self.global_kafillik.organization)
+
+    def test_org_calculation_uses_own_percent(self):
+        from home.models import Home
+        home = Home.objects.create(home_number=2, area=AREA, price_per_sqm=PRICE,
+                                   organization=self.org_a)
+        self.client.force_authenticate(user=self.admin_a)
+        self.client.put(reverse("guarantee-option-detail", args=[self.global_kafillik.id]),
+                        {"key": "kafillik", "label": "A", "percent": "20.00"}, format="json")
+        option_a = GuaranteeOption.objects.get(organization=self.org_a, key="kafillik")
+        resp = self.client.post(reverse("calculator-calculate"), {
+            "home_id": home.id,
+            "payment_type": "bosh_tolovli",
+            "guarantee_id": option_a.id,
+            "credit_years": 20,
+        }, format="json")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        # 20% bilan hisoblangan (test_case_2 qiymatlari), 15% emas
+        self.assertEqual(resp.data["client_payment"], Decimal("75999000"))

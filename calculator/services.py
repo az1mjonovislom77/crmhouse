@@ -3,11 +3,13 @@ from decimal import Decimal
 from rest_framework.exceptions import ValidationError
 
 from calculator.engine import calculate
-from calculator.models import CalculatorConfig, GuaranteeOption, SubsidyOption
+from calculator.models import CalculatorConfig, GuaranteeOption, SubsidyOption, options_for
 
 
-def resolve_guarantee(guarantee_id=None, guarantee_key=None):
-    qs = GuaranteeOption.objects.all()
+def resolve_guarantee(guarantee_id=None, guarantee_key=None, organization=None):
+    # Faqat shu org'ning to'plamidan (yoki org'niki bo'lmasa global'dan) qidiriladi —
+    # boshqa org'ning option id'si o'tmaydi.
+    qs = options_for(GuaranteeOption, organization)
     option = None
     if guarantee_id is not None:
         option = qs.filter(pk=guarantee_id).first()
@@ -18,8 +20,8 @@ def resolve_guarantee(guarantee_id=None, guarantee_key=None):
     return option
 
 
-def resolve_subsidy(subsidy_id=None, subsidy_key=None):
-    qs = SubsidyOption.objects.all()
+def resolve_subsidy(subsidy_id=None, subsidy_key=None, organization=None):
+    qs = options_for(SubsidyOption, organization)
     if subsidy_id is not None:
         option = qs.filter(pk=subsidy_id).first()
         if option is None:
@@ -57,8 +59,8 @@ def calculate_from_payload(data, organization=None):
     if home is None:
         raise ValidationError({'home_id': 'Uy topilmadi.'})
 
-    guarantee = resolve_guarantee(data.get('guarantee_id'), data.get('guarantee_key'))
-    subsidy = resolve_subsidy(data.get('subsidy_id'), data.get('subsidy_key'))
+    guarantee = resolve_guarantee(data.get('guarantee_id'), data.get('guarantee_key'), organization=organization)
+    subsidy = resolve_subsidy(data.get('subsidy_id'), data.get('subsidy_key'), organization=organization)
 
     return compute(
         area=home.area,
@@ -78,8 +80,8 @@ def compute_booking_snapshot(*, home, payment_type, guarantee_id=None, guarantee
                              manual_down_payment=None, rounding=True,
                              organization=None):
     config = CalculatorConfig.for_org(organization)
-    guarantee = resolve_guarantee(guarantee_id, guarantee_key)
-    subsidy = resolve_subsidy(subsidy_id, subsidy_key)
+    guarantee = resolve_guarantee(guarantee_id, guarantee_key, organization=organization)
+    subsidy = resolve_subsidy(subsidy_id, subsidy_key, organization=organization)
     area = home.area or 0
     price_per_m2 = home.price_per_sqm or config.default_price_per_m2
 

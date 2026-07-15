@@ -88,6 +88,34 @@ class SubsidyOption(models.Model):
         return self.label
 
 
+def options_for(model, organization=None):
+    """Org'ning option to'plami; org hali o'zinikini yaratmagan bo'lsa — global (default) to'plam."""
+    qs = model.objects.filter(organization=organization)
+    if organization is not None and not qs.exists():
+        qs = model.objects.filter(organization__isnull=True)
+    return qs
+
+
+def materialize_org_options(model, organization):
+    """Global to'plamning org nusxasini bir marta yaratadi (CalculatorConfig.resolve_for_edit naqshi).
+
+    Org o'z optionini birinchi marta o'zgartirganda/yaratganda butun global to'plam
+    nusxalanadi — shunda org faqat o'z nusxalari bilan ishlaydi va globalga
+    (boshqa org'larga) hech qanday ta'sir qilmaydi.
+    """
+    if organization is None or model.objects.filter(organization=organization).exists():
+        return
+    field_names = [
+        f.name for f in model._meta.concrete_fields
+        if f.name not in ('id', 'organization')
+    ]
+    copies = [
+        model(organization=organization, **{name: getattr(base, name) for name in field_names})
+        for base in model.objects.filter(organization__isnull=True)
+    ]
+    model.objects.bulk_create(copies)
+
+
 def active_guarantees(organization=None):
     qs = GuaranteeOption.objects.filter(organization=organization, is_active=True)
     if organization is not None and not qs.exists():
