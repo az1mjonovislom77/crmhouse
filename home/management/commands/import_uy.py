@@ -93,7 +93,11 @@ class Command(BaseCommand):
                 floor_number = int(row['floor'])
                 home_number = int(row['home_number'])
                 area = float(row['area'])
-                entrance = int(row['entrance'])
+                base_entrance = int(row['entrance'])
+                # department har bir bo'lim uchun entranceni siljitadi:
+                # dept 1 -> entrance 1,2 ; dept 2 -> entrance 3,4 ; ...
+                department = int(row.get('department') or 1)
+                entrance = base_entrance + (department - 1) * 2
 
                 raw_price = row.get('price') or 0
                 price = float(raw_price)
@@ -135,12 +139,14 @@ class Command(BaseCommand):
                         home_number=home_number,
                         floor=floor_obj,
                         blocks=block_obj,
+                        entrance=entrance,
                     ).exists()
                     action = "YANGILANADI" if exists else "YARATILADI"
                     self.stdout.write(
                         f"Qator {row_idx}: {action} | block='{block_obj.title}' (id={block_obj.id}) "
                         f"floor={floor_number} home_number={home_number} "
-                        f"area={area} rooms={rooms} price_per_sqm={price_per_sqm} entrance={entrance}"
+                        f"area={area} rooms={rooms} price_per_sqm={price_per_sqm} "
+                        f"department={department} entrance={entrance}"
                     )
                     if exists:
                         updated_count += 1
@@ -152,11 +158,11 @@ class Command(BaseCommand):
                     home_number=home_number,
                     floor=floor_obj,
                     blocks=block_obj,
+                    entrance=entrance,
                     defaults={
                         'area': area,
                         'rooms': rooms,
                         'price_per_sqm': price_per_sqm,
-                        'entrance': entrance,
                     },
                 )
 
