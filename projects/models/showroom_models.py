@@ -14,8 +14,7 @@ class SVG(models.Model):
 class ShowroomImage(models.Model):
     image = models.ImageField(upload_to='showroom_images/',
                               validators=[FileExtensionValidator(
-                                  allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']),
-                                  check_image_size])
+                                  allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']), check_image_size])
 
     def save(self, *args, **kwargs):
         if self.pk:
