@@ -40,6 +40,12 @@ class Command(BaseCommand):
             default=False,
             help='price ustuni umumiy narx bo\'lsa, price_per_sqm = price / area hisoblanadi',
         )
+        parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            default=False,
+            help='Bazaga hech narsa yozmaydi, faqat nima bo\'lishini hisoblab ko\'rsatadi',
+        )
 
     def handle(self, *args, **options):
         file_path = options['file']
@@ -61,6 +67,10 @@ class Command(BaseCommand):
         project_id = options['project_id']
         organization_name = options['organization']
         use_total_price = options['total_price']
+        dry_run = options['dry_run']
+
+        if dry_run:
+            self.stdout.write(self.style.WARNING("DRY-RUN rejimi: bazaga hech narsa yozilmaydi"))
 
         created_count = 0
         updated_count = 0
@@ -91,7 +101,10 @@ class Command(BaseCommand):
                 match = re.search(r'\d+', room_str)
                 rooms = int(match.group()) if match else 1
 
-                floor_obj, _ = Floors.objects.get_or_create(number=floor_number)
+                if dry_run:
+                    floor_obj = Floors.objects.filter(number=floor_number).first()
+                else:
+                    floor_obj, _ = Floors.objects.get_or_create(number=floor_number)
 
                 block_letter = str(row.get('block') or '').strip()
                 block_title = f"{block_prefix}{block_letter}"
@@ -110,6 +123,18 @@ class Command(BaseCommand):
                         )
                     )
                     skipped_count += 1
+                    continue
+
+                if dry_run:
+                    exists = Home.objects.filter(
+                        home_number=home_number,
+                        floor=floor_obj,
+                        blocks=block_obj,
+                    ).exists()
+                    if exists:
+                        updated_count += 1
+                    else:
+                        created_count += 1
                     continue
 
                 _, created = Home.objects.update_or_create(
