@@ -81,6 +81,11 @@ class Command(BaseCommand):
             row = {headers[c]: ws.cell(row_idx, c + 1).value for c in range(len(headers))}
 
             if not row.get('home_number'):
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"Qator {row_idx}: 'home_number' bo'sh, o'tkazib yuborildi | ma'lumot: {row}"
+                    )
+                )
                 skipped_count += 1
                 continue
 
@@ -131,6 +136,12 @@ class Command(BaseCommand):
                         floor=floor_obj,
                         blocks=block_obj,
                     ).exists()
+                    action = "YANGILANADI" if exists else "YARATILADI"
+                    self.stdout.write(
+                        f"Qator {row_idx}: {action} | block='{block_obj.title}' (id={block_obj.id}) "
+                        f"floor={floor_number} home_number={home_number} "
+                        f"area={area} rooms={rooms} price_per_sqm={price_per_sqm} entrance={entrance}"
+                    )
                     if exists:
                         updated_count += 1
                     else:
