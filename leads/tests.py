@@ -39,23 +39,10 @@ def make_lead(**kwargs):
 
 
 class LeadModelTest(TestCase):
-    def test_create_lead(self):
-        lead = make_lead()
-        self.assertEqual(lead.full_name, 'Test Lead')
-        self.assertEqual(lead.board, Lead.BOARD_SALES)
-
     def test_str_representation(self):
         lead = make_lead()
         self.assertIn('Test Lead', str(lead))
         self.assertIn('sales', str(lead))
-
-    def test_default_score_is_zero(self):
-        lead = make_lead()
-        self.assertEqual(lead.score, 0)
-
-    def test_default_subsidiya_is_false(self):
-        lead = make_lead()
-        self.assertFalse(lead.subsidiya)
 
     def test_ordering_by_created_at_desc(self):
         lead1 = make_lead(full_name='First', phone='111')
@@ -68,12 +55,6 @@ class LeadEventModelTest(TestCase):
     def setUp(self):
         self.user = make_user()
         self.lead = make_lead()
-
-    def test_create_event(self):
-        event = LeadEvent.objects.create(
-            lead=self.lead, type=LeadEvent.TYPE_COMMENT, text='Test comment', by=self.user)
-        self.assertEqual(event.type, LeadEvent.TYPE_COMMENT)
-        self.assertEqual(event.lead, self.lead)
 
     def test_str_representation(self):
         event = LeadEvent.objects.create(

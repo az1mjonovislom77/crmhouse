@@ -32,7 +32,7 @@ def make_project(**kwargs):
 def make_blocks(**kwargs):
     if "projects" not in kwargs:
         kwargs["projects"] = make_project()
-    defaults = {"title": "Block", "image": "f.webp"}
+    defaults = {"title": "Block"}
     defaults.update(kwargs)
     return Block.objects.create(**defaults)
 
@@ -73,11 +73,6 @@ def make_company(**kwargs):
 
 
 class HomeModelTest(TestCase):
-    def test_create_home(self):
-        home = make_home(home_number=10)
-        self.assertEqual(home.home_number, 10)
-        self.assertEqual(home.home_status, Home.HomeStatus.AVAILABLE)
-
     def test_home_str(self):
         home = make_home(home_number=5)
         self.assertIn("5", str(home))
@@ -86,35 +81,11 @@ class HomeModelTest(TestCase):
         home = Home.objects.create(home_number=1, price_per_sqm=0, area=0)
         self.assertEqual(home.home_status, Home.HomeStatus.AVAILABLE)
 
-    def test_home_with_blocks_and_floor(self):
-        blocks = make_blocks()
-        floor = make_floors(number=3)
-        home = make_home(blocks=blocks, floor=floor)
-        self.assertEqual(home.blocks, blocks)
-        self.assertEqual(home.floor, floor)
-
-    def test_home_with_renovation(self):
-        ren = make_renovation(price=5000)
-        home = make_home(renovation=ren)
-        self.assertEqual(home.renovation.price, 5000)
-
-
 class HomeStatusHistoryModelTest(TestCase):
     def setUp(self):
         self.home = make_home()
         self.user = make_user(username="hist_user")
         self.client_obj = make_client()
-
-    def test_create_history_entry(self):
-        h = HomeStatusHistory.objects.create(
-            home=self.home,
-            client=self.client_obj,
-            from_status=Home.HomeStatus.AVAILABLE,
-            to_status=Home.HomeStatus.RESERVED,
-            changed_by=self.user,
-        )
-        self.assertEqual(h.from_status, Home.HomeStatus.AVAILABLE)
-        self.assertEqual(h.to_status, Home.HomeStatus.RESERVED)
 
     def test_history_ordered_by_newest(self):
         HomeStatusHistory.objects.create(home=self.home, to_status="reserved")

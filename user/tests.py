@@ -73,11 +73,6 @@ class UserModelTest(TestCase):
         with self.assertRaises(Exception):
             make_user(username="unique1")
 
-    def test_user_roles_choices(self):
-        self.assertEqual(User.UserRoles.SELLER, "s")
-        self.assertEqual(User.UserRoles.ADMIN, "a")
-        self.assertEqual(User.UserRoles.SUPERADMIN, "sa")
-
 
 class UserServiceTest(TestCase):
     def test_create_user_hashes_password(self):

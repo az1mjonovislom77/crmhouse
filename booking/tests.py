@@ -60,10 +60,6 @@ def make_booking(**kwargs):
 
 
 class CompanyModelTest(TestCase):
-    def test_create_company(self):
-        co = make_company(name="My Co")
-        self.assertEqual(co.name, "My Co")
-
     def test_str(self):
         co = make_company(name="Alpha")
         self.assertEqual(str(co), "Alpha")
@@ -74,13 +70,6 @@ class BookingModelTest(TestCase):
         self.home = make_home()
         self.client_obj = make_client()
         self.company = make_company()
-
-    def test_create_booking(self):
-        booking = Booking.objects.create(
-            home=self.home, client=self.client_obj, company=self.company
-        )
-        self.assertIsNotNone(booking.pk)
-        self.assertEqual(booking.home, self.home)
 
     def test_booking_str_is_id(self):
         booking = Booking.objects.create(

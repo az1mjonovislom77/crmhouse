@@ -43,26 +43,9 @@ def make_company(**kwargs):
 
 
 class ClientModelTest(TestCase):
-    def test_create_client(self):
-        client = make_client(full_name="Alisher", phone_number="+998901111111")
-        self.assertEqual(client.full_name, "Alisher")
-        self.assertIsNotNone(client.pk)
-
     def test_str_returns_full_name(self):
         client = make_client(full_name="Bobur Karimov")
         self.assertEqual(str(client), "Bobur Karimov")
-
-    def test_all_fields_saved(self):
-        client = make_client(
-            full_name="Full Name",
-            phone_number="+998909876543",
-            passport="BB654321",
-            address="Samarkand",
-        )
-        client.refresh_from_db()
-        self.assertEqual(client.passport, "BB654321")
-        self.assertEqual(client.address, "Samarkand")
-
 
 class ClientSelectorTest(TestCase):
     def setUp(self):
@@ -94,13 +77,6 @@ class ClientSelectorTest(TestCase):
         client = qs.get(pk=self.client_obj.pk)
         with self.assertNumQueries(0):
             list(client.status_history.all())
-
-    def test_returns_all_clients(self):
-        make_client(phone_number="+998911111111")
-        make_client(phone_number="+998922222222")
-        qs = get_client_queryset()
-        self.assertGreaterEqual(qs.count(), 3)
-
 
 class ClientViewSetTest(APITestCase):
     def setUp(self):

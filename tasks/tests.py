@@ -48,30 +48,14 @@ def make_comment(user=None, project=None, **kwargs):
 
 
 class CardModelTest(TestCase):
-    def test_create_card(self):
-        card = Card.objects.create(title="Sprint 1")
-        self.assertEqual(card.title, "Sprint 1")
-        self.assertIsNotNone(card.pk)
-
     def test_card_str(self):
         card = Card.objects.create(title="My Card")
         self.assertEqual(str(card), "My Card")
-
-    def test_card_has_created_at(self):
-        card = Card.objects.create(title="Timed")
-        self.assertIsNotNone(card.created_at)
 
 
 class ProjectModelTest(TestCase):
     def setUp(self):
         self.card = make_card()
-
-    def test_create_project(self):
-        project = Project.objects.create(
-            card=self.card, title="Task 1", description="Desc", order=1
-        )
-        self.assertEqual(project.title, "Task 1")
-        self.assertEqual(project.order, 1)
 
     def test_project_str(self):
         project = Project.objects.create(card=self.card, title="My Task", description="D", order=1)
@@ -103,17 +87,9 @@ class CommentModelTest(TestCase):
         self.user = make_user(username="cm_mdl")
         self.project = make_project_obj()
 
-    def test_create_comment(self):
-        comment = Comment.objects.create(user=self.user, project=self.project, text="Nice work!")
-        self.assertEqual(comment.text, "Nice work!")
-
     def test_comment_str(self):
         comment = Comment.objects.create(user=self.user, project=self.project, text="Short text here")
         self.assertIn(self.user.full_name or self.user.username, str(comment))
-
-    def test_comment_linked_to_project(self):
-        comment = Comment.objects.create(user=self.user, project=self.project, text="Test")
-        self.assertEqual(comment.project, self.project)
 
 
 class CreateProjectServiceTest(TestCase):

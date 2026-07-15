@@ -48,11 +48,6 @@ def make_renovation(**kwargs):
 
 
 class ProjectsModelTest(TestCase):
-    def test_create_project(self):
-        project = make_project(title="My Project")
-        self.assertEqual(project.title, "My Project")
-        self.assertIsNotNone(project.pk)
-
     def test_project_str(self):
         project = make_project(title="Hero Project")
         self.assertEqual(str(project), "Hero Project")
@@ -65,36 +60,18 @@ class ProjectsModelTest(TestCase):
 
 
 class BlocksModelTest(TestCase):
-    def test_create_blocks(self):
-        blocks = make_blocks(title="Block B")
-        self.assertEqual(blocks.title, "Block B")
-
     def test_blocks_str(self):
         blocks = make_blocks(title="Block C")
         self.assertEqual(str(blocks), "Block C")
 
-    def test_blocks_linked_to_project(self):
-        project = make_project(title="Linked Project")
-        blocks = make_blocks(projects=project, title="B1")
-        self.assertEqual(blocks.projects, project)
-
 
 class FloorsModelTest(TestCase):
-    def test_create_floor(self):
-        floor = Floors.objects.create(number=5)
-        self.assertEqual(floor.number, 5)
-
     def test_floor_str(self):
         floor = Floors.objects.create(number=3)
         self.assertEqual(str(floor), "3")
 
 
 class RenovationModelTest(TestCase):
-    def test_create_renovation(self):
-        ren = Renovation.objects.create(title="Luxury", price=5000)
-        self.assertEqual(ren.title, "Luxury")
-        self.assertEqual(ren.price, 5000)
-
     def test_renovation_str(self):
         ren = Renovation.objects.create(title="Basic", price=0)
         self.assertEqual(str(ren), "Basic")

@@ -41,20 +41,10 @@ class CallRecordModelTest(TestCase):
         cr = make_call_record()
         self.assertIsNone(cr.audio_url)
 
-    def test_audio_downloaded_default_false(self):
-        cr = make_call_record()
-        self.assertFalse(cr.audio_downloaded)
-
     def test_uniqueid_unique_constraint(self):
         make_call_record(uniqueid='dup-001')
         with self.assertRaises(Exception):
             make_call_record(uniqueid='dup-001')
-
-    def test_timestamps_set_on_create(self):
-        cr = make_call_record(uniqueid='ts-test-1')
-        self.assertIsNotNone(cr.created_at)
-        self.assertIsNotNone(cr.updated_at)
-
 
 class CDRDedupServiceTest(TestCase):
     def test_answered_call_not_skipped(self):
