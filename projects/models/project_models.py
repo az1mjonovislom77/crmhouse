@@ -15,7 +15,7 @@ class Project(models.Model):
     image = models.ImageField(upload_to='projects/', validators=[
         FileExtensionValidator(
             allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']), check_image_size],
-        null=True, blank=True)
+                              null=True, blank=True)
 
     class Meta:
         db_table = 'projects_projects'
@@ -28,16 +28,24 @@ class Project(models.Model):
 class Block(models.Model):
     projects = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True, related_name='blocks')
     title = models.CharField(max_length=100, db_index=True)
-    image = models.FileField(upload_to='projects/', validators=[
-        FileExtensionValidator(
-            allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']), check_image_size])
 
     class Meta:
         db_table = 'projects_blocks'
 
+    def __str__(self):
+        return self.title
+
+
+class BlockImage(models.Model):
+    block = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name='plans')
+    image = models.ImageField(upload_to='block_image/',
+                              validators=[FileExtensionValidator(
+                                  allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']),
+                                  check_image_size])
+
     def save(self, *args, **kwargs):
         if self.pk:
-            old = Block.objects.only("image").filter(pk=self.pk).first()
+            old = BlockImage.objects.only("image").filter(pk=self.pk).first()
             if old and old.image == self.image:
                 super().save(*args, **kwargs)
                 return
@@ -49,7 +57,7 @@ class Block(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.title
+        return f"BlockImage {self.pk}"
 
 
 class Floors(models.Model):
