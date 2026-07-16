@@ -11,7 +11,8 @@ from django.db import transaction
 
 from home.models import Home
 
-DRY_RUN = False  # tekshirib bo'lgach False qilib qayta ishga tushiring
+DRY_RUN = False
+# tekshirib bo'lgach False qilib qayta ishga tushiring
 ORG_NAME = "Qamashi Xonadonlar"  # faqat shu organizationdagi homelar tuzatiladi
 
 qs = Home.objects.select_related('floor', 'blocks').filter(organization__name=ORG_NAME)
