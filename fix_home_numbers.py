@@ -24,27 +24,29 @@ for h in qs.order_by('pk'):
     if h.floor is None:
         skipped.append(h)
         continue
-    groups[(h.blocks_id, h.entrance)].append(h)
+    groups[h.blocks_id].append(h)
 
 changed = []
 
-for (block_id, entrance), homes in sorted(groups.items(), key=lambda x: (x[0][0] or 0, x[0][1])):
-    upper = [h for h in homes if h.floor.number >= 1]
-    lower = [h for h in homes if h.floor.number < 1]
-
-    # yuqori floorlar: floor o'sish tartibida, floor ichida eski home_number tartibida
-    upper.sort(key=lambda h: (h.floor.number, h.home_number, h.pk))
-    # pastki floorlar: 0, -1, -2 ... tartibida, floor ichida eski home_number tartibida
-    lower.sort(key=lambda h: (-h.floor.number, h.home_number, h.pk))
-
+for block_id, homes in sorted(groups.items(), key=lambda x: x[0] or 0):
     number = 0
-    for h in upper + lower:
-        number += 1
-        if h.home_number != number:
-            changed.append(h)
-            print(f"block={block_id} entrance={entrance} floor={h.floor.number} "
-                  f"home_id={h.pk}: {h.home_number} -> {number}")
-            h.home_number = number
+    for entrance in sorted({h.entrance for h in homes}):
+        ent_homes = [h for h in homes if h.entrance == entrance]
+        upper = [h for h in ent_homes if h.floor.number >= 1]
+        lower = [h for h in ent_homes if h.floor.number < 1]
+
+        # yuqori floorlar: floor o'sish tartibida, floor ichida eski home_number tartibida
+        upper.sort(key=lambda h: (h.floor.number, h.home_number, h.pk))
+        # pastki floorlar: 0, -1, -2 ... tartibida, floor ichida eski home_number tartibida
+        lower.sort(key=lambda h: (-h.floor.number, h.home_number, h.pk))
+
+        for h in upper + lower:
+            number += 1
+            if h.home_number != number:
+                changed.append(h)
+                print(f"block={block_id} entrance={entrance} floor={h.floor.number} "
+                      f"home_id={h.pk}: {h.home_number} -> {number}")
+                h.home_number = number
 
 if skipped:
     print(f"\nDIQQAT: floor=None bo'lgan {len(skipped)} ta home o'tkazib yuborildi: "
