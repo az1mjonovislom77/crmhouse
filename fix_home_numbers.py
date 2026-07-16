@@ -12,11 +12,15 @@ from django.db import transaction
 from home.models import Home
 
 DRY_RUN = True  # tekshirib bo'lgach False qilib qayta ishga tushiring
+ORG_NAME = "Qamashi Xonadonlar"  # faqat shu organizationdagi homelar tuzatiladi
+
+qs = Home.objects.select_related('floor', 'blocks').filter(organization__name=ORG_NAME)
+print(f"'{ORG_NAME}' organizationida {qs.count()} ta home topildi.")
 
 groups = defaultdict(list)
 skipped = []
 
-for h in Home.objects.select_related('floor', 'blocks').order_by('pk'):
+for h in qs.order_by('pk'):
     if h.floor is None:
         skipped.append(h)
         continue
