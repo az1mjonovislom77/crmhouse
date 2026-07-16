@@ -7,8 +7,6 @@ from calculator.models import CalculatorConfig, GuaranteeOption, SubsidyOption, 
 
 
 def resolve_guarantee(guarantee_id=None, guarantee_key=None, organization=None):
-    # Faqat shu org'ning to'plamidan (yoki org'niki bo'lmasa global'dan) qidiriladi —
-    # boshqa org'ning option id'si o'tmaydi.
     qs = options_for(GuaranteeOption, organization)
     option = None
     if guarantee_id is not None:

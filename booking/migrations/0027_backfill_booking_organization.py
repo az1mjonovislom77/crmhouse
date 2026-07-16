@@ -1,6 +1,5 @@
 from django.db import migrations
 
-# See home/migrations/0021 for why this is guarded and dependency-free.
 
 REQUIRED = {
     'booking_booking': {'home_id', 'organization_id'},

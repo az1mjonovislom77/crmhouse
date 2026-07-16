@@ -45,16 +45,12 @@ class _OrgScopedOptionViewSet(viewsets.ModelViewSet):
     pagination_class = None
 
     def get_queryset(self):
-        # Org o'zinikini yaratmagan bo'lsa global (default) to'plamni ko'radi —
-        # /calculator/config/ bilan bir xil siyosat.
         return options_for(self.model, _org(self.request))
 
     def get_object(self):
         obj = super().get_object()
         org = _org(self.request)
         if org is not None and obj.organization is None and self.request.method in ('PUT', 'DELETE'):
-            # Org global optionni o'zgartirmoqchi: globalga tegmaymiz —
-            # butun to'plamning org nusxasini yaratib, o'sha nusxani qaytaramiz.
             materialize_org_options(self.model, org)
             obj = options_for(self.model, org).get(key=obj.key)
             self.check_object_permissions(self.request, obj)
@@ -62,8 +58,6 @@ class _OrgScopedOptionViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         org = _org(self.request)
-        # Yangi option qo'shishdan oldin default to'plam nusxalanadi,
-        # aks holda org ro'yxati faqat bitta yangi optiondan iborat bo'lib qolardi.
         materialize_org_options(self.model, org)
         serializer.save(organization=org)
 

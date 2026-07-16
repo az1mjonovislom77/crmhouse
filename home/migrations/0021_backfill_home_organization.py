@@ -1,15 +1,5 @@
 from django.db import migrations
 
-# Backfill existing rows so org-scoped querysets keep showing them after the
-# switch to a direct `organization` FK.
-#
-# This migration is intentionally DEPENDENCY-FREE (beyond its own AddField):
-# depending on the `projects` app reorders the historical `projects.Basement`
-# create/delete lifecycle and breaks from-scratch DB builds. Instead we guard
-# on the exact tables/columns the UPDATE needs. On an incremental deploy they
-# all exist and the backfill runs automatically; on a from-scratch build they
-# may not exist yet (and there is no data anyway), so we skip. The
-# `backfill_organizations` management command does the same and can be re-run.
 
 REQUIRED = {
     'home_home': {'blocks_id', 'organization_id'},

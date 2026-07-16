@@ -34,9 +34,9 @@ class BookingMiniSerializer(serializers.ModelSerializer):
 class ClientSerializer(serializers.ModelSerializer):
     booking = BookingNestSerializer(source='bookings', many=True, read_only=True)
     home_status_history = serializers.SerializerMethodField()
-    user = serializers.PrimaryKeyRelatedField(read_only=True)  # type: ignore[var-annotated]
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
     user_full_name = serializers.CharField(source='user.full_name', read_only=True, default=None)
-    organization = serializers.PrimaryKeyRelatedField(read_only=True)  # type: ignore[var-annotated]
+    organization = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Client

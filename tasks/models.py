@@ -19,7 +19,7 @@ class Card(TimeStampedModel):
 
 
 class Project(TimeStampedModel):
-    users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='task_projects', blank=True)  # type: ignore[var-annotated]
+    users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='task_projects', blank=True)
     card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name='projects')
     title = models.CharField(max_length=200)
     description = models.TextField()

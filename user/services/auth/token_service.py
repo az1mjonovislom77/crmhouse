@@ -25,7 +25,7 @@ class UserTokenService:
     @staticmethod
     def rotate_refresh_token(refresh_token_str: str):
         try:
-            refresh = RefreshToken(refresh_token_str)  # type: ignore[arg-type]
+            refresh = RefreshToken(refresh_token_str)
             new_access = str(refresh.access_token)
             refresh.blacklist()
             refresh.set_jti()

@@ -10,7 +10,7 @@ class SVGSerializer(BaseReadSerializer):
 
 
 class ShowroomSerializer(serializers.ModelSerializer):
-    label = serializers.SerializerMethodField()  # type: ignore[assignment]
+    label = serializers.SerializerMethodField()
     homes_count = serializers.IntegerField(read_only=True)
     available_homes = serializers.IntegerField(read_only=True)
     sold_homes = serializers.IntegerField(read_only=True)

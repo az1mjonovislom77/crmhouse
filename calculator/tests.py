@@ -229,7 +229,6 @@ class CalculateApiTest(APITestCase):
 
 
 class OrgScopedOptionsTest(APITestCase):
-    """Kafillik/subsidiya turlari org bo'yicha to'liq izolyatsiya qilinganini tekshiradi."""
 
     def setUp(self):
         from organization.models import Organization
@@ -257,10 +256,8 @@ class OrgScopedOptionsTest(APITestCase):
             {"key": "kafillik", "label": "Kafillik A", "percent": "35.00"}, format="json")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
-        # global o'zgarmagan
         self.global_kafillik.refresh_from_db()
         self.assertEqual(self.global_kafillik.percent, old_percent)
-        # org A uchun butun to'plam nusxalangan va nusxada yangi qiymat
         copy = GuaranteeOption.objects.get(organization=self.org_a, key="kafillik")
         self.assertEqual(copy.percent, Decimal("35.00"))
         self.assertEqual(
@@ -285,13 +282,11 @@ class OrgScopedOptionsTest(APITestCase):
         from home.models import Home
         home = Home.objects.create(home_number=1, area=AREA, price_per_sqm=PRICE,
                                    organization=self.org_b)
-        # org A o'z nusxasini yaratadi
         self.client.force_authenticate(user=self.admin_a)
         self.client.put(reverse("guarantee-option-detail", args=[self.global_kafillik.id]),
                         {"key": "kafillik", "label": "A", "percent": "35.00"}, format="json")
         option_a = GuaranteeOption.objects.get(organization=self.org_a, key="kafillik")
 
-        # org B useri org A'ning option id'sini yuboradi — o'tmasligi kerak
         self.client.force_authenticate(user=self.admin_b)
         resp = self.client.post(reverse("calculator-calculate"), {
             "home_id": home.id,
@@ -310,7 +305,7 @@ class OrgScopedOptionsTest(APITestCase):
         keys = set(GuaranteeOption.objects.filter(
             organization=self.org_a).values_list("key", flat=True))
         self.assertIn("yangi", keys)
-        self.assertIn("kafillik", keys)  # default'lar ham nusxalangan
+        self.assertIn("kafillik", keys)
 
     def test_staff_edits_global_directly(self):
         staff = make_user(username="opt_staff")
@@ -338,5 +333,4 @@ class OrgScopedOptionsTest(APITestCase):
             "credit_years": 20,
         }, format="json")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        # 20% bilan hisoblangan (test_case_2 qiymatlari), 15% emas
         self.assertEqual(resp.data["client_payment"], Decimal("75999000"))

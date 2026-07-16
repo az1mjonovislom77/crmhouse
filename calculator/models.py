@@ -89,7 +89,6 @@ class SubsidyOption(models.Model):
 
 
 def options_for(model, organization=None):
-    """Org'ning option to'plami; org hali o'zinikini yaratmagan bo'lsa — global (default) to'plam."""
     qs = model.objects.filter(organization=organization)
     if organization is not None and not qs.exists():
         qs = model.objects.filter(organization__isnull=True)
@@ -97,12 +96,6 @@ def options_for(model, organization=None):
 
 
 def materialize_org_options(model, organization):
-    """Global to'plamning org nusxasini bir marta yaratadi (CalculatorConfig.resolve_for_edit naqshi).
-
-    Org o'z optionini birinchi marta o'zgartirganda/yaratganda butun global to'plam
-    nusxalanadi — shunda org faqat o'z nusxalari bilan ishlaydi va globalga
-    (boshqa org'larga) hech qanday ta'sir qilmaydi.
-    """
     if organization is None or model.objects.filter(organization=organization).exists():
         return
     field_names = [

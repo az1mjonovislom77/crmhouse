@@ -8,8 +8,8 @@ class HistoryMixin:
 
     @action(detail=True, methods=['get'])
     def history(self, request, pk=None):
-        obj = self.get_object()  # type: ignore[attr-defined]
+        obj = self.get_object()
         history = obj.history.all().order_by('-history_date')
 
-        serializer = self.history_serializer_class(history, many=True)  # type: ignore[misc]
+        serializer = self.history_serializer_class(history, many=True)
         return Response(serializer.data)

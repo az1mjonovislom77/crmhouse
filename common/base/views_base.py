@@ -9,7 +9,7 @@ User = get_user_model()
 class PartialPutMixin:
     def update(self, request, *args, **kwargs):
         kwargs["partial"] = True
-        return super().update(request, *args, **kwargs)  # type: ignore[misc]
+        return super().update(request, *args, **kwargs)
 
 
 class BaseUserViewSet(PartialPutMixin, viewsets.ModelViewSet):

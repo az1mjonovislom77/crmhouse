@@ -10,12 +10,12 @@ class UserManager(BaseUserManager):
     def create_user(self, username, password=None, **extra_fields):
         if not username:
             raise ValueError("Username is required")
-        username = self.model.normalize_username(username)  # type: ignore[attr-defined]
+        username = self.model.normalize_username(username)
         user = self.model(username=username, **extra_fields)
         if password:
-            user.set_password(password)  # type: ignore[attr-defined]
+            user.set_password(password)
         else:
-            user.set_unusable_password()  # type: ignore[attr-defined]
+            user.set_unusable_password()
         user.save(using=self._db)
         return user
 

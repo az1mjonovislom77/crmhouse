@@ -1,8 +1,3 @@
-"""Testlar uchun umumiy factory funksiyalar.
-
-Har bir app o'zining tests.py'sida shu factorylarni ishlatadi;
-app'ga xos fixture'lar (make_lead, make_card, ...) o'z faylida qoladi.
-"""
 
 from booking.models import Company
 from client.models import Client

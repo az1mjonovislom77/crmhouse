@@ -42,7 +42,7 @@ class HomeCreateSerializer(serializers.ModelSerializer):
 
 
 class HomeStatusHistorySerializer(serializers.ModelSerializer):
-    changed_by = serializers.StringRelatedField()  # type: ignore[var-annotated]
+    changed_by = serializers.StringRelatedField()
     home_number = SerializerMethodField()
     home_block = SerializerMethodField()
     home_floor = SerializerMethodField()

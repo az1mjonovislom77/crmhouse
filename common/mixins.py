@@ -21,5 +21,5 @@ class OrganizationMixin:
     request: Any
 
     def get_queryset(self):
-        qs = super().get_queryset()  # type: ignore[misc]
+        qs = super().get_queryset()
         return filter_by_org(qs, self.request, field=self.organization_field)
