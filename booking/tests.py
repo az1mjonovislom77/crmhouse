@@ -11,6 +11,7 @@ from booking.models import Booking, Company
 from booking.services.booking import create_booking, delete_booking
 from common.factories import make_client, make_company, make_home, make_user
 from home.models import Home, HomeStatusHistory
+from home.services.home import HomeService
 
 
 def make_booking(**kwargs):
@@ -47,6 +48,36 @@ class BookingModelTest(TestCase):
                 home=self.home,
                 client=make_client(phone_number="+998911234567"),
                 company=self.company,            )
+
+
+class BookingCancelOnHomeAvailableTest(TestCase):
+    def setUp(self):
+        self.user = make_user(username="cancel_user")
+        self.home = make_home(home_status=Home.HomeStatus.RESERVED)
+        self.booking = make_booking(home=self.home)
+
+    def test_default_status_is_active(self):
+        self.assertEqual(self.booking.status, Booking.BookingStatus.ACTIVE)
+
+    def test_reserved_to_available_cancels_booking(self):
+        HomeService.change_status(
+            home_id=self.home.id, new_status=Home.HomeStatus.AVAILABLE, user=self.user)
+        self.booking.refresh_from_db()
+        self.assertEqual(self.booking.status, Booking.BookingStatus.CANCELED)
+
+    def test_sold_to_available_cancels_booking(self):
+        self.home.home_status = Home.HomeStatus.SOLD
+        self.home.save(update_fields=["home_status"])
+        HomeService.change_status(
+            home_id=self.home.id, new_status=Home.HomeStatus.AVAILABLE, user=self.user)
+        self.booking.refresh_from_db()
+        self.assertEqual(self.booking.status, Booking.BookingStatus.CANCELED)
+
+    def test_reserved_to_sold_keeps_booking_active(self):
+        HomeService.change_status(
+            home_id=self.home.id, new_status=Home.HomeStatus.SOLD, user=self.user)
+        self.booking.refresh_from_db()
+        self.assertEqual(self.booking.status, Booking.BookingStatus.ACTIVE)
 
 
 class CreateBookingServiceTest(TestCase):

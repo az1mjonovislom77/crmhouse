@@ -50,6 +50,11 @@ class HomeService:
         home.home_status = new_status
         home.save(update_fields=["home_status"])
 
+        if (new_status == Home.HomeStatus.AVAILABLE
+                and old in (Home.HomeStatus.RESERVED, Home.HomeStatus.SOLD)):
+            Booking.objects.filter(home=home, status=Booking.BookingStatus.ACTIVE).update(
+                status=Booking.BookingStatus.CANCELED)
+
         if not client:
             try:
                 client = home.booking.client

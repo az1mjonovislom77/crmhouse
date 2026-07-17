@@ -23,6 +23,10 @@ class Booking(models.Model):
         BOSH_TOLOVLI = 'bosh_tolovli', 'Bosh to`lovli'
         BOSH_TOLOVSIZ = 'bosh_tolovsiz', 'Bosh to`lovsiz'
 
+    class BookingStatus(models.TextChoices):
+        ACTIVE = 'active', 'Active'
+        CANCELED = 'canceled', 'Canceled'
+
     organization = models.ForeignKey(
         'organization.Organization', on_delete=models.SET_NULL, null=True, blank=True, related_name='bookings')
     home = models.OneToOneField(Home, on_delete=models.CASCADE, related_name="booking")
@@ -33,6 +37,8 @@ class Booking(models.Model):
     map_key = models.CharField(max_length=200, null=True, blank=True)
     booking_no = models.CharField(max_length=200, null=True, blank=True)
     payment_type = models.CharField(max_length=20, choices=PaymentType.choices, null=True, blank=True)
+    status = models.CharField(max_length=20, choices=BookingStatus.choices, default=BookingStatus.ACTIVE,
+                              db_index=True)
     price_per_m2 = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     guarantee_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     credit_years = models.PositiveIntegerField(null=True, blank=True)

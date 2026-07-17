@@ -13,9 +13,13 @@ class SVG(models.Model):
 
 
 class ShowroomImage(models.Model):
-    image = models.ImageField(upload_to='showroom_images/',
-                              validators=[FileExtensionValidator(
-                                  allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']), check_image_size])
+    image = models.ImageField(
+        upload_to="showroom_images/",
+        validators=[
+            FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "webp", "heic", "heif"]),
+            check_image_size,
+        ],
+    )
 
     def __str__(self):
         return f"ShowroomImage {self.pk}"
@@ -35,15 +39,16 @@ class ShowroomImage(models.Model):
 
 
 class Showroom(models.Model):
-    image = models.ForeignKey(ShowroomImage, on_delete=models.CASCADE, null=True, blank=True,
-                              related_name='showrooms')
+    image = models.ForeignKey(ShowroomImage, on_delete=models.CASCADE, null=True, blank=True, related_name="showrooms")
     title = models.CharField(max_length=200, null=True, blank=True)
-    block = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name='showrooms')
+    block = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name="showrooms")
     blocks_number = models.IntegerField(default=0)
     path = models.CharField(max_length=500)
     navigate_to = models.CharField(max_length=200)
     hover_color = models.CharField(max_length=200)
     default_color = models.CharField(max_length=200)
+    width = models.PositiveIntegerField(default=0)
+    height = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return str(self.title)
