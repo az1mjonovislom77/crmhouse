@@ -22,7 +22,7 @@ class ShowroomSerializer(serializers.ModelSerializer):
         model = Showroom
         fields = ['id', 'title', 'label', 'blocks_number', 'path', 'navigate_to', 'hover_color',
                   'default_color', 'homes_count', 'available_homes', 'sold_homes', 'reserved_homes',
-                  'project_title', 'project_id', 'width', 'height', 'svg']
+                  'project_title', 'project_id', 'svg']
 
     def get_label(self, obj):
         return obj.block.title if obj.block else None
@@ -39,4 +39,4 @@ class ShowroomImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShowroomImage
-        fields = ['id', 'image', 'showrooms']
+        fields = ['id', 'image', 'width', 'height', 'showrooms']

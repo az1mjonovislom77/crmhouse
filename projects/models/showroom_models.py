@@ -13,6 +13,8 @@ class SVG(models.Model):
 
 
 class ShowroomImage(models.Model):
+    width = models.PositiveIntegerField(default=0)
+    height = models.PositiveIntegerField(default=0)
     image = models.ImageField(
         upload_to="showroom_images/",
         validators=[
@@ -47,8 +49,6 @@ class Showroom(models.Model):
     navigate_to = models.CharField(max_length=200)
     hover_color = models.CharField(max_length=200)
     default_color = models.CharField(max_length=200)
-    width = models.PositiveIntegerField(default=0)
-    height = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return str(self.title)
