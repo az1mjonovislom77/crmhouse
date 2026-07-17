@@ -48,8 +48,7 @@ class BookingGetSerializer(serializers.ModelSerializer):
 def _home_org_id(home):
     block = home.blocks
     project = block.projects if block else None
-    owner = project.user if project else None
-    return owner.organization_id if owner else None
+    return project.organization_id if project else None
 
 
 def _require_same_org(serializer, attrs, home=None, client=None, booking=None):
