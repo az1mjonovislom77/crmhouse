@@ -3,7 +3,7 @@ from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 
 from projects.api.serializers.showroom_serializers import ShowroomImageSerializer, SVGSerializer
-from projects.models.showroom_models import SVG
+from projects.models.showroom_models import SVG, ShowroomImage
 from projects.selectors.showroom_selectors import get_showroom_images
 
 
@@ -22,4 +22,9 @@ class ShowroomView(ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        return get_showroom_images()
+        if self.request.user.is_staff:
+            return get_showroom_images()
+        organization = getattr(self.request.user, 'organization', None)
+        if organization is None:
+            return ShowroomImage.objects.none()
+        return get_showroom_images(organization=organization)
