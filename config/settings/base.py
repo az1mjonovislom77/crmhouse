@@ -41,6 +41,7 @@ LOCAL_APPS = [
     'leads',
     'contact_center',
     'stats',
+    'contracts',
 ]
 
 THIRD_PARTY_APPS = [
