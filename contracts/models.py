@@ -33,6 +33,7 @@ class Contract(models.Model):
     booking = models.ForeignKey(
         Booking, on_delete=models.SET_NULL, null=True, blank=True, related_name='contracts')
     number = models.CharField(max_length=200, null=True, blank=True)
+    contract_date = models.DateField(null=True, blank=True)
     data = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 

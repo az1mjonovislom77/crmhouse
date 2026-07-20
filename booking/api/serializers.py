@@ -21,10 +21,13 @@ class BookingGetSerializer(serializers.ModelSerializer):
     floor_number = serializers.SerializerMethodField()
     total_area = serializers.SerializerMethodField()
     rooms_number = serializers.SerializerMethodField()
+    entrance = serializers.SerializerMethodField()
+    price_per_sqm = serializers.SerializerMethodField()
     company = CompanySerializer(read_only=True)
     total_price = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
     total_price_inword = serializers.CharField(read_only=True)
     manual_down_payment_inword = serializers.CharField(read_only=True)
+    client_payment_inword = serializers.CharField(read_only=True)
     remaining_debt = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
 
     class Meta:
@@ -45,6 +48,12 @@ class BookingGetSerializer(serializers.ModelSerializer):
 
     def get_total_area(self, obj):
         return obj.home.area if obj.home else None
+
+    def get_entrance(self, obj):
+        return obj.home.entrance if obj.home else None
+
+    def get_price_per_sqm(self, obj):
+        return obj.home.price_per_sqm if obj.home else None
 
 
 def _home_org_id(home):

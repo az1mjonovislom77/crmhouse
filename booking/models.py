@@ -21,15 +21,16 @@ class Company(models.Model):
 
 class Booking(models.Model):
     class PaymentType(models.TextChoices):
-        BOSH_TOLOVLI = 'bosh_tolovli', 'Bosh to`lovli'
-        BOSH_TOLOVSIZ = 'bosh_tolovsiz', 'Bosh to`lovsiz'
+        BOSH_TOLOVLI = "bosh_tolovli", "Bosh to`lovli"
+        BOSH_TOLOVSIZ = "bosh_tolovsiz", "Bosh to`lovsiz"
 
     class BookingStatus(models.TextChoices):
-        ACTIVE = 'active', 'Active'
-        CANCELED = 'canceled', 'Canceled'
+        ACTIVE = "active", "Active"
+        CANCELED = "canceled", "Canceled"
 
     organization = models.ForeignKey(
-        'organization.Organization', on_delete=models.SET_NULL, null=True, blank=True, related_name='bookings')
+        "organization.Organization", on_delete=models.SET_NULL, null=True, blank=True, related_name="bookings"
+    )
     home = models.ForeignKey(Home, on_delete=models.CASCADE, related_name="bookings")
     company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="bookings")
@@ -38,8 +39,7 @@ class Booking(models.Model):
     map_key = models.CharField(max_length=200, null=True, blank=True)
     booking_no = models.CharField(max_length=200, null=True, blank=True)
     payment_type = models.CharField(max_length=20, choices=PaymentType.choices, null=True, blank=True)
-    status = models.CharField(max_length=20, choices=BookingStatus.choices, default=BookingStatus.ACTIVE,
-                              db_index=True)
+    status = models.CharField(max_length=20, choices=BookingStatus.choices, default=BookingStatus.ACTIVE, db_index=True)
     price_per_m2 = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     guarantee_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     credit_years = models.PositiveIntegerField(null=True, blank=True)
@@ -56,6 +56,11 @@ class Booking(models.Model):
     monthly_full = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     monthly_stage1 = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     gov_monthly = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
+    payment_start_date = models.DateField(null=True, blank=True)
+    payment_end_date = models.DateField(null=True, blank=True)
+    ownership_deadline = models.DateField(null=True, blank=True)
+    registration_workdays = models.PositiveIntegerField(null=True, blank=True)
+    monthly_payment_day = models.PositiveIntegerField(null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -72,6 +77,8 @@ class Booking(models.Model):
 
     @property
     def total_price(self):
+        if self.contract_price:
+            return self.contract_price
         total = (self.home.price_per_sqm or 0) * (self.home.area or 0)
         if self.home.renovation:
             total += self.home.renovation.price
@@ -86,20 +93,26 @@ class Booking(models.Model):
         return number_to_words_uz(self.manual_down_payment)
 
     @property
+    def client_payment_inword(self):
+        return number_to_words_uz(self.client_payment)
+
+    @property
     def remaining_debt(self):
-        if hasattr(self, 'payments_total'):
+        if hasattr(self, "payments_total"):
             paid = self.payments_total or 0
         else:
-            paid = self.payments.aggregate(total=Sum('amount'))['total'] or 0
+            paid = self.payments.aggregate(total=Sum("amount"))["total"] or 0
         return self.total_price - paid
 
 
 class Payment(models.Model):
-    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='payments')
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name="payments")
     amount = models.DecimalField(max_digits=14, decimal_places=2)
     file = models.FileField(
-        upload_to='payments/', null=True, blank=True,
-        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'jpg', 'jpeg', 'png', 'webp'])]
+        upload_to="payments/",
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=["pdf", "jpg", "jpeg", "png", "webp"])],
     )
     payment_date = models.DateField(default=timezone.localdate, null=True, blank=True)
     payment_data = models.TextField(null=True, blank=True)

@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from rest_framework.exceptions import ValidationError
 
-from calculator.engine import calculate
+from calculator.engine import _d, calculate
 from calculator.models import CalculatorConfig, GuaranteeOption, SubsidyOption, options_for
 
 
@@ -34,11 +34,17 @@ def resolve_subsidy(subsidy_id=None, subsidy_key=None, organization=None):
 
 
 def compute(*, area, price_per_m2, payment_type, guarantee, subsidy,
-            credit_years, manual_down_payment=None, rounding=True, config=None):
+            credit_years, manual_down_payment=None, rounding=True, config=None,
+            renovation_price=0):
     config = config or CalculatorConfig.load()
+    # remont narxi shartnoma summasiga (kreditga) kiradi: uni m2 narxiga qo'shib beramiz
+    area_d = _d(area)
+    eff_price = _d(price_per_m2)
+    if renovation_price and area_d:
+        eff_price += _d(renovation_price) / area_d
     return calculate(
         area=area,
-        price_per_m2=price_per_m2,
+        price_per_m2=eff_price,
         payment_type=payment_type,
         guarantee_percent=guarantee.percent,
         subsidy_amount=(subsidy.amount if subsidy else 0),
@@ -70,6 +76,7 @@ def calculate_from_payload(data, organization=None):
         manual_down_payment=data.get('manual_down_payment'),
         rounding=data.get('rounding', True),
         config=config,
+        renovation_price=(home.renovation.price if home.renovation else 0),
     )
 
 
@@ -93,6 +100,7 @@ def compute_booking_snapshot(*, home, payment_type, guarantee_id=None, guarantee
         manual_down_payment=manual_down_payment,
         rounding=rounding,
         config=config,
+        renovation_price=(home.renovation.price if home.renovation else 0),
     )
     return {
         'price_per_m2': Decimal(str(price_per_m2)),

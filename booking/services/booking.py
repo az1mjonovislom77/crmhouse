@@ -16,6 +16,11 @@ def create_booking(data, user=None, home_status=None):
         data["home"] = home
         if Booking.objects.filter(home=home, status=Booking.BookingStatus.ACTIVE).exists():
             raise ValidationError({"home": "Bu uy allaqachon band qilingan."})
+        # naqd sotuv (kalkulyator ishlamagan): contract_price'ni uy narxi + remontdan to'ldiramiz,
+        # shunda contract_price va total_price har doim bir xil bo'ladi.
+        if not data.get("contract_price"):
+            reno = home.renovation.price if home.renovation else 0
+            data["contract_price"] = (home.price_per_sqm or 0) * (home.area or 0) + reno
 
     if not data.get("company"):
         company = Company.objects.only("id").order_by("id").first()
