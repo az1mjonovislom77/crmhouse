@@ -82,6 +82,10 @@ class Booking(models.Model):
         return number_to_words_uz(self.total_price)
 
     @property
+    def manual_down_payment_inword(self):
+        return number_to_words_uz(self.manual_down_payment)
+
+    @property
     def remaining_debt(self):
         if hasattr(self, 'payments_total'):
             paid = self.payments_total or 0

@@ -5,11 +5,13 @@ from django.db.models import DecimalField, OuterRef, Prefetch, Subquery, Sum, Va
 from django.db.models.functions import Coalesce
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
 
 from booking.api.serializers import BookingCreateSerializer, BookingGetSerializer, PaymentSerializer
 from booking.models import Booking, Payment
-from booking.services.booking import create_booking, delete_booking
+from booking.services.booking import create_booking, delete_booking, set_booking_status
 from common.base.views_base import BaseUserViewSet
 from common.mixins import filter_by_org
 from common.search import TransliteratedSearchFilter
@@ -68,6 +70,20 @@ class BookingViewSet(BaseUserViewSet):
 
     def perform_destroy(self, instance):
         delete_booking(booking_id=instance.id, user=self.request.user)
+
+    @extend_schema(
+        request={'application/json': {'type': 'object', 'properties': {'status': {'type': 'string'}}}},
+        responses=BookingGetSerializer,
+    )
+    @action(detail=True, methods=['post'], url_path='set-status')
+    def set_status(self, request, pk=None):
+        booking = self.get_object()
+        new_status = request.data.get('status')
+        if not new_status:
+            raise ValidationError({"status": "status maydoni majburiy."})
+        booking = set_booking_status(booking_id=booking.id, new_status=new_status, user=request.user)
+        serializer = BookingGetSerializer(self.get_queryset().get(pk=booking.pk), context={'request': request})
+        return Response(serializer.data)
 
 
 @extend_schema(tags=['Payment'],

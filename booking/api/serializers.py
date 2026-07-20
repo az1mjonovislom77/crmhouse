@@ -24,6 +24,7 @@ class BookingGetSerializer(serializers.ModelSerializer):
     company = CompanySerializer(read_only=True)
     total_price = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
     total_price_inword = serializers.CharField(read_only=True)
+    manual_down_payment_inword = serializers.CharField(read_only=True)
     remaining_debt = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
 
     class Meta:
