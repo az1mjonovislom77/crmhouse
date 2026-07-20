@@ -12,14 +12,14 @@ class Command(BaseCommand):
     help = (
         "Organization + Block + entrance bo'yicha homelarga rasmlarni cycling tartibida ulaydi.\n"
         "home_number 1 -> 1-rasm, 2 -> 2-rasm, ... , ro'yxat tugagach yana boshidan.\n"
-        "Standart: Qarshi Xonadonlar / Block - B / entrance 1 / b1.png,b2.png,b3.png,b4.jpg\n"
+        "Standart: Qamashi Xonadonlar / Block - B / entrance 1 / b1.png,b2.png,b3.png,b4.jpg\n"
         "Misol: python manage.py attach_block_plans "
-        '--org "Qarshi Xonadonlar" --block "Block - B" --entrance 1 '
+        '--org "Qamashi Xonadonlar" --block "Block - B" --entrance 1 '
         "--images-dir . --order b1.png,b2.png,b3.png,b4.jpg"
     )
 
     def add_arguments(self, parser):
-        parser.add_argument('--org', default='Qarshi Xonadonlar', help='Organization nomi')
+        parser.add_argument('--org', default='Qamashi Xonadonlar', help='Organization nomi')
         parser.add_argument('--block', default='Block - B', help='Block title')
         parser.add_argument(
             '--entrance', default='1',
