@@ -25,6 +25,9 @@ class Command(BaseCommand):
             '--entrance', default='1',
             help="Podyezd (entrance) raqami. Barcha podyezdlar uchun: all")
         parser.add_argument(
+            '--start', default='',
+            help="Ro'yxatdagi 1-rasmni oladigan home_number. Bo'sh bo'lsa guruhdagi eng kichik home_number olinadi")
+        parser.add_argument(
             '--images-dir', default='.',
             help='Rasmlar papkasi (BASE_DIR ga nisbatan). Ildiz uchun: .')
         parser.add_argument(
@@ -79,13 +82,26 @@ class Command(BaseCommand):
             return
 
         cycle = len(image_files)
+
+        if str(options['start']).strip():
+            try:
+                start_num = int(options['start'])
+            except (TypeError, ValueError):
+                self.stdout.write(self.style.ERROR(f'--start noto\'g\'ri: "{options["start"]}" (raqam bo\'lishi kerak)'))
+                return
+        else:
+            # bo'sh bo'lsa guruhdagi eng kichik home_number 1-rasmni oladi
+            start_num = homes[0].home_number
+
+        def image_for(home):
+            return image_files[(home.home_number - start_num) % cycle]
+
         self.stdout.write(
             f'{len(homes)} ta home topildi ({org_name} / {block_title} / {entrance_label}). '
-            f'Rasmlar tartibi: {image_files}')
+            f'start={start_num}, rasmlar tartibi: {image_files}')
 
         for home in homes:
-            idx = (home.home_number - 1) % cycle
-            self.stdout.write(f'  home_number={home.home_number} (id={home.pk}) -> {image_files[idx]}')
+            self.stdout.write(f'  home_number={home.home_number} (id={home.pk}) -> {image_for(home)}')
 
         if dry_run:
             self.stdout.write(self.style.WARNING('Dry-run: bazaga hech narsa yozilmadi.'))
@@ -108,7 +124,7 @@ class Command(BaseCommand):
         to_create = []
         used_masters = set()
         for home in homes:
-            img_name = image_files[(home.home_number - 1) % cycle]
+            img_name = image_for(home)
             master = master_plans[img_name]
             if master.pk not in used_masters:
                 # birinchi home masterning o'zini oladi
