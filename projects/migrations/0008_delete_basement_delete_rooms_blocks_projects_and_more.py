@@ -7,6 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('projects', '0007_blocks_image'),
+        ('home', '0009_remove_home_basement'),
     ]
 
     operations = [

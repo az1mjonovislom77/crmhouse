@@ -10,7 +10,7 @@ def get_homes_with_finance():
 
     return (
         Home.objects
-        .select_related('blocks', 'blocks__projects', 'floor', 'renovation', 'booking')
+        .select_related('blocks', 'blocks__projects', 'floor', 'renovation')
         .annotate(
             total_price_annotated=ExpressionWrapper(
                 total_price_expr, output_field=DecimalField(max_digits=14, decimal_places=2)),

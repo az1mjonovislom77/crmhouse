@@ -14,7 +14,7 @@ def create_booking(data, user=None, home_status=None):
     if home is not None:
         home = Home.objects.select_for_update().get(pk=home.pk)
         data["home"] = home
-        if Booking.objects.filter(home=home).exists():
+        if Booking.objects.filter(home=home, status=Booking.BookingStatus.ACTIVE).exists():
             raise ValidationError({"home": "Bu uy allaqachon band qilingan."})
 
     if not data.get("company"):
@@ -53,5 +53,5 @@ def delete_booking(booking_id, user=None):
         to_status="booking_deleted", changed_by=user
     )
 
-    if not Booking.objects.filter(home=home).exists():
+    if not Booking.objects.filter(home=home, status=Booking.BookingStatus.ACTIVE).exists():
         HomeService.change_status(home_id=home.id, new_status=Home.HomeStatus.AVAILABLE, user=user, client=client)

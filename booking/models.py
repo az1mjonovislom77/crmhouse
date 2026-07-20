@@ -6,6 +6,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 
 from client.models import Client
+from common.services.numbers import number_to_words_uz
 from home.models import Home
 
 
@@ -29,7 +30,7 @@ class Booking(models.Model):
 
     organization = models.ForeignKey(
         'organization.Organization', on_delete=models.SET_NULL, null=True, blank=True, related_name='bookings')
-    home = models.OneToOneField(Home, on_delete=models.CASCADE, related_name="booking")
+    home = models.ForeignKey(Home, on_delete=models.CASCADE, related_name="bookings")
     company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="bookings")
     description = models.TextField(null=True, blank=True)
@@ -57,6 +58,15 @@ class Booking(models.Model):
     gov_monthly = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["home"],
+                condition=models.Q(status="active"),
+                name="unique_active_booking_per_home",
+            ),
+        ]
+
     def __str__(self):
         return str(self.id)
 
@@ -66,6 +76,10 @@ class Booking(models.Model):
         if self.home.renovation:
             total += self.home.renovation.price
         return total
+
+    @property
+    def total_price_inword(self):
+        return number_to_words_uz(self.total_price)
 
     @property
     def remaining_debt(self):

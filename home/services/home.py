@@ -56,10 +56,9 @@ class HomeService:
                 status=Booking.BookingStatus.CANCELED)
 
         if not client:
-            try:
-                client = home.booking.client
-            except Booking.DoesNotExist:
-                client = None
+            booking = (home.bookings.filter(status=Booking.BookingStatus.ACTIVE).order_by('-created_at').first()
+                       or home.bookings.order_by('-created_at').first())
+            client = booking.client if booking else None
 
         HomeStatusHistory.objects.create(
             home=home, client=client, from_status=old, to_status=new_status, changed_by=user)

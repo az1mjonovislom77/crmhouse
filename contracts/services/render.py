@@ -4,12 +4,15 @@ from io import BytesIO
 from pathlib import Path
 
 from django.conf import settings
-from django.template import Context, Template
+from django.template import Context, Engine
 from html4docx import HtmlToDocx
 from xhtml2pdf import pisa
 from xhtml2pdf.files import pisaFileObject
 
+from common.services.numbers import number_to_words_uz
 from contracts.models import Contract
+
+_TEMPLATE_ENGINE = Engine(builtins=["contracts.templatetags.contracts_extras"])
 
 _orig_get_named_file = pisaFileObject.getNamedFile
 
@@ -49,19 +52,26 @@ def extract_placeholders(html: str) -> list[str]:
 
 def build_context(contract: Contract) -> dict:
     ctx = dict(contract.data or {})
+    # data ichidagi sonli qiymatlar uchun so'z bilan yozilgan variant: price -> price_sozda
+    for key, value in list(ctx.items()):
+        words = number_to_words_uz(value)
+        if words:
+            ctx.setdefault(f"{key}_sozda", words)
     booking = contract.booking
     if booking is not None:
         ctx.setdefault("booking", booking)
         ctx.setdefault("client", booking.client)
         ctx.setdefault("home", booking.home)
         ctx.setdefault("company", booking.company)
+        ctx.setdefault("total_price", booking.total_price)
+        ctx.setdefault("total_price_sozda", booking.total_price_inword)
     ctx.setdefault("contract", contract)
     return ctx
 
 
 def render_contract_html(contract: Contract) -> str:
     source = contract.template.read_html()
-    return Template(source).render(Context(build_context(contract)))
+    return _TEMPLATE_ENGINE.from_string(source).render(Context(build_context(contract)))
 
 
 def html_to_pdf(html: str) -> bytes:
