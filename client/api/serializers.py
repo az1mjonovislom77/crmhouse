@@ -33,19 +33,15 @@ class BookingMiniSerializer(serializers.ModelSerializer):
 
 class ClientSerializer(serializers.ModelSerializer):
     booking = BookingNestSerializer(source='bookings', many=True, read_only=True)
-    home_status_history = serializers.SerializerMethodField()
     user = serializers.PrimaryKeyRelatedField(read_only=True)
     user_full_name = serializers.CharField(source='user.full_name', read_only=True, default=None)
     organization = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Client
-        fields = ['id', 'booking', 'home_status_history', 'full_name', 'short_name', 'birth_date', 'phone_number',
+        fields = ['id', 'booking', 'full_name', 'short_name', 'birth_date', 'phone_number',
                   'phone_number2', 'passport', 'passport_date', 'jshshir', 'address', 'from_who', 'user',
                   'user_full_name', 'organization']
-
-    def get_home_status_history(self, obj):
-        return HomeStatusHistorySerializer(obj.status_history.all(), many=True).data
 
 
 class ClientNestSerializer(serializers.ModelSerializer):
