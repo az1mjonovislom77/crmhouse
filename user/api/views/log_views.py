@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from user.api.serializers.log_serializers import RequestLogSerializer
 from user.api.views.user_views import UserPagination
-from user.models import RequestLog
+from user.models import RequestLog, User
 
 
 class IsAdminOrSuperAdmin(IsAuthenticated):
@@ -25,6 +25,13 @@ class RequestLogListView(ListAPIView):
 
     def get_queryset(self):
         qs = RequestLog.objects.select_related('user')
+
+        user = self.request.user
+        if user.role == User.UserRoles.ADMIN:
+            if user.organization_id is None:
+                return qs.none()
+            qs = qs.filter(user__organization_id=user.organization_id)
+
         params = self.request.query_params
         errors = {}
 
