@@ -14,6 +14,7 @@ class IsAdminOrSuperAdmin(IsAuthenticated):
         return super().has_permission(request, view) and request.user.role in ('a', 'sa')
 
 
+
 @extend_schema(tags=["RequestLogs"])
 class RequestLogListView(ListAPIView):
     serializer_class = RequestLogSerializer

@@ -4,6 +4,7 @@ from io import BytesIO
 from pathlib import Path
 
 from django.conf import settings
+from django.db import models
 from django.template import Context, Engine
 from html4docx import HtmlToDocx
 from xhtml2pdf import pisa
@@ -50,6 +51,30 @@ def extract_placeholders(html: str) -> list[str]:
     return sorted(set(PLACEHOLDER_RE.findall(html)))
 
 
+class BlankNoneWrapper:
+    def __init__(self, obj):
+        self._obj = obj
+
+    def __getattr__(self, name):
+        value = getattr(self._obj, name)
+        if value is None:
+            return ""
+        if isinstance(value, models.Model):
+            return BlankNoneWrapper(value)
+        return value
+
+    def __str__(self):
+        return str(self._obj)
+
+
+def _wrap(value):
+    if isinstance(value, models.Model):
+        return BlankNoneWrapper(value)
+    if value is None:
+        return ""
+    return value
+
+
 def build_context(contract: Contract) -> dict:
     ctx = dict(contract.data or {})
     for key, value in list(ctx.items()):
@@ -65,7 +90,7 @@ def build_context(contract: Contract) -> dict:
         ctx.setdefault("total_price", booking.total_price)
         ctx.setdefault("total_price_sozda", booking.total_price_inword)
     ctx.setdefault("contract", contract)
-    return ctx
+    return {key: _wrap(value) for key, value in ctx.items()}
 
 
 def render_contract_html(contract: Contract) -> str:
