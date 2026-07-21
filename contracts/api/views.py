@@ -5,8 +5,11 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
+from rest_framework.renderers import JSONRenderer
+
 from common.base.views_base import BaseUserViewSet
 from common.mixins import filter_by_org
+from common.renderers import BinaryFileRenderer
 from contracts.api.serializers import ContractSerializer, ContractTemplateSerializer
 from contracts.models import Contract, ContractTemplate
 from contracts.services.render import (
@@ -56,7 +59,7 @@ class ContractViewSet(BaseUserViewSet):
         parameters=[OpenApiParameter(name='file_format', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY,
                                      enum=['pdf', 'docx'], default='pdf')],
         responses={(200, 'application/octet-stream'): OpenApiTypes.BINARY})
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=['get'], renderer_classes=[BinaryFileRenderer, JSONRenderer])
     def download(self, request, pk=None):
         contract = self.get_object()
         file_format = request.query_params.get('file_format', 'pdf')
