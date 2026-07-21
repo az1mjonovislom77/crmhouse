@@ -90,7 +90,6 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(f'--start noto\'g\'ri: "{options["start"]}" (raqam bo\'lishi kerak)'))
                 return
         else:
-            # bo'sh bo'lsa guruhdagi eng kichik home_number 1-rasmni oladi
             start_num = homes[0].home_number
 
         def image_for(home):
@@ -111,8 +110,6 @@ class Command(BaseCommand):
             deleted, _ = FloorPlan.objects.filter(home__in=homes).delete()
             self.stdout.write(self.style.WARNING(f'{deleted} ta mavjud floor plan o\'chirildi'))
 
-        # Har bir rasmni bir marta yuklaymiz (save() webp ga optimizatsiya qiladi),
-        # qolgan homelarga shu faylning nomini ulaymiz (qayta optimizatsiya bo'lmasin).
         master_plans = {}
         for img_name in image_files:
             plan = FloorPlan()
@@ -127,7 +124,6 @@ class Command(BaseCommand):
             img_name = image_for(home)
             master = master_plans[img_name]
             if master.pk not in used_masters:
-                # birinchi home masterning o'zini oladi
                 master.home = home
                 master.save(update_fields=['home'])
                 used_masters.add(master.pk)
@@ -136,7 +132,6 @@ class Command(BaseCommand):
 
         FloorPlan.objects.bulk_create(to_create)
 
-        # Hech bir home ishlatmagan master bo'lsa (home soni kam bo'lganda), egasiz qoldirmaymiz.
         for master in master_plans.values():
             if master.pk not in used_masters:
                 master.delete()

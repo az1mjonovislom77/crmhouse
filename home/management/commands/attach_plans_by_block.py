@@ -10,8 +10,6 @@ from projects.models.project_models import Block
 
 IMAGE_EXTS = ('.png', '.jpg', '.jpeg', '.webp', '.heic', '.heif')
 
-# Rasm nomining boshidagi harflar (token) -> qaysi block(lar)dagi barcha homelarga qo'shiladi.
-# Fayllar token bo'yicha guruhlanadi: "a (1).png" -> a, "b.png" -> b, "bv.png" -> bv, "v (2).png" -> v.
 DEFAULT_RULES = {
     'a': ['Block - A'],
     'b': ['Block - B'],
@@ -51,7 +49,6 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f'Papka topilmadi: {images_dir}'))
             return
 
-        # entrance filtri
         entrance_val = None
         if str(entrance).lower() != 'all':
             try:
@@ -60,7 +57,6 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(f'--entrance noto\'g\'ri: "{entrance}" (raqam yoki "all")'))
                 return
 
-        # Fayllarni token bo'yicha guruhlash
         groups = {}
         for fname in sorted(os.listdir(images_dir)):
             if not fname.lower().endswith(IMAGE_EXTS):
@@ -77,9 +73,8 @@ class Command(BaseCommand):
                 f'{images_dir} ichida qoidalarga mos rasm topilmadi (kutilgan tokenlar: {list(DEFAULT_RULES)})'))
             return
 
-        # Har bir qoida bo'yicha (home, fayl) juftliklarini yig'amiz
-        assignments = []          # (home, fname)
-        affected_homes = {}       # home.pk -> home
+        assignments = []
+        affected_homes = {}
         unique_files = set()
         plan_lines = []
 
@@ -129,9 +124,7 @@ class Command(BaseCommand):
             deleted, _ = FloorPlan.objects.filter(home__in=list(affected_homes.values())).delete()
             self.stdout.write(self.style.WARNING(f'{deleted} ta mavjud floor plan o\'chirildi'))
 
-        # Har bir rasmni bir marta yuklaymiz (save() webp ga optimizatsiya qiladi),
-        # keyin barcha homelarga shu faylning nomini ulaymiz.
-        masters = {}   # fname -> FloorPlan (image saqlangan)
+        masters = {}
         for fname in sorted(unique_files):
             plan = FloorPlan()
             with open(os.path.join(images_dir, fname), 'rb') as f:
@@ -144,7 +137,6 @@ class Command(BaseCommand):
         for home, fname in assignments:
             master = masters[fname]
             if master.pk not in used_masters:
-                # birinchi ishlatilishda masterning o'zini shu homega biriktiramiz
                 master.home = home
                 master.save(update_fields=['home'])
                 used_masters.add(master.pk)
@@ -153,7 +145,6 @@ class Command(BaseCommand):
 
         FloorPlan.objects.bulk_create(to_create)
 
-        # Ishlatilmagan master qolsa (masalan homelar bo'lmasa), egasiz qoldirmaymiz
         for master in masters.values():
             if master.pk not in used_masters:
                 master.delete()

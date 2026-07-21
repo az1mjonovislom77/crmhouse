@@ -52,7 +52,6 @@ def extract_placeholders(html: str) -> list[str]:
 
 def build_context(contract: Contract) -> dict:
     ctx = dict(contract.data or {})
-    # data ichidagi sonli qiymatlar uchun so'z bilan yozilgan variant: price -> price_sozda
     for key, value in list(ctx.items()):
         words = number_to_words_uz(value)
         if words:

@@ -53,15 +53,15 @@ class ContractViewSet(BaseUserViewSet):
         return HttpResponse(render_contract_html(contract), content_type='text/html; charset=utf-8')
 
     @extend_schema(
-        parameters=[OpenApiParameter(name='format', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY,
+        parameters=[OpenApiParameter(name='file_format', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY,
                                      enum=['pdf', 'docx'], default='pdf')],
         responses={(200, 'application/octet-stream'): OpenApiTypes.BINARY})
     @action(detail=True, methods=['get'])
     def download(self, request, pk=None):
         contract = self.get_object()
-        file_format = request.query_params.get('format', 'pdf')
+        file_format = request.query_params.get('file_format', 'pdf')
         if file_format not in ('pdf', 'docx'):
-            raise ValidationError({'format': "Format 'pdf' yoki 'docx' bo'lishi kerak."})
+            raise ValidationError({'file_format': "Format 'pdf' yoki 'docx' bo'lishi kerak."})
 
         html = render_contract_html(contract)
         if file_format == 'pdf':

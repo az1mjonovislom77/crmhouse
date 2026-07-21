@@ -21,11 +21,6 @@ def _uch_xona(n: int) -> str:
 
 
 def number_to_words_uz(value) -> str:
-    """Sonni o'zbekcha so'zlar bilan yozadi: 100000 -> "yuz ming".
-
-    Kasr qismi (tiyin) tashlab yuboriladi. Songa o'xshamagan qiymat
-    uchun bo'sh satr qaytaradi.
-    """
     try:
         n = int(Decimal(str(value).replace(" ", "").replace("\xa0", "").replace(",", ".")))
     except (InvalidOperation, ValueError, TypeError):

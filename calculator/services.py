@@ -37,7 +37,6 @@ def compute(*, area, price_per_m2, payment_type, guarantee, subsidy,
             credit_years, manual_down_payment=None, rounding=True, config=None,
             renovation_price=0):
     config = config or CalculatorConfig.load()
-    # remont narxi shartnoma summasiga (kreditga) kiradi: uni m2 narxiga qo'shib beramiz
     area_d = _d(area)
     eff_price = _d(price_per_m2)
     if renovation_price and area_d:

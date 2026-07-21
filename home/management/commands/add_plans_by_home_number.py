@@ -71,8 +71,6 @@ class Command(BaseCommand):
             deleted, _ = FloorPlan.objects.filter(home__in=homes).delete()
             self.stdout.write(self.style.WARNING(f'{deleted} ta mavjud floor plan o\'chirildi'))
 
-        # har bir rasm faylini bir marta yuklaymiz (save() webp ga optimizatsiya qiladi),
-        # qolgan homelarga shu faylning nomini ulaymiz
         master_plans = {}
         for img_name in image_files:
             plan = FloorPlan()
@@ -87,7 +85,6 @@ class Command(BaseCommand):
             img_name = image_files[(home.home_number - 1) % cycle]
             master = master_plans[img_name]
             if master.pk not in used_masters:
-                # birinchi home masterning o'zini oladi
                 master.home = home
                 master.save(update_fields=['home'])
                 used_masters.add(master.pk)
@@ -96,7 +93,6 @@ class Command(BaseCommand):
 
         FloorPlan.objects.bulk_create(to_create)
 
-        # hech bir home ishlatmagan master bo'lsa (home soni kam bo'lganda), egasiz qoldirmaymiz
         for master in master_plans.values():
             if master.pk not in used_masters:
                 master.delete()
