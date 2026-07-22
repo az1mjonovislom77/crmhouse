@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from django.db.models import Count, ExpressionWrapper, Q
+from django.db.models import Count, Exists, ExpressionWrapper, OuterRef, Q
 from django.db.models.functions import TruncMonth
 
 from common.utils import MONTH_LABELS_UZ, apply_date_range, last_months, local_day_start, to_millions
@@ -16,7 +16,19 @@ SOLD_STATUSES = [
 
 
 def get_sold_events(date_from=None, date_to=None):
-    qs = HomeStatusHistory.objects.filter(to_status__in=SOLD_STATUSES).exclude(from_status__in=SOLD_STATUSES)
+    # 'booking_deleted' is an informational row, not a real status change
+    reverted = (
+        HomeStatusHistory.objects
+        .filter(home=OuterRef('home'), changed_at__gt=OuterRef('changed_at'), from_status__in=SOLD_STATUSES)
+        .exclude(to_status__in=SOLD_STATUSES + ['booking_deleted'])
+    )
+    qs = (
+        HomeStatusHistory.objects
+        .filter(to_status__in=SOLD_STATUSES)
+        .exclude(from_status__in=SOLD_STATUSES)
+        .annotate(is_reverted=Exists(reverted))
+        .filter(is_reverted=False)
+    )
     return apply_date_range(qs, 'changed_at', date_from, date_to)
 
 

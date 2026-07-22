@@ -1,11 +1,14 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
 
+from booking.models import Booking
+from common.factories import make_client, make_home
 from common.utils import MONTH_LABELS_UZ, last_months, to_millions
 from home.models import Home, HomeStatusHistory
+from stats.selectors.booking_selectors import get_total_contract
 from leads.models import STATUS_NEW, STATUS_SUCCESS, Lead, LeadEvent
 from projects.models.project_models import Block, Floors
 from stats.selectors.home_selectors import (
@@ -110,10 +113,38 @@ class HomeStatsTests(TestCase):
         self.assertEqual(sellers[0]['sold'], 1)
         self.assertEqual(sellers[0]['revenue'], 50.0)
 
+    def test_canceled_sale_is_not_counted(self):
+        now = timezone.now()
+        make_sold_event(self.home1, now)
+        make_sold_event(self.home1, now + timedelta(hours=1), to_status='available', from_status='sold')
+        self.assertEqual(get_sold_events().count(), 0)
+
+    def test_resold_after_cancel_counts_once(self):
+        now = timezone.now()
+        make_sold_event(self.home1, now)
+        make_sold_event(self.home1, now + timedelta(hours=1), to_status='available', from_status='sold')
+        make_sold_event(self.home1, now + timedelta(hours=2))
+        self.assertEqual(get_sold_events().count(), 1)
+
+    def test_booking_deleted_row_does_not_revert_sale(self):
+        now = timezone.now()
+        make_sold_event(self.home1, now)
+        make_sold_event(self.home1, now + timedelta(hours=1), to_status='booking_deleted', from_status='sold')
+        self.assertEqual(get_sold_events().count(), 1)
+
     def test_block_occupancy(self):
         blocks = get_block_occupancy(get_homes())
         self.assertEqual(blocks[0], {'block': '1-blok', 'total': 2, 'occupied': 1})
         self.assertEqual(blocks[1], {'block': '2-blok', 'total': 1, 'occupied': 1})
+
+
+class BookingStatsTests(TestCase):
+    def test_total_contract_excludes_canceled_bookings(self):
+        home = make_home()
+        client = make_client()
+        Booking.objects.create(home=home, client=client)
+        Booking.objects.create(home=home, client=client, status=Booking.BookingStatus.CANCELED)
+        self.assertEqual(get_total_contract().count(), 1)
 
 
 class LeadStatsTests(TestCase):

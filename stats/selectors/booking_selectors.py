@@ -15,7 +15,8 @@ CONTRACT_PRICE = (Coalesce(F("home__area") * F("home__price_per_sqm"), ZERO)
 
 
 def get_total_contract(date_from=None, date_to=None):
-    return apply_date_range(Booking.objects.all(), 'created_at', date_from, date_to)
+    qs = Booking.objects.exclude(status=Booking.BookingStatus.CANCELED)
+    return apply_date_range(qs, 'created_at', date_from, date_to)
 
 
 def get_total_contract_price(qs):
