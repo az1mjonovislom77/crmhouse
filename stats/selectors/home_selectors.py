@@ -16,7 +16,6 @@ SOLD_STATUSES = [
 
 
 def get_sold_events(date_from=None, date_to=None):
-    # 'booking_deleted' is an informational row, not a real status change
     reverted = (
         HomeStatusHistory.objects
         .filter(home=OuterRef('home'), changed_at__gt=OuterRef('changed_at'), from_status__in=SOLD_STATUSES)

@@ -4,8 +4,11 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+from common.health import health_check
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('health/', health_check, name='health'),
     path('user/', include('user.api.urls')),
     path('instagram/', include('instagram.urls')),
     path('projects/', include('projects.api.urls')),

@@ -8,6 +8,7 @@ from rest_framework.response import Response
 
 from contact_center.filters import CallRecordFilter
 from contact_center.models import CallRecord
+from contact_center.selectors import scope_call_records
 from contact_center.serializers import CRSerializer
 from contact_center.tasks import sync_cdr_data
 
@@ -42,6 +43,9 @@ class CDRListView(generics.ListAPIView):
     filterset_class = CallRecordFilter
     search_fields = ['clid', 'uniqueid', 'src', 'dst']
     queryset = CallRecord.objects.all().order_by('-calldate')
+
+    def get_queryset(self):
+        return scope_call_records(super().get_queryset(), self.request)
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()

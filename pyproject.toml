@@ -26,6 +26,22 @@ known-first-party = [
     "home", "instagram", "leads", "organization", "projects", "stats", "tasks", "user",
 ]
 
+[tool.coverage.run]
+source = ["."]
+omit = [
+    ".venv/*",
+    "*/migrations/*",
+    "*/tests.py",
+    "common/factories.py",
+    "manage.py",
+    "config/asgi.py",
+    "config/wsgi.py",
+]
+
+[tool.coverage.report]
+skip_covered = false
+show_missing = false
+
 [tool.mypy]
 python_version = "3.12"
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]

@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from contact_center.models import CallRecord
+from contact_center.selectors import scope_call_records
 from contact_center.services import IssabelService
 
 
@@ -14,7 +15,7 @@ class RecordingDownloadAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, cdr_id: int):
-        cdr = get_object_or_404(CallRecord, id=cdr_id)
+        cdr = get_object_or_404(scope_call_records(CallRecord.objects.all(), request), id=cdr_id)
 
         if not cdr.recordingfile:
             return Response({'detail': 'Recording not found'}, status=404)

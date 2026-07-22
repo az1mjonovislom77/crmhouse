@@ -10,6 +10,7 @@ from common.factories import make_user
 from contact_center.models import CallRecord
 from contact_center.services.common_service import CDRService
 from contact_center.services.dedub_service import CDRDedupService
+from organization.models import Organization
 from user.models import User
 
 
@@ -143,3 +144,53 @@ class CDRListViewTest(APITestCase):
         resp = self.client.get('/contact-center/', {'disposition': 'ANSWERED'})
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data['count'], 1)
+
+
+class CallRecordOrgScopingTest(APITestCase):
+    def setUp(self):
+        self.org_a = Organization.objects.create(name='Org A')
+        self.org_b = Organization.objects.create(name='Org B')
+        self.user_a = make_user(username='seller_a', is_staff=False, organization=self.org_a)
+        self.user_b = make_user(username='seller_b', is_staff=False, organization=self.org_b)
+        self.record_a = make_call_record(uniqueid='scope-a-1', user=self.user_a, recordingfile='a.wav')
+        self.record_b = make_call_record(uniqueid='scope-b-1', user=self.user_b, recordingfile='b.wav')
+        self.record_unmatched = make_call_record(uniqueid='scope-none-1')
+
+    def test_list_hides_other_org_records(self):
+        self.client.force_authenticate(user=self.user_a)
+        resp = self.client.get('/contact-center/')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        uniqueids = {r['uniqueid'] for r in resp.data['results']}
+        self.assertIn('scope-a-1', uniqueids)
+        self.assertIn('scope-none-1', uniqueids)
+        self.assertNotIn('scope-b-1', uniqueids)
+
+    def test_staff_sees_all_records(self):
+        staff = make_user(username='staff_user', is_staff=True)
+        self.client.force_authenticate(user=staff)
+        resp = self.client.get('/contact-center/')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['count'], 3)
+
+    def test_user_without_org_sees_nothing(self):
+        orgless = make_user(username='orgless_user', is_staff=False)
+        self.client.force_authenticate(user=orgless)
+        with patch('contact_center.views.cdr_view.sync_cdr_data') as mock_sync:
+            mock_sync.delay = MagicMock()
+            resp = self.client.get('/contact-center/')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['count'], 0)
+
+    def test_recording_download_other_org_returns_404(self):
+        self.client.force_authenticate(user=self.user_a)
+        resp = self.client.get(f'/contact-center/download-recording/{self.record_b.id}/')
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_recording_download_own_org_allowed(self):
+        self.client.force_authenticate(user=self.user_a)
+        with patch('contact_center.views.recording_view.IssabelService') as mock_service:
+            upstream = MagicMock()
+            upstream.iter_content.return_value = iter([b'audio'])
+            mock_service.return_value.stream_recording.return_value = upstream
+            resp = self.client.get(f'/contact-center/download-recording/{self.record_a.id}/')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)

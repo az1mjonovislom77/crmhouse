@@ -3,9 +3,8 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.response import Response
-
 from rest_framework.renderers import JSONRenderer
+from rest_framework.response import Response
 
 from common.base.views_base import BaseUserViewSet
 from common.mixins import filter_by_org

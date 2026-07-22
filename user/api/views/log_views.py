@@ -4,8 +4,8 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 
+from common.base.pagination_base import DefaultPagination
 from user.api.serializers.log_serializers import RequestLogSerializer
-from user.api.views.user_views import UserPagination
 from user.models import RequestLog, User
 
 
@@ -19,7 +19,7 @@ class IsAdminOrSuperAdmin(IsAuthenticated):
 class RequestLogListView(ListAPIView):
     serializer_class = RequestLogSerializer
     permission_classes = [IsAdminOrSuperAdmin]
-    pagination_class = UserPagination
+    pagination_class = DefaultPagination
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['created_at', 'status_code', 'duration_ms']
     ordering = ['-created_at']

@@ -7,9 +7,9 @@ from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.decorators import action
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
+from common.base.pagination_base import DefaultPagination
 from common.base.views_base import BaseUserViewSet
 from common.mixins import filter_by_org
 from leads.api.serializers import (
@@ -31,25 +31,9 @@ from leads.selectors.lead_selectors import (
 from leads.services.lead_service import LeadService
 
 
-class LeadPagination(PageNumberPagination):
-    page_size = 20
-    page_size_query_param = 'limit'
-
-    def get_paginated_response(self, data):
-        total = self.page.paginator.count
-        limit = self.get_page_size(self.request)
-        return Response({
-            'page': self.page.number,
-            'limit': limit,
-            'total': total,
-            'total_pages': (total + limit - 1) // limit,
-            'data': data,
-        })
-
-
 @extend_schema(tags=['Leads'])
 class LeadViewSet(BaseUserViewSet):
-    pagination_class = LeadPagination
+    pagination_class = DefaultPagination
 
     def get_queryset(self):
         if self.action in ('retrieve', 'ai_suggest'):

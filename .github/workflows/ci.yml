@@ -41,5 +41,8 @@ jobs:
       - name: Django system check
         run: python manage.py check --settings=config.settings.local
 
-      - name: Run tests
-        run: python manage.py test --settings=config.settings.local --verbosity=2
+      - name: Run tests (coverage)
+        run: python -m coverage run manage.py test --settings=config.settings.local --verbosity=2
+
+      - name: Coverage gate
+        run: python -m coverage report --fail-under=60

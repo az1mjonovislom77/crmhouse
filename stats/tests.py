@@ -8,9 +8,9 @@ from booking.models import Booking
 from common.factories import make_client, make_home
 from common.utils import MONTH_LABELS_UZ, last_months, to_millions
 from home.models import Home, HomeStatusHistory
-from stats.selectors.booking_selectors import get_total_contract
 from leads.models import STATUS_NEW, STATUS_SUCCESS, Lead, LeadEvent
 from projects.models.project_models import Block, Floors
+from stats.selectors.booking_selectors import get_total_contract
 from stats.selectors.home_selectors import (
     get_block_occupancy,
     get_home_status_counts,
