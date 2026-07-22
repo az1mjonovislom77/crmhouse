@@ -7,6 +7,8 @@ from bs4 import BeautifulSoup, NavigableString
 from django.conf import settings
 from django.db import models
 from django.template import Context, Engine
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 from docx.shared import Cm, Pt
 from html4docx import HtmlToDocx
 from xhtml2pdf import pisa
@@ -104,6 +106,19 @@ _GENERIC_FONT_MAP = {
 }
 
 _CSS_SIZE_RE = re.compile(r"([\d.]+)\s*(px|pt|em|rem|%)?")
+
+# Body shrift ko'rsatilmaganda ishlatiladi — PDF'dagi DejaVuSans'ga vizual yaqin
+_DOCX_DEFAULT_FONT = "Arial"
+
+# w:tblPr ichidagi elementlarning sxema bo'yicha tartibi
+_TBLPR_SEQUENCE = (
+    "tblStyle", "tblpPr", "tblOverlap", "bidiVisual", "tblStyleRowBandSize",
+    "tblStyleColBandSize", "tblW", "jc", "tblCellSpacing", "tblInd",
+    "tblBorders", "shd", "tblLayout", "tblCellMar", "tblLook",
+)
+
+# Word standart katak ichki hoshiyalari (dxa: 1pt = 20 dxa)
+_DEFAULT_CELL_MARGINS_DXA = {"top": 0, "left": 108, "bottom": 0, "right": 108}
 
 
 def extract_placeholders(html: str) -> list[str]:
@@ -308,13 +323,16 @@ def _inline_styles(soup: BeautifulSoup) -> dict:
     for tag in soup.find_all(["style", "script", "link", "meta", "title"]):
         tag.decompose()
     root = soup.body or soup
-    body_style = {}
+    # Shablon shrift bermasa ham hamma element bir xil shriftga ega bo'lsin
+    # (aks holda Word sarlavhalarga Calibri Light, matnga Calibri qo'yadi).
+    seed = {"font-family": _DOCX_DEFAULT_FONT}
     if soup.body is not None:
-        body_style = _stamp_element(soup.body, matched, {})
+        body_style = _stamp_element(soup.body, matched, seed)
         soup.body.attrs.pop("style", None)
     else:
+        body_style = dict(seed)
         for child in root.find_all(recursive=False):
-            _stamp_element(child, matched, {})
+            _stamp_element(child, matched, seed)
     return body_style
 
 
@@ -354,11 +372,165 @@ def _apply_document_defaults(document, body_style: dict) -> None:
         font.name = family
 
 
+def _local_name(element) -> str:
+    return element.tag.rsplit("}", 1)[-1]
+
+
+def _tblpr_insert(tbl_pr, element) -> None:
+    """w:tblPr ichiga elementni sxema tartibini buzmasdan qo'yadi."""
+    pos = _TBLPR_SEQUENCE.index(_local_name(element))
+    for child in tbl_pr:
+        local = _local_name(child)
+        if local in _TBLPR_SEQUENCE and _TBLPR_SEQUENCE.index(local) > pos:
+            child.addprevious(element)
+            return
+    tbl_pr.append(element)
+
+
+def _expand_box_values(value: str) -> dict:
+    """CSS qisqartmasini (padding/margin) 4 tomonga yoyadi."""
+    parts = _IMPORTANT_RE.sub("", value).split()
+    if not parts:
+        return {}
+    if len(parts) == 1:
+        parts = parts * 4
+    elif len(parts) == 2:
+        parts = [parts[0], parts[1], parts[0], parts[1]]
+    elif len(parts) == 3:
+        parts = [parts[0], parts[1], parts[2], parts[1]]
+    return {"top": parts[0], "right": parts[1], "bottom": parts[2], "left": parts[3]}
+
+
+def _set_table_width(table, width_value: str) -> None:
+    """HTML'dagi table width (%, px, pt...) ni Word jadvaliga o'tkazadi."""
+    value = _IMPORTANT_RE.sub("", width_value).strip()
+    tbl_w = OxmlElement("w:tblW")
+    if value.endswith("%"):
+        try:
+            pct = float(value[:-1])
+        except ValueError:
+            return
+        tbl_w.set(qn("w:type"), "pct")
+        tbl_w.set(qn("w:w"), str(int(pct * 50)))
+    else:
+        size = _css_size_to_pt(value)
+        if size is None:
+            return
+        tbl_w.set(qn("w:type"), "dxa")
+        tbl_w.set(qn("w:w"), str(int(size.pt * 20)))
+    tbl_pr = table._tbl.tblPr
+    for old in tbl_pr.findall(qn("w:tblW")):
+        tbl_pr.remove(old)
+    _tblpr_insert(tbl_pr, tbl_w)
+
+
+def _cell_padding(table_soup) -> dict | None:
+    """Jadvalning o'z kataklaridan birinchi topilgan padding qiymatlarini oladi."""
+    for cell in table_soup.find_all(["td", "th"]):
+        if cell.find_parent("table") is not table_soup:
+            continue
+        styles = _parse_declarations(cell.get("style", ""))
+        box = _expand_box_values(styles["padding"]) if "padding" in styles else {}
+        for side in ("top", "right", "bottom", "left"):
+            if f"padding-{side}" in styles:
+                box[side] = styles[f"padding-{side}"]
+        if box:
+            return box
+    return None
+
+
+def _set_cell_margins(table, box: dict) -> None:
+    margins = OxmlElement("w:tblCellMar")
+    for side in ("top", "left", "bottom", "right"):
+        size = _css_size_to_pt(box.get(side))
+        dxa = int(size.pt * 20) if size is not None else _DEFAULT_CELL_MARGINS_DXA[side]
+        element = OxmlElement(f"w:{side}")
+        element.set(qn("w:w"), str(max(0, dxa)))
+        element.set(qn("w:type"), "dxa")
+        margins.append(element)
+    tbl_pr = table._tbl.tblPr
+    for old in tbl_pr.findall(qn("w:tblCellMar")):
+        tbl_pr.remove(old)
+    _tblpr_insert(tbl_pr, margins)
+
+
+def _postprocess_tables(document, soup: BeautifulSoup) -> None:
+    soup_tables = [t for t in soup.find_all("table") if t.find_parent("table") is None]
+    for table, table_soup in zip(document.tables, soup_tables, strict=False):
+        styles = _parse_declarations(table_soup.get("style", ""))
+        if "width" in styles:
+            _set_table_width(table, styles["width"])
+        padding = _cell_padding(table_soup)
+        if padding:
+            _set_cell_margins(table, padding)
+
+
+def _fix_border_sizes(document) -> None:
+    """html4docx chegara o'lchamini kasr ko'rinishda yozadi (sz="6.0"),
+    Word esa faqat butun son qabul qiladi — aks holda chegara yo'qoladi."""
+    for border in document.element.xpath(".//w:tcBorders/*"):
+        size = border.get(qn("w:sz"))
+        if size is None:
+            continue
+        try:
+            border.set(qn("w:sz"), str(max(2, round(float(size)))))
+        except ValueError:
+            continue
+
+
+def _is_visually_empty(paragraph) -> bool:
+    if paragraph.text.strip():
+        return False
+    return not paragraph._p.xpath(".//w:br | .//w:drawing | .//w:pict")
+
+
+def _remove_empty_paragraphs(document) -> None:
+    """html4docx har bir div uchun bo'sh paragraf qo'shadi — HTML'da ular
+    ko'rinmaydi, Word'da esa ortiqcha bo'sh qatorlar hosil qiladi."""
+    paragraphs = document.paragraphs
+    remaining = len(paragraphs)
+    for paragraph in paragraphs:
+        if remaining <= 1 or not _is_visually_empty(paragraph):
+            continue
+        p = paragraph._p
+        prev_el, next_el = p.getprevious(), p.getnext()
+        prev_is_tbl = prev_el is not None and _local_name(prev_el) == "tbl"
+        next_is_tbl = next_el is not None and _local_name(next_el) == "tbl"
+        next_is_end = next_el is None or _local_name(next_el) == "sectPr"
+        # Ikki jadval orasidagi va hujjat oxiridagi paragraf majburiy
+        if prev_is_tbl and (next_is_tbl or next_is_end):
+            continue
+        p.getparent().remove(p)
+        remaining -= 1
+
+
+def _apply_paragraph_spacing(document, soup: BeautifulSoup, body_style: dict) -> None:
+    """HTML'dagi paragraf oralig'ini (standart 1em margin) Word'ga o'tkazadi."""
+    first_p = soup.find("p")
+    if first_p is None:
+        return
+    styles = _parse_declarations(first_p.get("style", ""))
+    bottom = styles.get("margin-bottom")
+    if bottom is None and "margin" in styles:
+        bottom = _expand_box_values(styles["margin"]).get("bottom")
+    if bottom is None:
+        space = _css_size_to_pt(body_style.get("font-size")) or Pt(12)
+    else:
+        space = _css_size_to_pt(bottom) or Pt(0)
+    for paragraph in document.paragraphs:
+        if paragraph.paragraph_format.space_after is None:
+            paragraph.paragraph_format.space_after = space
+
+
 def html_to_docx(html: str) -> bytes:
     soup = BeautifulSoup(html, "html.parser")
     body_style = _inline_styles(soup)
     document = HtmlToDocx().parse_html_string(str(soup))
     _apply_document_defaults(document, body_style)
+    _postprocess_tables(document, soup)
+    _fix_border_sizes(document)
+    _remove_empty_paragraphs(document)
+    _apply_paragraph_spacing(document, soup, body_style)
     buffer = BytesIO()
     document.save(buffer)
     return buffer.getvalue()
