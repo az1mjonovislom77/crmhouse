@@ -125,6 +125,7 @@ class LeadEvent(models.Model):
     class Meta:
         ordering = ['at']
 
+
     def __str__(self):
         return f"{self.lead_id} — {self.type} @ {self.at}"
 
