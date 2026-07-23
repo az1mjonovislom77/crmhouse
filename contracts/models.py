@@ -6,6 +6,11 @@ from django.utils import timezone
 
 from booking.models import Booking
 
+MONTH_NAMES_UZ = (
+    "yanvar", "fevral", "mart", "aprel", "may", "iyun",
+    "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr",
+)
+
 
 class ContractTemplate(models.Model):
     organization = models.ForeignKey(
@@ -48,6 +53,14 @@ class Contract(models.Model):
             else:
                 self.number = str(home.home_number)
         super().save(*args, **kwargs)
+
+    @property
+    def contract_date_uz(self):
+        """contract_date'ni «2026-yil “23”-iyul» ko'rinishida qaytaradi."""
+        if not self.contract_date:
+            return ""
+        d = self.contract_date
+        return f"{d.year}-yil “{d.day:02d}”-{MONTH_NAMES_UZ[d.month - 1]}"
 
 
 @receiver(post_delete, sender=ContractTemplate)
