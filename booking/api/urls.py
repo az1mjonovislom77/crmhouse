@@ -1,12 +1,13 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from booking.api.views import BookingViewSet, PaymentViewSet
+from booking.api.views import BookingViewSet, CompanyViewSet, PaymentViewSet
 
 router = DefaultRouter()
-router.register('payments', PaymentViewSet, basename='payment')
-router.register('', BookingViewSet, basename='booking')
+router.register("payments", PaymentViewSet, basename="payment")
+router.register("company", CompanyViewSet, basename="company")
+router.register("", BookingViewSet, basename="booking")
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]
