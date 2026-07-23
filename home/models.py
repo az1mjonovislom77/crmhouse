@@ -11,6 +11,7 @@ class Home(models.Model):
     class HomeStatus(models.TextChoices):
         AVAILABLE = 'available', 'Available'
         RESERVED = 'reserved', 'Reserved'
+
         SOLD = 'sold', 'Sold'
         KALIT_TOPSHIRILDI = 'kalit_topshirildi', 'Kalit Topshirildi'
         NOMIGA_OTKAZIB_BERILDI = 'nomiga_otkazib_berildi', 'Nomiga O`tkazib Berildi'
