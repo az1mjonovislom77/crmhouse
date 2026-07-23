@@ -11,9 +11,15 @@ from home.models import Home
 
 
 class Company(models.Model):
-    name = models.CharField(max_length=200)
-    address = models.CharField(max_length=200)
-    phone = models.CharField(max_length=200)
+    name = models.CharField(max_length=250)
+    address = models.CharField(max_length=250)
+    phone = models.CharField(max_length=250)
+    hr = models.CharField(max_length=250, null=True, blank=True)
+    mfo = models.CharField(max_length=250, null=True, blank=True)
+    inn = models.CharField(max_length=250, null=True, blank=True)
+    bank = models.CharField(max_length=250, null=True, blank=True)
+    director_name = models.CharField(max_length=250, null=True, blank=True)
+    director_short_name = models.CharField(max_length=250, null=True, blank=True)
 
     def __str__(self):
         return self.name

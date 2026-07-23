@@ -11,7 +11,7 @@ class BookingAdmin(admin.ModelAdmin):
 
 @admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name']
+    list_display = ['id', 'name', 'inn', 'mfo', 'bank', 'director_name']
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
