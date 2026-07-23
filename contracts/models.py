@@ -56,7 +56,6 @@ class Contract(models.Model):
 
     @property
     def contract_date_uz(self):
-        """contract_date'ni «2026-yil “23”-iyul» ko'rinishida qaytaradi."""
         if not self.contract_date:
             return ""
         d = self.contract_date

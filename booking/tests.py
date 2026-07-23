@@ -264,6 +264,31 @@ class BookingViewSetTest(APITestCase):
         resp = self.client.get(self.list_url)
         self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_active_bookings_by_home(self):
+        url = reverse("booking-active")
+        active_booking = Booking.objects.create(
+            home=self.home, client=self.client_obj, company=self.company)
+        Booking.objects.create(
+            home=self.home,
+            client=make_client(phone_number="+998991234569"),
+            company=self.company,
+            status=Booking.BookingStatus.CANCELED,
+        )
+        other_home = make_home(home_number=77)
+        Booking.objects.create(
+            home=other_home,
+            client=make_client(phone_number="+998991234570"),
+            company=self.company,
+        )
+        resp = self.client.get(url, {"home_id": self.home.id})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(resp.data), 1)
+        self.assertEqual(resp.data[0]["id"], active_booking.id)
+
+    def test_active_bookings_requires_home_id(self):
+        resp = self.client.get(reverse("booking-active"))
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
 
 class PaymentViewSetTest(APITestCase):
     def setUp(self):

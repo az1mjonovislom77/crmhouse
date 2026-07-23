@@ -84,6 +84,23 @@ class BookingViewSet(BaseUserViewSet):
         delete_booking(booking_id=instance.id, user=self.request.user)
 
     @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="home_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=True
+            )
+        ],
+        responses=BookingGetSerializer(many=True),
+    )
+    @action(detail=False, methods=["get"], url_path="active")
+    def active(self, request):
+        home_id = request.query_params.get("home_id")
+        if not home_id:
+            raise ValidationError({"home_id": "home_id parametri majburiy."})
+        qs = self.get_queryset().filter(status=Booking.BookingStatus.ACTIVE)
+        serializer = BookingGetSerializer(qs, many=True, context={"request": request})
+        return Response(serializer.data)
+
+    @extend_schema(
         request={"application/json": {"type": "object", "properties": {"status": {"type": "string"}}}},
         responses=BookingGetSerializer,
     )
