@@ -21,7 +21,12 @@ def create_booking(data, user=None, home_status=None):
             data["contract_price"] = (home.price_per_sqm or 0) * (home.area or 0) + reno
 
     if not data.get("company"):
-        company = Company.objects.only("id").order_by("id").first()
+        org = data.get("organization") or getattr(user, "organization", None)
+        company = None
+        if org is not None:
+            company = Company.objects.only("id").filter(organization=org).order_by("id").first()
+        if company is None:
+            company = Company.objects.only("id").order_by("id").first()
         if not company:
             raise ValidationError("Company hali yaratilmagan")
         data["company"] = company

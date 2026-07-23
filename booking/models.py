@@ -11,6 +11,9 @@ from home.models import Home
 
 
 class Company(models.Model):
+    organization = models.ForeignKey(
+        "organization.Organization", on_delete=models.SET_NULL, null=True, blank=True, related_name="companies"
+    )
     name = models.CharField(max_length=250)
     address = models.CharField(max_length=250)
     phone = models.CharField(max_length=250)

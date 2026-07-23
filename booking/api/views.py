@@ -166,3 +166,9 @@ class PaymentViewSet(BaseUserViewSet):
 class CompanyViewSet(BaseUserViewSet):
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
+
+    def get_queryset(self):
+        return filter_by_org(super().get_queryset(), self.request, field="organization")
+
+    def perform_create(self, serializer):
+        serializer.save(organization=getattr(self.request.user, "organization", None))

@@ -12,6 +12,7 @@ from home.models import Home
 class CompanySerializer(BaseReadSerializer):
     class Meta(BaseReadSerializer.Meta):
         model = Company
+        read_only_fields = ("organization",)
 
 
 class BookingGetSerializer(serializers.ModelSerializer):
