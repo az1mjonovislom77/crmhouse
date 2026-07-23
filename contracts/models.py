@@ -40,6 +40,15 @@ class Contract(models.Model):
     def __str__(self):
         return self.number or str(self.id)
 
+    def save(self, *args, **kwargs):
+        if not self.number and self.booking and self.booking.home:
+            home = self.booking.home
+            if home.blocks:
+                self.number = f"{home.blocks.title}/{home.home_number}"
+            else:
+                self.number = str(home.home_number)
+        super().save(*args, **kwargs)
+
 
 @receiver(post_delete, sender=ContractTemplate)
 def delete_template_file(sender, instance, **kwargs):
