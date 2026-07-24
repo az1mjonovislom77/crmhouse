@@ -33,13 +33,17 @@ def resolve_subsidy(subsidy_id=None, subsidy_key=None, organization=None):
     return None
 
 
-def effective_guarantee_percent(*, guarantee_percent, payment_type, manual_down_payment, contract_price):
+def effective_guarantee_percent(*, guarantee_percent, payment_type, manual_down_payment, contract_price,
+                                client_payment=None):
     if manual_down_payment is None or payment_type == 'bosh_tolovsiz':
         return guarantee_percent
     contract = _d(contract_price or 0)
     if contract <= 0:
         return guarantee_percent
-    return (_d(manual_down_payment) * 100 / contract).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    # Formula manual to'lovni minimalgacha ko'tarishi yoki limit oshganda unga farq
+    # qo'shishi mumkin — foiz kiritilgan summadan emas, haqiqiy to'lovdan hisoblanadi.
+    paid = client_payment if client_payment is not None else manual_down_payment
+    return (_d(paid) * 100 / contract).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
 
 def compute(*, area, price_per_m2, payment_type, guarantee, subsidy,
@@ -93,6 +97,7 @@ def calculate_from_payload(data, organization=None):
         payment_type=data['payment_type'],
         manual_down_payment=data.get('manual_down_payment'),
         contract_price=result.get('contract_price'),
+        client_payment=result.get('client_payment'),
     )
     return result
 
@@ -127,6 +132,7 @@ def compute_booking_snapshot(*, home, payment_type, guarantee_id=None, guarantee
             payment_type=payment_type,
             manual_down_payment=manual_down_payment,
             contract_price=result.get('contract_price'),
+            client_payment=result.get('client_payment'),
         ),
         **result,
     }
