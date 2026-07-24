@@ -29,6 +29,7 @@ class Project(models.Model):
 class Block(models.Model):
     projects = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True, related_name='blocks')
     title = models.CharField(max_length=100, db_index=True)
+    order = models.PositiveIntegerField(default=0)
 
     class Meta:
         db_table = 'projects_blocks'
