@@ -135,7 +135,7 @@ class ConfigApiTest(APITestCase):
 
 class TengUlushFormulaTest(TestCase):
 
-    def test_equal_split(self):
+    def test_bosh_tolovli(self):
         config = CalculatorConfig.load()
         config.formula_key = 'teng_ulush'
         r = calculate(area=AREA, price_per_m2=PRICE, payment_type='bosh_tolovli',
@@ -143,8 +143,53 @@ class TengUlushFormulaTest(TestCase):
                       rounding=True, config=config)
         self.assertEqual(r['contract_price'], Decimal("379995000"))
         self.assertEqual(r['client_payment'], Decimal("57000000"))
-        self.assertEqual(r['credit_amount'], Decimal("322995000"))
-        self.assertEqual(r['monthly_full'], Decimal("1345813"))
+        self.assertEqual(r['credit_amount'], Decimal("322995750"))
+        self.assertEqual(r['monthly_full'], Decimal("4737703"))
+        self.assertIsNone(r['monthly_stage1'])
+
+    def test_discount_under_200mln(self):
+        # 200 mln gacha tannarxda 15% bosh to'lov avtomatik 5% bo'ladi
+        config = CalculatorConfig.load()
+        config.formula_key = 'teng_ulush'
+        r = calculate(area=Decimal("25"), price_per_m2=Decimal("7000000"),
+                      payment_type='bosh_tolovli', guarantee_percent=15,
+                      subsidy_amount=0, credit_years=20, rounding=True, config=config)
+        self.assertEqual(r['contract_price'], Decimal("175000000"))
+        self.assertEqual(r['client_payment'], Decimal("8750000"))  # 5%
+        self.assertEqual(r['credit_amount'], Decimal("166250000"))
+
+    def test_credit_limit_380mln(self):
+        # Limitdan oshgan qism mijoz to'loviga qo'shiladi
+        config = CalculatorConfig.load()
+        config.formula_key = 'teng_ulush'
+        r = calculate(area=Decimal("100"), price_per_m2=Decimal("10000000"),
+                      payment_type='bosh_tolovli', guarantee_percent=20,
+                      subsidy_amount=0, credit_years=20, rounding=True, config=config)
+        self.assertEqual(r['contract_price'], Decimal("1000000000"))
+        self.assertEqual(r['credit_amount'], Decimal("380000000"))
+        # 20% = 200 mln + limitdan oshgan 420 mln
+        self.assertEqual(r['client_payment'], Decimal("620000000"))
+
+    def test_manual_down_payment_used(self):
+        config = CalculatorConfig.load()
+        config.formula_key = 'teng_ulush'
+        r = calculate(area=AREA, price_per_m2=PRICE, payment_type='bosh_tolovli',
+                      guarantee_percent=15, subsidy_amount=0, credit_years=20,
+                      manual_down_payment=Decimal("100000000"), rounding=True, config=config)
+        # manual minimal bosh to'lovdan katta bo'lsa, manual ishlatiladi
+        self.assertEqual(r['client_payment'], Decimal("100000000"))
+        self.assertEqual(r['credit_amount'], Decimal("279995000"))
+
+    def test_pedagog_subsidy_converges(self):
+        config = CalculatorConfig.load()
+        config.formula_key = 'teng_ulush'
+        r = calculate(area=AREA, price_per_m2=PRICE, payment_type='bosh_tolovli',
+                      guarantee_percent=15, subsidy_amount=0, credit_years=20,
+                      rounding=True, config=config, subsidy_key='pedagog')
+        # subsidiya = kredit * (0.15 * 0.25) / 0.85 ga yaqinlashadi
+        expected_sub = r['credit_amount'] * (Decimal('0.15') * Decimal('0.25')) / Decimal('0.85')
+        self.assertLess(abs(r['subsidy_amount'] - expected_sub), Decimal("1"))
+        # pedagogda foiz bo'yicha davlat yordami yo'q
         self.assertIsNone(r['monthly_stage1'])
 
     def test_dispatcher_picks_by_formula_key(self):
