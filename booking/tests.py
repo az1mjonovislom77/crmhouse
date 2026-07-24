@@ -243,6 +243,29 @@ class BookingViewSetTest(APITestCase):
         self.assertEqual(booking.monthly_stage1, Decimal("4016510"))
         self.assertEqual(booking.gov_monthly, Decimal("721182"))
 
+    def test_create_booking_manual_down_payment_recomputes_percent(self):
+        from calculator.models import GuaranteeOption
+        self.home.area = Decimal("49.35")
+        self.home.price_per_sqm = Decimal("7700000")
+        self.home.save()
+        guarantee = GuaranteeOption.objects.get(key="kafillik")
+        data = {
+            "home": self.home.id,
+            "client": self.client_obj.id,
+            "company": self.company.id,
+            "home_status": Home.HomeStatus.RESERVED,
+            "payment_type": Booking.PaymentType.BOSH_TOLOVLI,
+            "guarantee_id": guarantee.id,
+            "credit_years": 20,
+            "manual_down_payment": "10000000",
+        }
+        resp = self.client.post(self.list_url, data)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        booking = Booking.objects.get(home=self.home)
+        self.assertEqual(booking.contract_price, Decimal("379995000"))
+        self.assertEqual(booking.client_payment, Decimal("10000000"))
+        self.assertEqual(booking.guarantee_percent, Decimal("2.63"))
+
     def test_delete_booking_via_api(self):
         booking = Booking.objects.create(
             home=self.home, client=self.client_obj, company=self.company        )

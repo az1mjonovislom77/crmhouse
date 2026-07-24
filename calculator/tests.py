@@ -158,6 +158,30 @@ class TengUlushFormulaTest(TestCase):
                             calculate(config=teng, **kw)['monthly_full'])
 
 
+class EffectiveGuaranteePercentTest(TestCase):
+
+    def test_manual_down_payment_overrides_percent(self):
+        from calculator.services import effective_guarantee_percent
+        pct = effective_guarantee_percent(
+            guarantee_percent=Decimal("15.00"), payment_type='bosh_tolovli',
+            manual_down_payment=Decimal("10000000"), contract_price=Decimal("133333333"))
+        self.assertEqual(pct, Decimal("7.50"))
+
+    def test_without_manual_keeps_option_percent(self):
+        from calculator.services import effective_guarantee_percent
+        pct = effective_guarantee_percent(
+            guarantee_percent=Decimal("15.00"), payment_type='bosh_tolovli',
+            manual_down_payment=None, contract_price=Decimal("133333333"))
+        self.assertEqual(pct, Decimal("15.00"))
+
+    def test_bosh_tolovsiz_ignores_manual(self):
+        from calculator.services import effective_guarantee_percent
+        pct = effective_guarantee_percent(
+            guarantee_percent=Decimal("15.00"), payment_type='bosh_tolovsiz',
+            manual_down_payment=Decimal("10000000"), contract_price=Decimal("133333333"))
+        self.assertEqual(pct, Decimal("15.00"))
+
+
 class OrgScopedConfigTest(TestCase):
     def setUp(self):
         from organization.models import Organization

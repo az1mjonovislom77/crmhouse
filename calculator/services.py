@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 from rest_framework.exceptions import ValidationError
 
@@ -33,6 +33,17 @@ def resolve_subsidy(subsidy_id=None, subsidy_key=None, organization=None):
     return None
 
 
+def effective_guarantee_percent(*, guarantee_percent, payment_type, manual_down_payment, contract_price):
+    """Manual boshlang'ich to'lov kiritilsa, foiz tanlangan kafillik turidan emas,
+    haqiqiy to'lovdan hisoblanadi: manual / shartnoma narxi * 100."""
+    if manual_down_payment is None or payment_type == 'bosh_tolovsiz':
+        return guarantee_percent
+    contract = _d(contract_price or 0)
+    if contract <= 0:
+        return guarantee_percent
+    return (_d(manual_down_payment) * 100 / contract).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+
 def compute(*, area, price_per_m2, payment_type, guarantee, subsidy,
             credit_years, manual_down_payment=None, rounding=True, config=None,
             renovation_price=0):
@@ -65,7 +76,7 @@ def calculate_from_payload(data, organization=None):
     guarantee = resolve_guarantee(data.get('guarantee_id'), data.get('guarantee_key'), organization=organization)
     subsidy = resolve_subsidy(data.get('subsidy_id'), data.get('subsidy_key'), organization=organization)
 
-    return compute(
+    result = compute(
         area=home.area,
         price_per_m2=home.price_per_sqm or config.default_price_per_m2,
         payment_type=data['payment_type'],
@@ -77,6 +88,13 @@ def calculate_from_payload(data, organization=None):
         config=config,
         renovation_price=(home.renovation.price if home.renovation else 0),
     )
+    result['guarantee_percent'] = effective_guarantee_percent(
+        guarantee_percent=guarantee.percent,
+        payment_type=data['payment_type'],
+        manual_down_payment=data.get('manual_down_payment'),
+        contract_price=result.get('contract_price'),
+    )
+    return result
 
 
 def compute_booking_snapshot(*, home, payment_type, guarantee_id=None, guarantee_key=None,
@@ -103,5 +121,11 @@ def compute_booking_snapshot(*, home, payment_type, guarantee_id=None, guarantee
     )
     return {
         'price_per_m2': Decimal(str(price_per_m2)),
-        'guarantee_percent': guarantee.percent, **result,
+        'guarantee_percent': effective_guarantee_percent(
+            guarantee_percent=guarantee.percent,
+            payment_type=payment_type,
+            manual_down_payment=manual_down_payment,
+            contract_price=result.get('contract_price'),
+        ),
+        **result,
     }
