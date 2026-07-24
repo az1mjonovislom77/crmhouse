@@ -164,6 +164,7 @@ def build_context(contract: Contract) -> dict:
         ctx.setdefault("total_price", booking.total_price)
         ctx.setdefault("total_price_sozda", booking.total_price_inword)
         ctx.setdefault("guarantee_percent", booking.guarantee_percent)
+        ctx.setdefault("price_per_m2", booking.price_per_m2)
     ctx.setdefault("contract", contract)
     return {key: _wrap(value) for key, value in ctx.items()}
 

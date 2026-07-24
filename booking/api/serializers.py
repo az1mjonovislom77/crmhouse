@@ -91,7 +91,7 @@ class BookingCreateSerializer(serializers.ModelSerializer):
 
         read_only_fields = [
             'created_at', 'organization', 'status',
-            'price_per_m2', 'guarantee_percent', 'subsidy_amount',
+            'guarantee_percent', 'subsidy_amount',
             'annual_rate_pct', 'state_threshold_pct', 'subsidy_years', 'firm_markup_pct',
             'contract_price', 'firm_covers', 'client_payment', 'credit_amount',
             'monthly_full', 'monthly_stage1', 'gov_monthly',
@@ -125,6 +125,7 @@ class BookingCreateSerializer(serializers.ModelSerializer):
                 credit_years=credit_years,
                 manual_down_payment=current('manual_down_payment'),
                 organization=organization,
+                price_per_m2=current('price_per_m2'),
             )
             attrs.update(snapshot)
         return attrs

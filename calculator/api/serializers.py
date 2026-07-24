@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from rest_framework import serializers
 
 from booking.models import Booking
@@ -41,6 +43,8 @@ class CalculateInputSerializer(serializers.Serializer):
     subsidy_id = serializers.IntegerField(required=False)
     subsidy_key = serializers.CharField(required=False)
     credit_years = serializers.IntegerField(min_value=1)
+    price_per_m2 = serializers.DecimalField(
+        max_digits=14, decimal_places=2, required=False, allow_null=True, min_value=Decimal('0.01'))
     manual_down_payment = serializers.DecimalField(
         max_digits=16, decimal_places=2, required=False, allow_null=True)
     rounding = serializers.BooleanField(default=True)

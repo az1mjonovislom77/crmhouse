@@ -8,12 +8,6 @@ from projects.models.project_models import Block, BlockImage
 
 
 class Command(BaseCommand):
-    help = (
-        "Blockni barcha homelari, block va home rasmlari bilan birga yangi nom ostida nusxalaydi.\n"
-        "Rasmlar storage'da fizik nusxalanadi, yangi block eskisidan to'liq mustaqil bo'ladi.\n"
-        'Misol: python manage.py copy_block --org "Qamashi Xonadonlar" '
-        '--source "Block - B" --new-title "Block - D"'
-    )
 
     def add_arguments(self, parser):
         parser.add_argument('--org', default='Qamashi Xonadonlar', help='Organization nomi')
@@ -25,7 +19,6 @@ class Command(BaseCommand):
                             help="Bazaga yozmasdan faqat rejani ko'rsatish")
 
     def copy_image(self, name):
-        """Storage'dagi faylni nusxalab yangi nomini qaytaradi."""
         if not name:
             return ''
         if not default_storage.exists(name):
