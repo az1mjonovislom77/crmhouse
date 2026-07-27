@@ -8,18 +8,23 @@ from user.models import User
 class Project(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     organization = models.ForeignKey(
-        'organization.Organization', on_delete=models.SET_NULL,
-        null=True, blank=True, related_name='projects')
+        "organization.Organization", on_delete=models.SET_NULL, null=True, blank=True, related_name="projects"
+    )
     title = models.CharField(max_length=100, db_index=True)
     description = models.TextField(max_length=500)
     floors = models.PositiveIntegerField(default=0)
-    image = models.ImageField(upload_to='projects/', validators=[
-        FileExtensionValidator(
-            allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']), check_image_size],
-                              null=True, blank=True)
+    image = models.ImageField(
+        upload_to="projects/",
+        validators=[
+            FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "webp", "heic", "heif"]),
+            check_image_size,
+        ],
+        null=True,
+        blank=True,
+    )
 
     class Meta:
-        db_table = 'projects_projects'
+        db_table = "projects_projects"
         ordering = ["-id"]
 
     def __str__(self):
@@ -27,23 +32,26 @@ class Project(models.Model):
 
 
 class Block(models.Model):
-    projects = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True, related_name='blocks')
+    projects = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True, related_name="blocks")
     title = models.CharField(max_length=100, db_index=True)
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
-        db_table = 'projects_blocks'
+        db_table = "projects_blocks"
 
     def __str__(self):
         return self.title
 
 
 class BlockImage(models.Model):
-    block = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name='plans')
-    image = models.ImageField(upload_to='block_image/',
-                              validators=[FileExtensionValidator(
-                                  allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']),
-                                  check_image_size])
+    block = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name="plans")
+    image = models.ImageField(
+        upload_to="block_image/",
+        validators=[
+            FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "webp", "heic", "heif"]),
+            check_image_size,
+        ],
+    )
 
     def __str__(self):
         return f"BlockImage {self.pk}"

@@ -1,8 +1,18 @@
 from calculator.engine import _d, annuity_factor, ceil_step, round_som
 
 
-def calculate(*, area, price_per_m2, payment_type, guarantee_percent, subsidy_amount,
-              credit_years, manual_down_payment=None, rounding=True, config):
+def calculate(
+    *,
+    area,
+    price_per_m2,
+    payment_type,
+    guarantee_percent,
+    subsidy_amount,
+    credit_years,
+    manual_down_payment=None,
+    rounding=True,
+    config,
+):
     area = _d(area)
     price_per_m2 = _d(price_per_m2)
     g = _d(guarantee_percent) / 100
@@ -18,14 +28,11 @@ def calculate(*, area, price_per_m2, payment_type, guarantee_percent, subsidy_am
 
     base = area * price_per_m2
 
-    if payment_type == 'bosh_tolovsiz':
+    if payment_type == "bosh_tolovsiz":
         eff = base - (1 + m) * S
         contract = rnd(eff / (1 - g * (1 + m)))
         firm_covers = rnd(g * contract - S)
-        if S > 0:
-            client_payment = _d(0)
-        else:
-            client_payment = rnd(firm_covers * m)
+        client_payment = _d(0) if S > 0 else rnd(firm_covers * m)
         credit = contract - firm_covers - client_payment - S
     else:
         contract = base
@@ -49,17 +56,17 @@ def calculate(*, area, price_per_m2, payment_type, guarantee_percent, subsidy_am
         gov_monthly = None
 
     return {
-        'contract_price': contract,
-        'firm_covers': firm_covers,
-        'client_payment': client_payment,
-        'subsidy_amount': S,
-        'credit_amount': credit,
-        'monthly_full': monthly_full,
-        'monthly_stage1': monthly_stage1,
-        'gov_monthly': gov_monthly,
-        'subsidy_years': config.subsidy_years,
-        'credit_years': Y,
-        'annual_rate_pct': R,
-        'state_threshold_pct': T,
-        'firm_markup_pct': _d(config.firm_markup_pct),
+        "contract_price": contract,
+        "firm_covers": firm_covers,
+        "client_payment": client_payment,
+        "subsidy_amount": S,
+        "credit_amount": credit,
+        "monthly_full": monthly_full,
+        "monthly_stage1": monthly_stage1,
+        "gov_monthly": gov_monthly,
+        "subsidy_years": config.subsidy_years,
+        "credit_years": Y,
+        "annual_rate_pct": R,
+        "state_threshold_pct": T,
+        "firm_markup_pct": _d(config.firm_markup_pct),
     }

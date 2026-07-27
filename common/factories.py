@@ -1,4 +1,3 @@
-
 from booking.models import Company
 from client.models import Client
 from home.models import Home

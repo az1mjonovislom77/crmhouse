@@ -7,14 +7,14 @@ from user.api.views.stats_views import UserStatsView
 from user.api.views.user_views import UserViewSet
 
 router = DefaultRouter()
-router.register('users', UserViewSet)
+router.register("users", UserViewSet)
 
 urlpatterns = [
-    path('', include(router.urls)),
-    path('login/', SignInAPIView.as_view(), name='login'),
-    path('logout/', LogOutAPIView.as_view(), name='logout'),
-    path('auth/refresh/', RefreshTokenAPIView.as_view(), name='token_refresh'),
-    path('me/', MeAPIView.as_view(), name='me'),
-    path('stats/', UserStatsView.as_view(), name='user_stats'),
-    path('request-logs/', RequestLogListView.as_view(), name='request_logs'),
+    path("", include(router.urls)),
+    path("login/", SignInAPIView.as_view(), name="login"),
+    path("logout/", LogOutAPIView.as_view(), name="logout"),
+    path("auth/refresh/", RefreshTokenAPIView.as_view(), name="token_refresh"),
+    path("me/", MeAPIView.as_view(), name="me"),
+    path("stats/", UserStatsView.as_view(), name="user_stats"),
+    path("request-logs/", RequestLogListView.as_view(), name="request_logs"),
 ]

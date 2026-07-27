@@ -4,9 +4,9 @@ from rest_framework.routers import DefaultRouter
 from contracts.api.views import ContractTemplateViewSet, ContractViewSet
 
 router = DefaultRouter()
-router.register('templates', ContractTemplateViewSet, basename='contract-template')
-router.register('', ContractViewSet, basename='contract')
+router.register("templates", ContractTemplateViewSet, basename="contract-template")
+router.register("", ContractViewSet, basename="contract")
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]

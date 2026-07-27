@@ -15,14 +15,13 @@ class ClientModelTest(TestCase):
         client = make_client(full_name="Bobur Karimov")
         self.assertEqual(str(client), "Bobur Karimov")
 
+
 class ClientSelectorTest(TestCase):
     def setUp(self):
         self.client_obj = make_client()
         self.home = make_home()
         self.company = make_company()
-        self.booking = Booking.objects.create(
-            home=self.home, client=self.client_obj, company=self.company
-        )
+        self.booking = Booking.objects.create(home=self.home, client=self.client_obj, company=self.company)
         HomeStatusHistory.objects.create(
             home=self.home,
             client=self.client_obj,
@@ -45,6 +44,7 @@ class ClientSelectorTest(TestCase):
         client = qs.get(pk=self.client_obj.pk)
         with self.assertNumQueries(0):
             list(client.status_history.all())
+
 
 class ClientViewSetTest(APITestCase):
     def setUp(self):

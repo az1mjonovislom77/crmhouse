@@ -26,68 +26,71 @@ class CeilStepTest(TestCase):
 
 
 class EngineTest(TestCase):
-
     def setUp(self):
         self.config = CalculatorConfig.load()
 
     def _calc(self, payment_type, g, s, **kw):
-        return calculate(area=AREA, price_per_m2=PRICE, payment_type=payment_type,
-                         guarantee_percent=g, subsidy_amount=s, credit_years=20,
-                         rounding=True, config=self.config, **kw)
+        return calculate(
+            area=AREA,
+            price_per_m2=PRICE,
+            payment_type=payment_type,
+            guarantee_percent=g,
+            subsidy_amount=s,
+            credit_years=20,
+            rounding=True,
+            config=self.config,
+            **kw,
+        )
 
-    def assert_case(self, r, contract, firm, client, credit, monthly,
-                    stage1=None, gov=None):
-        self.assertEqual(r['contract_price'], Decimal(contract))
-        self.assertEqual(r['firm_covers'], Decimal(firm))
-        self.assertEqual(r['client_payment'], Decimal(client))
-        self.assertEqual(r['credit_amount'], Decimal(credit))
-        self.assertEqual(r['monthly_full'], Decimal(monthly))
+    def assert_case(self, r, contract, firm, client, credit, monthly, stage1=None, gov=None):
+        self.assertEqual(r["contract_price"], Decimal(contract))
+        self.assertEqual(r["firm_covers"], Decimal(firm))
+        self.assertEqual(r["client_payment"], Decimal(client))
+        self.assertEqual(r["credit_amount"], Decimal(credit))
+        self.assertEqual(r["monthly_full"], Decimal(monthly))
         if stage1 is None:
-            self.assertIsNone(r['monthly_stage1'])
-            self.assertIsNone(r['gov_monthly'])
+            self.assertIsNone(r["monthly_stage1"])
+            self.assertIsNone(r["gov_monthly"])
         else:
-            self.assertEqual(r['monthly_stage1'], Decimal(stage1))
-            self.assertEqual(r['gov_monthly'], Decimal(gov))
+            self.assertEqual(r["monthly_stage1"], Decimal(stage1))
+            self.assertEqual(r["gov_monthly"], Decimal(gov))
 
     def test_case_1_bosh_tolovli_15_yoq(self):
-        r = self._calc('bosh_tolovli', 15, 0)
+        r = self._calc("bosh_tolovli", 15, 0)
         self.assert_case(r, "379995000", "0", "57000000", "322995000", "4737692")
 
     def test_case_2_bosh_tolovli_20_yoq(self):
-        r = self._calc('bosh_tolovli', 20, 0)
+        r = self._calc("bosh_tolovli", 20, 0)
         self.assert_case(r, "379995000", "0", "75999000", "303996000", "4459015")
 
     def test_case_3_bosh_tolovli_15_oddiy(self):
-        r = self._calc('bosh_tolovli', 15, 30000000)
-        self.assert_case(r, "379995000", "0", "27000000", "322995000", "4737692",
-                         "4016510", "721182")
+        r = self._calc("bosh_tolovli", 15, 30000000)
+        self.assert_case(r, "379995000", "0", "27000000", "322995000", "4737692", "4016510", "721182")
 
     def test_case_4_bosh_tolovli_20_oddiy(self):
-        r = self._calc('bosh_tolovli', 20, 30000000)
-        self.assert_case(r, "379995000", "0", "45999000", "303996000", "4459015",
-                         "3780254", "678761")
+        r = self._calc("bosh_tolovli", 20, 30000000)
+        self.assert_case(r, "379995000", "0", "45999000", "303996000", "4459015", "3780254", "678761")
+
     def test_case_5_bosh_tolovsiz_15_yoq(self):
-        r = self._calc('bosh_tolovsiz', 15, 0)
+        r = self._calc("bosh_tolovsiz", 15, 0)
         self.assert_case(r, "460043000", "69007000", "11042000", "379994000", "5573754")
 
     def test_case_6_bosh_tolovsiz_20_yoq(self):
-        r = self._calc('bosh_tolovsiz', 20, 0)
+        r = self._calc("bosh_tolovsiz", 20, 0)
         self.assert_case(r, "494786000", "98958000", "15834000", "379994000", "5573754")
 
     def test_case_7_bosh_tolovsiz_20_oddiy(self):
-        r = self._calc('bosh_tolovsiz', 20, 30000000)
-        self.assert_case(r, "449473000", "59895000", "0", "359578000", "5274292",
-                         "4471427", "802865")
+        r = self._calc("bosh_tolovsiz", 20, 30000000)
+        self.assert_case(r, "449473000", "59895000", "0", "359578000", "5274292", "4471427", "802865")
 
     def test_case_8_bosh_tolovsiz_15_oddiy(self):
-        r = self._calc('bosh_tolovsiz', 15, 30000000)
-        self.assert_case(r, "417912000", "32687000", "0", "355225000", "5210442",
-                         "4417297", "793145")
+        r = self._calc("bosh_tolovsiz", 15, 30000000)
+        self.assert_case(r, "417912000", "32687000", "0", "355225000", "5210442", "4417297", "793145")
 
     def test_manual_down_payment(self):
-        r = self._calc('bosh_tolovli', 15, 0, manual_down_payment=Decimal("60000000"))
-        self.assertEqual(r['client_payment'], Decimal("60000000"))
-        self.assertEqual(r['credit_amount'], Decimal("319995000"))
+        r = self._calc("bosh_tolovli", 15, 0, manual_down_payment=Decimal("60000000"))
+        self.assertEqual(r["client_payment"], Decimal("60000000"))
+        self.assertEqual(r["credit_amount"], Decimal("319995000"))
 
 
 class ConfigTest(TestCase):
@@ -122,8 +125,7 @@ class ConfigApiTest(APITestCase):
         self.assertEqual(resp.data["term_options"], [20, 15])
 
     def test_update_config_admin(self):
-        resp = self.client.put(reverse("calculator-config"),
-                               {"annual_rate_pct": "18.00"}, format="json")
+        resp = self.client.put(reverse("calculator-config"), {"annual_rate_pct": "18.00"}, format="json")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(CalculatorConfig.load().annual_rate_pct, Decimal("18.00"))
 
@@ -134,122 +136,176 @@ class ConfigApiTest(APITestCase):
 
 
 class TengUlushFormulaTest(TestCase):
-
     def test_bosh_tolovli(self):
         config = CalculatorConfig.load()
-        config.formula_key = 'teng_ulush'
-        r = calculate(area=AREA, price_per_m2=PRICE, payment_type='bosh_tolovli',
-                      guarantee_percent=15, subsidy_amount=0, credit_years=20,
-                      rounding=True, config=config)
-        self.assertEqual(r['contract_price'], Decimal("379995000"))
-        self.assertEqual(r['client_payment'], Decimal("57000000"))
-        self.assertEqual(r['credit_amount'], Decimal("322995750"))
-        self.assertEqual(r['monthly_full'], Decimal("4737703"))
-        self.assertIsNone(r['monthly_stage1'])
+        config.formula_key = "teng_ulush"
+        r = calculate(
+            area=AREA,
+            price_per_m2=PRICE,
+            payment_type="bosh_tolovli",
+            guarantee_percent=15,
+            subsidy_amount=0,
+            credit_years=20,
+            rounding=True,
+            config=config,
+        )
+        self.assertEqual(r["contract_price"], Decimal("379995000"))
+        self.assertEqual(r["client_payment"], Decimal("57000000"))
+        self.assertEqual(r["credit_amount"], Decimal("322995750"))
+        self.assertEqual(r["monthly_full"], Decimal("4737703"))
+        self.assertIsNone(r["monthly_stage1"])
 
     def test_discount_under_200mln(self):
         # 200 mln gacha tannarxda 15% bosh to'lov avtomatik 5% bo'ladi
         config = CalculatorConfig.load()
-        config.formula_key = 'teng_ulush'
-        r = calculate(area=Decimal("25"), price_per_m2=Decimal("7000000"),
-                      payment_type='bosh_tolovli', guarantee_percent=15,
-                      subsidy_amount=0, credit_years=20, rounding=True, config=config)
-        self.assertEqual(r['contract_price'], Decimal("175000000"))
-        self.assertEqual(r['client_payment'], Decimal("8750000"))  # 5%
-        self.assertEqual(r['credit_amount'], Decimal("166250000"))
+        config.formula_key = "teng_ulush"
+        r = calculate(
+            area=Decimal("25"),
+            price_per_m2=Decimal("7000000"),
+            payment_type="bosh_tolovli",
+            guarantee_percent=15,
+            subsidy_amount=0,
+            credit_years=20,
+            rounding=True,
+            config=config,
+        )
+        self.assertEqual(r["contract_price"], Decimal("175000000"))
+        self.assertEqual(r["client_payment"], Decimal("8750000"))  # 5%
+        self.assertEqual(r["credit_amount"], Decimal("166250000"))
 
     def test_credit_limit_380mln(self):
         # Limitdan oshgan qism mijoz to'loviga qo'shiladi
         config = CalculatorConfig.load()
-        config.formula_key = 'teng_ulush'
-        r = calculate(area=Decimal("100"), price_per_m2=Decimal("10000000"),
-                      payment_type='bosh_tolovli', guarantee_percent=20,
-                      subsidy_amount=0, credit_years=20, rounding=True, config=config)
-        self.assertEqual(r['contract_price'], Decimal("1000000000"))
-        self.assertEqual(r['credit_amount'], Decimal("380000000"))
+        config.formula_key = "teng_ulush"
+        r = calculate(
+            area=Decimal("100"),
+            price_per_m2=Decimal("10000000"),
+            payment_type="bosh_tolovli",
+            guarantee_percent=20,
+            subsidy_amount=0,
+            credit_years=20,
+            rounding=True,
+            config=config,
+        )
+        self.assertEqual(r["contract_price"], Decimal("1000000000"))
+        self.assertEqual(r["credit_amount"], Decimal("380000000"))
         # 20% = 200 mln + limitdan oshgan 420 mln
-        self.assertEqual(r['client_payment'], Decimal("620000000"))
+        self.assertEqual(r["client_payment"], Decimal("620000000"))
 
     def test_manual_down_payment_used(self):
         config = CalculatorConfig.load()
-        config.formula_key = 'teng_ulush'
-        r = calculate(area=AREA, price_per_m2=PRICE, payment_type='bosh_tolovli',
-                      guarantee_percent=15, subsidy_amount=0, credit_years=20,
-                      manual_down_payment=Decimal("100000000"), rounding=True, config=config)
+        config.formula_key = "teng_ulush"
+        r = calculate(
+            area=AREA,
+            price_per_m2=PRICE,
+            payment_type="bosh_tolovli",
+            guarantee_percent=15,
+            subsidy_amount=0,
+            credit_years=20,
+            manual_down_payment=Decimal("100000000"),
+            rounding=True,
+            config=config,
+        )
         # manual minimal bosh to'lovdan katta bo'lsa, manual ishlatiladi
-        self.assertEqual(r['client_payment'], Decimal("100000000"))
-        self.assertEqual(r['credit_amount'], Decimal("279995000"))
+        self.assertEqual(r["client_payment"], Decimal("100000000"))
+        self.assertEqual(r["credit_amount"], Decimal("279995000"))
 
     def test_pedagog_subsidy_converges(self):
         config = CalculatorConfig.load()
-        config.formula_key = 'teng_ulush'
-        r = calculate(area=AREA, price_per_m2=PRICE, payment_type='bosh_tolovli',
-                      guarantee_percent=15, subsidy_amount=0, credit_years=20,
-                      rounding=True, config=config, subsidy_key='pedagog')
+        config.formula_key = "teng_ulush"
+        r = calculate(
+            area=AREA,
+            price_per_m2=PRICE,
+            payment_type="bosh_tolovli",
+            guarantee_percent=15,
+            subsidy_amount=0,
+            credit_years=20,
+            rounding=True,
+            config=config,
+            subsidy_key="pedagog",
+        )
         # subsidiya = kredit * (0.15 * 0.25) / 0.85 ga yaqinlashadi
-        expected_sub = r['credit_amount'] * (Decimal('0.15') * Decimal('0.25')) / Decimal('0.85')
-        self.assertLess(abs(r['subsidy_amount'] - expected_sub), Decimal("1"))
+        expected_sub = r["credit_amount"] * (Decimal("0.15") * Decimal("0.25")) / Decimal("0.85")
+        self.assertLess(abs(r["subsidy_amount"] - expected_sub), Decimal("1"))
         # pedagogda foiz bo'yicha davlat yordami yo'q
-        self.assertIsNone(r['monthly_stage1'])
+        self.assertIsNone(r["monthly_stage1"])
 
     def test_dispatcher_picks_by_formula_key(self):
         std = CalculatorConfig.load()
-        std.formula_key = 'standart'
+        std.formula_key = "standart"
         teng = CalculatorConfig.load()
-        teng.formula_key = 'teng_ulush'
-        kw = dict(area=AREA, price_per_m2=PRICE, payment_type='bosh_tolovli',
-                  guarantee_percent=15, subsidy_amount=0, credit_years=20, rounding=True)
-        self.assertNotEqual(calculate(config=std, **kw)['monthly_full'],
-                            calculate(config=teng, **kw)['monthly_full'])
+        teng.formula_key = "teng_ulush"
+        kw = {
+            "area": AREA,
+            "price_per_m2": PRICE,
+            "payment_type": "bosh_tolovli",
+            "guarantee_percent": 15,
+            "subsidy_amount": 0,
+            "credit_years": 20,
+            "rounding": True,
+        }
+        self.assertNotEqual(calculate(config=std, **kw)["monthly_full"], calculate(config=teng, **kw)["monthly_full"])
 
 
 class EffectiveGuaranteePercentTest(TestCase):
-
     def test_manual_down_payment_overrides_percent(self):
         from calculator.services import effective_guarantee_percent
+
         pct = effective_guarantee_percent(
-            guarantee_percent=Decimal("15.00"), payment_type='bosh_tolovli',
-            manual_down_payment=Decimal("10000000"), contract_price=Decimal("133333333"))
+            guarantee_percent=Decimal("15.00"),
+            payment_type="bosh_tolovli",
+            manual_down_payment=Decimal("10000000"),
+            contract_price=Decimal("133333333"),
+        )
         self.assertEqual(pct, Decimal("7.50"))
 
     def test_without_manual_keeps_option_percent(self):
         from calculator.services import effective_guarantee_percent
+
         pct = effective_guarantee_percent(
-            guarantee_percent=Decimal("15.00"), payment_type='bosh_tolovli',
-            manual_down_payment=None, contract_price=Decimal("133333333"))
+            guarantee_percent=Decimal("15.00"),
+            payment_type="bosh_tolovli",
+            manual_down_payment=None,
+            contract_price=Decimal("133333333"),
+        )
         self.assertEqual(pct, Decimal("15.00"))
 
     def test_bosh_tolovsiz_ignores_manual(self):
         from calculator.services import effective_guarantee_percent
+
         pct = effective_guarantee_percent(
-            guarantee_percent=Decimal("15.00"), payment_type='bosh_tolovsiz',
-            manual_down_payment=Decimal("10000000"), contract_price=Decimal("133333333"))
+            guarantee_percent=Decimal("15.00"),
+            payment_type="bosh_tolovsiz",
+            manual_down_payment=Decimal("10000000"),
+            contract_price=Decimal("133333333"),
+        )
         self.assertEqual(pct, Decimal("15.00"))
 
 
 class OrgScopedConfigTest(TestCase):
     def setUp(self):
         from organization.models import Organization
+
         self.org = Organization.objects.create(name="OrgB")
 
     def test_org_gets_own_config(self):
-        cfg = CalculatorConfig.objects.create(organization=self.org, formula_key='teng_ulush')
+        cfg = CalculatorConfig.objects.create(organization=self.org, formula_key="teng_ulush")
         self.assertEqual(CalculatorConfig.for_org(self.org).pk, cfg.pk)
-        self.assertEqual(CalculatorConfig.for_org(self.org).formula_key, 'teng_ulush')
+        self.assertEqual(CalculatorConfig.for_org(self.org).formula_key, "teng_ulush")
 
     def test_org_without_config_falls_back_to_global(self):
-        self.assertEqual(CalculatorConfig.for_org(self.org).formula_key, 'standart')
+        self.assertEqual(CalculatorConfig.for_org(self.org).formula_key, "standart")
 
     def test_global_is_standart(self):
-        self.assertEqual(CalculatorConfig.for_org(None).formula_key, 'standart')
+        self.assertEqual(CalculatorConfig.for_org(None).formula_key, "standart")
 
 
 class OrgScopedApiTest(APITestCase):
     def test_two_orgs_see_different_config(self):
         from organization.models import Organization
+
         orgb = Organization.objects.create(name="OrgB")
-        CalculatorConfig.objects.create(
-            organization=orgb, formula_key='teng_ulush', annual_rate_pct=15)
+        CalculatorConfig.objects.create(organization=orgb, formula_key="teng_ulush", annual_rate_pct=15)
 
         user_a = make_user(username="orga_user")
         self.client.force_authenticate(user=user_a)
@@ -267,21 +323,25 @@ class OrgScopedApiTest(APITestCase):
 class CalculateApiTest(APITestCase):
     def setUp(self):
         from home.models import Home
+
         self.user = make_user(username="calc_calc")
         self.client.force_authenticate(user=self.user)
         self.guarantee = GuaranteeOption.objects.get(key="kafillik")
         self.subsidy = SubsidyOption.objects.get(key="oddiy")
-        self.home = Home.objects.create(
-            home_number=1, area=AREA, price_per_sqm=PRICE)
+        self.home = Home.objects.create(home_number=1, area=AREA, price_per_sqm=PRICE)
 
     def test_calculate_case_3(self):
-        resp = self.client.post(reverse("calculator-calculate"), {
-            "home_id": self.home.id,
-            "payment_type": "bosh_tolovli",
-            "guarantee_id": self.guarantee.id,
-            "subsidy_id": self.subsidy.id,
-            "credit_years": 20,
-        }, format="json")
+        resp = self.client.post(
+            reverse("calculator-calculate"),
+            {
+                "home_id": self.home.id,
+                "payment_type": "bosh_tolovli",
+                "guarantee_id": self.guarantee.id,
+                "subsidy_id": self.subsidy.id,
+                "credit_years": 20,
+            },
+            format="json",
+        )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data["contract_price"], Decimal("379995000"))
         self.assertEqual(resp.data["client_payment"], Decimal("27000000"))
@@ -289,40 +349,49 @@ class CalculateApiTest(APITestCase):
         self.assertEqual(resp.data["monthly_full"], Decimal("4737692"))
 
     def test_calculate_requires_home_id(self):
-        resp = self.client.post(reverse("calculator-calculate"), {
-            "payment_type": "bosh_tolovli",
-            "guarantee_id": self.guarantee.id,
-            "credit_years": 20,
-        }, format="json")
+        resp = self.client.post(
+            reverse("calculator-calculate"),
+            {
+                "payment_type": "bosh_tolovli",
+                "guarantee_id": self.guarantee.id,
+                "credit_years": 20,
+            },
+            format="json",
+        )
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
 
 
 class OrgScopedOptionsTest(APITestCase):
-
     def setUp(self):
         from organization.models import Organization
+
         self.org_a = Organization.objects.create(name="Opt Org A")
         self.org_b = Organization.objects.create(name="Opt Org B")
-        self.admin_a = make_user(username="opt_admin_a", role=User.UserRoles.ADMIN,
-                                 is_staff=False, organization=self.org_a)
-        self.admin_b = make_user(username="opt_admin_b", role=User.UserRoles.ADMIN,
-                                 is_staff=False, organization=self.org_b)
+        self.admin_a = make_user(
+            username="opt_admin_a", role=User.UserRoles.ADMIN, is_staff=False, organization=self.org_a
+        )
+        self.admin_b = make_user(
+            username="opt_admin_b", role=User.UserRoles.ADMIN, is_staff=False, organization=self.org_b
+        )
         self.global_kafillik = GuaranteeOption.objects.get(key="kafillik", organization__isnull=True)
 
     def test_org_without_own_options_sees_global_list(self):
         self.client.force_authenticate(user=self.admin_a)
         resp = self.client.get(reverse("guarantee-option-list"))
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual({item["key"] for item in resp.data},
-                         set(GuaranteeOption.objects.filter(
-                             organization__isnull=True).values_list("key", flat=True)))
+        self.assertEqual(
+            {item["key"] for item in resp.data},
+            set(GuaranteeOption.objects.filter(organization__isnull=True).values_list("key", flat=True)),
+        )
 
     def test_org_update_creates_copy_and_does_not_touch_global(self):
         old_percent = self.global_kafillik.percent
         self.client.force_authenticate(user=self.admin_a)
         resp = self.client.put(
             reverse("guarantee-option-detail", args=[self.global_kafillik.id]),
-            {"key": "kafillik", "label": "Kafillik A", "percent": "35.00"}, format="json")
+            {"key": "kafillik", "label": "Kafillik A", "percent": "35.00"},
+            format="json",
+        )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
         self.global_kafillik.refresh_from_db()
@@ -331,48 +400,59 @@ class OrgScopedOptionsTest(APITestCase):
         self.assertEqual(copy.percent, Decimal("35.00"))
         self.assertEqual(
             GuaranteeOption.objects.filter(organization=self.org_a).count(),
-            GuaranteeOption.objects.filter(organization__isnull=True).count())
+            GuaranteeOption.objects.filter(organization__isnull=True).count(),
+        )
 
     def test_two_orgs_do_not_affect_each_other(self):
         self.client.force_authenticate(user=self.admin_a)
-        self.client.put(reverse("guarantee-option-detail", args=[self.global_kafillik.id]),
-                        {"key": "kafillik", "label": "A", "percent": "35.00"}, format="json")
+        self.client.put(
+            reverse("guarantee-option-detail", args=[self.global_kafillik.id]),
+            {"key": "kafillik", "label": "A", "percent": "35.00"},
+            format="json",
+        )
 
         self.client.force_authenticate(user=self.admin_b)
-        self.client.put(reverse("guarantee-option-detail", args=[self.global_kafillik.id]),
-                        {"key": "kafillik", "label": "B", "percent": "25.00"}, format="json")
+        self.client.put(
+            reverse("guarantee-option-detail", args=[self.global_kafillik.id]),
+            {"key": "kafillik", "label": "B", "percent": "25.00"},
+            format="json",
+        )
 
-        self.assertEqual(GuaranteeOption.objects.get(organization=self.org_a, key="kafillik").percent,
-                         Decimal("35.00"))
-        self.assertEqual(GuaranteeOption.objects.get(organization=self.org_b, key="kafillik").percent,
-                         Decimal("25.00"))
+        self.assertEqual(GuaranteeOption.objects.get(organization=self.org_a, key="kafillik").percent, Decimal("35.00"))
+        self.assertEqual(GuaranteeOption.objects.get(organization=self.org_b, key="kafillik").percent, Decimal("25.00"))
 
     def test_org_cannot_use_other_orgs_option_in_calculate(self):
         from home.models import Home
-        home = Home.objects.create(home_number=1, area=AREA, price_per_sqm=PRICE,
-                                   organization=self.org_b)
+
+        home = Home.objects.create(home_number=1, area=AREA, price_per_sqm=PRICE, organization=self.org_b)
         self.client.force_authenticate(user=self.admin_a)
-        self.client.put(reverse("guarantee-option-detail", args=[self.global_kafillik.id]),
-                        {"key": "kafillik", "label": "A", "percent": "35.00"}, format="json")
+        self.client.put(
+            reverse("guarantee-option-detail", args=[self.global_kafillik.id]),
+            {"key": "kafillik", "label": "A", "percent": "35.00"},
+            format="json",
+        )
         option_a = GuaranteeOption.objects.get(organization=self.org_a, key="kafillik")
 
         self.client.force_authenticate(user=self.admin_b)
-        resp = self.client.post(reverse("calculator-calculate"), {
-            "home_id": home.id,
-            "payment_type": "bosh_tolovli",
-            "guarantee_id": option_a.id,
-            "credit_years": 20,
-        }, format="json")
+        resp = self.client.post(
+            reverse("calculator-calculate"),
+            {
+                "home_id": home.id,
+                "payment_type": "bosh_tolovli",
+                "guarantee_id": option_a.id,
+                "credit_years": 20,
+            },
+            format="json",
+        )
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_option_materializes_default_set(self):
         self.client.force_authenticate(user=self.admin_a)
-        resp = self.client.post(reverse("guarantee-option-list"),
-                                {"key": "yangi", "label": "Yangi tur", "percent": "10.00"},
-                                format="json")
+        resp = self.client.post(
+            reverse("guarantee-option-list"), {"key": "yangi", "label": "Yangi tur", "percent": "10.00"}, format="json"
+        )
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
-        keys = set(GuaranteeOption.objects.filter(
-            organization=self.org_a).values_list("key", flat=True))
+        keys = set(GuaranteeOption.objects.filter(organization=self.org_a).values_list("key", flat=True))
         self.assertIn("yangi", keys)
         self.assertIn("kafillik", keys)
 
@@ -381,7 +461,9 @@ class OrgScopedOptionsTest(APITestCase):
         self.client.force_authenticate(user=staff)
         resp = self.client.put(
             reverse("guarantee-option-detail", args=[self.global_kafillik.id]),
-            {"key": "kafillik", "label": "Global", "percent": "18.00"}, format="json")
+            {"key": "kafillik", "label": "Global", "percent": "18.00"},
+            format="json",
+        )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.global_kafillik.refresh_from_db()
         self.assertEqual(self.global_kafillik.percent, Decimal("18.00"))
@@ -389,17 +471,24 @@ class OrgScopedOptionsTest(APITestCase):
 
     def test_org_calculation_uses_own_percent(self):
         from home.models import Home
-        home = Home.objects.create(home_number=2, area=AREA, price_per_sqm=PRICE,
-                                   organization=self.org_a)
+
+        home = Home.objects.create(home_number=2, area=AREA, price_per_sqm=PRICE, organization=self.org_a)
         self.client.force_authenticate(user=self.admin_a)
-        self.client.put(reverse("guarantee-option-detail", args=[self.global_kafillik.id]),
-                        {"key": "kafillik", "label": "A", "percent": "20.00"}, format="json")
+        self.client.put(
+            reverse("guarantee-option-detail", args=[self.global_kafillik.id]),
+            {"key": "kafillik", "label": "A", "percent": "20.00"},
+            format="json",
+        )
         option_a = GuaranteeOption.objects.get(organization=self.org_a, key="kafillik")
-        resp = self.client.post(reverse("calculator-calculate"), {
-            "home_id": home.id,
-            "payment_type": "bosh_tolovli",
-            "guarantee_id": option_a.id,
-            "credit_years": 20,
-        }, format="json")
+        resp = self.client.post(
+            reverse("calculator-calculate"),
+            {
+                "home_id": home.id,
+                "payment_type": "bosh_tolovli",
+                "guarantee_id": option_a.id,
+                "credit_years": 20,
+            },
+            format="json",
+        )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data["client_payment"], Decimal("75999000"))

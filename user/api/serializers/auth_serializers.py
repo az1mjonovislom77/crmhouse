@@ -19,5 +19,13 @@ class MeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id", "full_name", "organization_name", "organization_logo", "username", "phone_number", "role",
-                  "is_active")
+        fields = (
+            "id",
+            "full_name",
+            "organization_name",
+            "organization_logo",
+            "username",
+            "phone_number",
+            "role",
+            "is_active",
+        )

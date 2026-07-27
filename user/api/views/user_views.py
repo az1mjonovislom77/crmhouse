@@ -16,7 +16,7 @@ class UserViewSet(BaseUserViewSet):
     pagination_class = DefaultPagination
     permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
     filter_backends = [TransliteratedSearchFilter]
-    search_fields = ['full_name', 'username', 'phone_number']
+    search_fields = ["full_name", "username", "phone_number"]
 
     def get_queryset(self):
         return filter_by_org(super().get_queryset(), self.request)

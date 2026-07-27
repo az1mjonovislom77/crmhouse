@@ -6,15 +6,15 @@ from tasks.models import Card, Project
 
 
 def _shift_orders(qs, *, delta):
-    project_ids = list(qs.values_list('id', flat=True))
+    project_ids = list(qs.values_list("id", flat=True))
     if not project_ids:
         return []
 
-    max_order = Project.objects.aggregate(max_order=Max('order'))['max_order'] or 0
+    max_order = Project.objects.aggregate(max_order=Max("order"))["max_order"] or 0
     offset = max_order + len(project_ids) + abs(delta) + 1
 
-    Project.objects.filter(id__in=project_ids).update(order=F('order') + offset)
-    Project.objects.filter(id__in=project_ids).update(order=F('order') - offset + delta)
+    Project.objects.filter(id__in=project_ids).update(order=F("order") + offset)
+    Project.objects.filter(id__in=project_ids).update(order=F("order") - offset + delta)
 
     return project_ids
 
@@ -22,13 +22,13 @@ def _shift_orders(qs, *, delta):
 def create_project(*, card=None, users=None, order=None, **data):
     with transaction.atomic():
         if card is None:
-            card = Card.objects.order_by('id').first()
+            card = Card.objects.order_by("id").first()
             if not card:
                 raise ValidationError("Card mavjud emas! Avval card yarating")
 
         qs = Project.objects.select_for_update().filter(card=card)
 
-        max_order = qs.aggregate(max_order=Max('order'))['max_order'] or 0
+        max_order = qs.aggregate(max_order=Max("order"))["max_order"] or 0
 
         if order is None or order > max_order:
             order = max_order + 1
@@ -74,7 +74,7 @@ def update_project(project, *, new_card=None, new_order=None, users=None, **data
         old_qs = qs1 if old_card.id == card_ids[0] else qs2
         new_qs = qs2 if new_card.id == card_ids[1] else qs1
 
-        max_order = new_qs.aggregate(max_order=Max('order'))['max_order'] or 0
+        max_order = new_qs.aggregate(max_order=Max("order"))["max_order"] or 0
 
         if new_order > max_order:
             new_order = max_order + 1
@@ -82,7 +82,7 @@ def update_project(project, *, new_card=None, new_order=None, users=None, **data
             new_order = 1
 
         project.order = 0
-        project.save(update_fields=['order'])
+        project.save(update_fields=["order"])
 
         if old_card == new_card:
             if new_order > old_order:
@@ -112,7 +112,7 @@ def update_project(project, *, new_card=None, new_order=None, users=None, **data
 
         updated_ids.add(project.id)
 
-        updated_projects = Project.objects.filter(id__in=updated_ids).values('id', 'order', 'card_id')
+        updated_projects = Project.objects.filter(id__in=updated_ids).values("id", "order", "card_id")
 
         return list(updated_projects)
 
@@ -123,6 +123,6 @@ def delete_project(project):
         order = project.order
 
         qs = Project.objects.select_for_update().filter(card=card)
-        qs.filter(order__gt=order).update(order=F('order') - 1)
+        qs.filter(order__gt=order).update(order=F("order") - 1)
 
         project.delete()

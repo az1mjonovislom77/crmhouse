@@ -9,16 +9,16 @@ class Command(BaseCommand):
     help = "Bulk add floor plan to homes (by block and floor range)"
 
     def add_arguments(self, parser):
-        parser.add_argument('--block', type=str, required=True, help='Block name (A-2)')
-        parser.add_argument('--from_floor', type=int, required=True)
-        parser.add_argument('--to_floor', type=int, required=True)
-        parser.add_argument('--image_path', type=str, required=True)
+        parser.add_argument("--block", type=str, required=True, help="Block name (A-2)")
+        parser.add_argument("--from_floor", type=int, required=True)
+        parser.add_argument("--to_floor", type=int, required=True)
+        parser.add_argument("--image_path", type=str, required=True)
 
     def handle(self, *args, **options):
-        block_name = options['block']
-        from_floor = options['from_floor']
-        to_floor = options['to_floor']
-        image_path = options['image_path']
+        block_name = options["block"]
+        from_floor = options["from_floor"]
+        to_floor = options["to_floor"]
+        image_path = options["image_path"]
 
         try:
             block = Block.objects.get(title=block_name)

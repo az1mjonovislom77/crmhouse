@@ -15,23 +15,25 @@ from contact_center.tasks import sync_cdr_data
 
 class CustomPagination(PageNumberPagination):
     page_size = 10
-    page_size_query_param = 'page_size'
+    page_size_query_param = "page_size"
     max_page_size = 100
 
     def get_paginated_response(self, data):
-        return Response({
-            'links': {
-                'next': self.get_next_link(),
-                'previous': self.get_previous_link(),
-            },
-            'count': self.page.paginator.count,
-            'total_pages': self.page.paginator.num_pages,
-            'results': data,
-        })
+        return Response(
+            {
+                "links": {
+                    "next": self.get_next_link(),
+                    "previous": self.get_previous_link(),
+                },
+                "count": self.page.paginator.count,
+                "total_pages": self.page.paginator.num_pages,
+                "results": data,
+            }
+        )
 
 
 @extend_schema(
-    tags=['CDR'],
+    tags=["CDR"],
     summary="CDR ma'lumotlari ro'yxati (paginated + filtered)",
     description="Sana, src, dst, disposition bo'yicha filter qilish mumkin.",
 )
@@ -41,8 +43,8 @@ class CDRListView(generics.ListAPIView):
     pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_class = CallRecordFilter
-    search_fields = ['clid', 'uniqueid', 'src', 'dst']
-    queryset = CallRecord.objects.all().order_by('-calldate')
+    search_fields = ["clid", "uniqueid", "src", "dst"]
+    queryset = CallRecord.objects.all().order_by("-calldate")
 
     def get_queryset(self):
         return scope_call_records(super().get_queryset(), self.request)
@@ -50,11 +52,14 @@ class CDRListView(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         if not queryset.exists():
-            if cache.add('cdr_sync_requested', 1, timeout=300):
+            if cache.add("cdr_sync_requested", 1, timeout=300):
                 sync_cdr_data.delay()
-            return Response({
-                'message': "Ma'lumotlar yangilanmoqda, 10-60 soniya ichida qayta so'rang",
-                'count': 0,
-                'results': [],
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "message": "Ma'lumotlar yangilanmoqda, 10-60 soniya ichida qayta so'rang",
+                    "count": 0,
+                    "results": [],
+                },
+                status=status.HTTP_200_OK,
+            )
         return super().get(request, *args, **kwargs)

@@ -4,8 +4,8 @@ from calculator.formulas.standart import calculate as standart
 from calculator.formulas.teng_ulush import calculate as teng_ulush
 
 FORMULAS = {
-    'standart': standart,
-    'teng_ulush': teng_ulush,
+    "standart": standart,
+    "teng_ulush": teng_ulush,
 }
 
 

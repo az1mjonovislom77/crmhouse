@@ -156,16 +156,19 @@ class AuthServiceTest(TestCase):
 
     def test_login_wrong_password_raises(self):
         from rest_framework.exceptions import ValidationError
+
         with self.assertRaises(ValidationError):
             AuthService.login_user("authuser", "wrong", "127.0.0.1")
 
     def test_login_nonexistent_user_raises(self):
         from rest_framework.exceptions import ValidationError
+
         with self.assertRaises(ValidationError):
             AuthService.login_user("nobody", "pass123", "127.0.0.1")
 
     def test_login_inactive_user_raises(self):
         from rest_framework.exceptions import ValidationError
+
         self.user.is_active = False
         self.user.save()
         with self.assertRaises(ValidationError):
@@ -179,16 +182,19 @@ class AuthServiceTest(TestCase):
 
     def test_refresh_none_token_raises(self):
         from rest_framework.exceptions import ValidationError
+
         with self.assertRaises(ValidationError):
             AuthService.refresh_user_token(None)
 
     def test_refresh_invalid_token_raises(self):
         from rest_framework.exceptions import ValidationError
+
         with self.assertRaises(ValidationError):
             AuthService.refresh_user_token("invalid.token.here")
 
     def test_logout_blacklists_token(self):
         from rest_framework.exceptions import ValidationError
+
         refresh = RefreshToken.for_user(self.user)
         AuthService.logout_user(str(refresh))
         with self.assertRaises(ValidationError):
@@ -353,7 +359,9 @@ class UserViewSetTest(APITestCase):
     def test_update_user(self):
         user = make_user(username="upduser", full_name="Old")
         url = reverse("user-detail", args=[user.id])
-        resp = self.client.put(url, {"username": "upduser", "full_name": "Updated", "password": "N3wStrong!Pass", "role": "s"})
+        resp = self.client.put(
+            url, {"username": "upduser", "full_name": "Updated", "password": "N3wStrong!Pass", "role": "s"}
+        )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         user.refresh_from_db()
         self.assertEqual(user.full_name, "Updated")
@@ -407,7 +415,8 @@ class RequestLogTrimTest(TestCase):
     @staticmethod
     def make_log():
         from user.models import RequestLog
-        return RequestLog.objects.create(method='GET', path='/x/', status_code=200, duration_ms=1)
+
+        return RequestLog.objects.create(method="GET", path="/x/", status_code=200, duration_ms=1)
 
     @override_settings(REQUEST_LOG_MAX=5)
     def test_trim_keeps_only_latest_max_logs(self):
@@ -417,7 +426,7 @@ class RequestLogTrimTest(TestCase):
         logs = [self.make_log() for _ in range(7)]
         _trim_logs(RequestLog)
         self.assertEqual(RequestLog.objects.count(), 5)
-        remaining_ids = set(RequestLog.objects.values_list('id', flat=True))
+        remaining_ids = set(RequestLog.objects.values_list("id", flat=True))
         self.assertEqual(remaining_ids, {log.id for log in logs[2:]})
 
     @override_settings(REQUEST_LOG_MAX=5)

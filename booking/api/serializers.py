@@ -33,7 +33,7 @@ class BookingGetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Booking
-        fields = '__all__'
+        fields = "__all__"
 
     def get_home_number(self, obj):
         return obj.home.home_number if obj.home else None
@@ -64,7 +64,7 @@ def _home_org_id(home):
 
 
 def _require_same_org(serializer, attrs, home=None, client=None, booking=None):
-    request = serializer.context.get('request')
+    request = serializer.context.get("request")
     if request is None or request.user.is_staff:
         return
     org_id = request.user.organization_id
@@ -87,45 +87,57 @@ class BookingCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Booking
-        fields = '__all__'
+        fields = "__all__"
 
         read_only_fields = [
-            'created_at', 'organization', 'status',
-            'guarantee_percent', 'subsidy_amount',
-            'annual_rate_pct', 'state_threshold_pct', 'subsidy_years', 'firm_markup_pct',
-            'contract_price', 'firm_covers', 'client_payment', 'credit_amount',
-            'monthly_full', 'monthly_stage1', 'gov_monthly',
+            "created_at",
+            "organization",
+            "status",
+            "guarantee_percent",
+            "subsidy_amount",
+            "annual_rate_pct",
+            "state_threshold_pct",
+            "subsidy_years",
+            "firm_markup_pct",
+            "contract_price",
+            "firm_covers",
+            "client_payment",
+            "credit_amount",
+            "monthly_full",
+            "monthly_stage1",
+            "gov_monthly",
         ]
 
     def validate(self, attrs):
-        home = attrs.get('home') or (self.instance.home if self.instance else None)
-        client = attrs.get('client') or (self.instance.client if self.instance else None)
+        home = attrs.get("home") or (self.instance.home if self.instance else None)
+        client = attrs.get("client") or (self.instance.client if self.instance else None)
         _require_same_org(self, attrs, home=home, client=client)
 
-        guarantee_id = attrs.pop('guarantee_id', None)
-        subsidy_id = attrs.pop('subsidy_id', None)
+        guarantee_id = attrs.pop("guarantee_id", None)
+        subsidy_id = attrs.pop("subsidy_id", None)
 
         def current(field):
             if field in attrs:
                 return attrs[field]
             return getattr(self.instance, field, None)
 
-        payment_type = current('payment_type')
-        credit_years = current('credit_years')
+        payment_type = current("payment_type")
+        credit_years = current("credit_years")
 
         if payment_type and guarantee_id and credit_years and home is not None:
             from calculator.services import compute_booking_snapshot
-            request = self.context.get('request')
-            organization = getattr(request.user, 'organization', None) if request else None
+
+            request = self.context.get("request")
+            organization = getattr(request.user, "organization", None) if request else None
             snapshot = compute_booking_snapshot(
                 home=home,
                 payment_type=payment_type,
                 guarantee_id=guarantee_id,
                 subsidy_id=subsidy_id,
                 credit_years=credit_years,
-                manual_down_payment=current('manual_down_payment'),
+                manual_down_payment=current("manual_down_payment"),
                 organization=organization,
-                price_per_m2=current('price_per_m2'),
+                price_per_m2=current("price_per_m2"),
             )
             attrs.update(snapshot)
         return attrs
@@ -133,17 +145,27 @@ class BookingCreateSerializer(serializers.ModelSerializer):
 
 class PaymentSerializer(serializers.ModelSerializer):
     remaining_debt = serializers.SerializerMethodField()
-    amount = serializers.DecimalField(max_digits=14, decimal_places=2, min_value=Decimal('0.01'))
+    amount = serializers.DecimalField(max_digits=14, decimal_places=2, min_value=Decimal("0.01"))
 
     class Meta:
         model = Payment
-        fields = ['id', 'booking', 'amount', 'note', 'created_at', 'remaining_debt', 'payment_date', 'payment_data',
-                  'payment_number', 'file']
-        read_only_fields = ['id', 'created_at', 'remaining_debt']
+        fields = [
+            "id",
+            "booking",
+            "amount",
+            "note",
+            "created_at",
+            "remaining_debt",
+            "payment_date",
+            "payment_data",
+            "payment_number",
+            "file",
+        ]
+        read_only_fields = ["id", "created_at", "remaining_debt"]
 
     def validate(self, attrs):
-        booking = attrs.get('booking') or (self.instance.booking if self.instance else None)
-        if self.instance is not None and 'booking' in attrs and attrs['booking'].pk != self.instance.booking_id:
+        booking = attrs.get("booking") or (self.instance.booking if self.instance else None)
+        if self.instance is not None and "booking" in attrs and attrs["booking"].pk != self.instance.booking_id:
             raise serializers.ValidationError({"booking": "To'lovning bookingini o'zgartirib bo'lmaydi."})
         _require_same_org(self, attrs, booking=booking)
         return attrs
@@ -151,8 +173,8 @@ class PaymentSerializer(serializers.ModelSerializer):
     def get_remaining_debt(self, obj):
         booking = obj.booking
         total_price = booking.total_price
-        if hasattr(obj, 'booking_payments_total') and obj.booking_payments_total is not None:
+        if hasattr(obj, "booking_payments_total") and obj.booking_payments_total is not None:
             paid = obj.booking_payments_total
         else:
-            paid = booking.payments.aggregate(total=Sum('amount'))['total'] or 0
+            paid = booking.payments.aggregate(total=Sum("amount"))["total"] or 0
         return total_price - paid

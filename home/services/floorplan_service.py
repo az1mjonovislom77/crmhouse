@@ -3,7 +3,6 @@ from home.models import FloorPlan
 
 
 class FloorPlanService:
-
     @staticmethod
     def create_floorplan(validated_data):
         image = validated_data.get("image")

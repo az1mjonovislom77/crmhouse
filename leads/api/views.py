@@ -31,33 +31,30 @@ from leads.selectors.lead_selectors import (
 from leads.services.lead_service import LeadService
 
 
-@extend_schema(tags=['Leads'])
+@extend_schema(tags=["Leads"])
 class LeadViewSet(BaseUserViewSet):
     pagination_class = DefaultPagination
 
     def get_queryset(self):
-        if self.action in ('retrieve', 'ai_suggest'):
-            qs = get_lead_detail_queryset()
-        else:
-            qs = get_lead_list_queryset()
-        qs = filter_by_org(qs, self.request, field='owner__organization')
+        qs = get_lead_detail_queryset() if self.action in ("retrieve", "ai_suggest") else get_lead_list_queryset()
+        qs = filter_by_org(qs, self.request, field="owner__organization")
         return scope_leads_for_user(qs, self.request.user)
 
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action == "create":
             return LeadCreateSerializer
-        if self.action in ('update', 'partial_update'):
+        if self.action in ("update", "partial_update"):
             return LeadUpdateSerializer
-        if self.action == 'retrieve':
+        if self.action == "retrieve":
             return LeadDetailSerializer
-        if self.action == 'bulk_assign':
+        if self.action == "bulk_assign":
             return LeadBulkAssignSerializer
         return LeadListSerializer
 
     def list(self, request, *args, **kwargs):
         count_params = request.query_params.copy()
         count_params._mutable = True
-        count_params.pop('status', None)
+        count_params.pop("status", None)
         base_qs = self.get_queryset()
         counts = get_status_counts(filter_leads(base_qs, count_params, user=request.user), user=request.user)
 
@@ -65,70 +62,92 @@ class LeadViewSet(BaseUserViewSet):
         page = self.paginate_queryset(qs)
         if page is not None:
             response = self.get_paginated_response(LeadListSerializer(page, many=True).data)
-            response.data['counts'] = counts
+            response.data["counts"] = counts
             return response
-        return Response({'counts': counts, 'data': LeadListSerializer(qs, many=True).data})
+        return Response({"counts": counts, "data": LeadListSerializer(qs, many=True).data})
 
     def create(self, request, *args, **kwargs):
-        serializer = LeadCreateSerializer(data=request.data, context={'request': request})
+        serializer = LeadCreateSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         lead = LeadService.create_lead(serializer.validated_data, request.user)
-        return Response(LeadDetailSerializer(get_lead_detail_queryset().get(pk=lead.pk),
-                                             context={'request': request}).data,
-                        status=status.HTTP_201_CREATED)
+        return Response(
+            LeadDetailSerializer(get_lead_detail_queryset().get(pk=lead.pk), context={"request": request}).data,
+            status=status.HTTP_201_CREATED,
+        )
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = LeadUpdateSerializer(instance, data=request.data, partial=True, context={'request': request})
+        serializer = LeadUpdateSerializer(instance, data=request.data, partial=True, context={"request": request})
         serializer.is_valid(raise_exception=True)
         lead = LeadService.update_lead(instance, serializer.validated_data, request.user)
-        return Response(LeadDetailSerializer(get_lead_detail_queryset().get(pk=lead.pk),
-                                             context={'request': request}).data)
+        return Response(
+            LeadDetailSerializer(get_lead_detail_queryset().get(pk=lead.pk), context={"request": request}).data
+        )
 
     @extend_schema(
         request=LeadBulkAssignSerializer,
-        responses={200: inline_serializer('LeadBulkAssignResponse', fields={
-            'updated': serializers.IntegerField(),
-            'lead_ids': serializers.ListField(child=serializers.IntegerField()),
-            'assignee_id': serializers.IntegerField(),
-            'assignee_name': serializers.CharField(),
-        })},
+        responses={
+            200: inline_serializer(
+                "LeadBulkAssignResponse",
+                fields={
+                    "updated": serializers.IntegerField(),
+                    "lead_ids": serializers.ListField(child=serializers.IntegerField()),
+                    "assignee_id": serializers.IntegerField(),
+                    "assignee_name": serializers.CharField(),
+                },
+            )
+        },
     )
-    @action(detail=False, methods=['post'], url_path='bulk-assign')
+    @action(detail=False, methods=["post"], url_path="bulk-assign")
     def bulk_assign(self, request):
-        serializer = LeadBulkAssignSerializer(data=request.data, context={'request': request})
+        serializer = LeadBulkAssignSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
-        assignee_to = serializer.validated_data['assignee_to']
-        lead_ids = serializer.validated_data['lead_ids']
+        assignee_to = serializer.validated_data["assignee_to"]
+        lead_ids = serializer.validated_data["lead_ids"]
         updated_ids = LeadService.bulk_assign_leads(
-            lead_ids, assignee_to, request.user, self.get_queryset(),
+            lead_ids,
+            assignee_to,
+            request.user,
+            self.get_queryset(),
         )
-        return Response({
-            'updated': len(updated_ids),
-            'lead_ids': updated_ids,
-            'assignee_id': assignee_to.id,
-            'assignee_name': assignee_to.full_name,
-        })
+        return Response(
+            {
+                "updated": len(updated_ids),
+                "lead_ids": updated_ids,
+                "assignee_id": assignee_to.id,
+                "assignee_name": assignee_to.full_name,
+            }
+        )
 
     @extend_schema(
         request=None,
-        responses={200: inline_serializer('AiSuggestResponse', fields={
-            'tips': serializers.ListField(child=serializers.CharField()),
-            'suggested_message': serializers.CharField(allow_null=True),
-            'next_action': serializers.CharField(allow_null=True),
-        })},
+        responses={
+            200: inline_serializer(
+                "AiSuggestResponse",
+                fields={
+                    "tips": serializers.ListField(child=serializers.CharField()),
+                    "suggested_message": serializers.CharField(allow_null=True),
+                    "next_action": serializers.CharField(allow_null=True),
+                },
+            )
+        },
     )
-    @action(detail=True, methods=['post'], url_path='ai-suggest')
+    @action(detail=True, methods=["post"], url_path="ai-suggest")
     def ai_suggest(self, request, pk=None):
         lead = self.get_object()
 
-        events_text = '\n'.join([
-            f"- [{e.at.strftime('%Y-%m-%d %H:%M')}] {e.type}"
-            f"{f': {e.from_value} → {e.to_value}' if e.from_value or e.to_value else ''}"
-            f"{f' | {e.text}' if e.text else ''}"
-            f" ({e.by})"
-            for e in lead.events.all()
-        ]) or "Hali hech qanday amal yo'q"
+        events_text = (
+            "\n".join(
+                [
+                    f"- [{e.at.strftime('%Y-%m-%d %H:%M')}] {e.type}"
+                    f"{f': {e.from_value} → {e.to_value}' if e.from_value or e.to_value else ''}"
+                    f"{f' | {e.text}' if e.text else ''}"
+                    f" ({e.by})"
+                    for e in lead.events.all()
+                ]
+            )
+            or "Hali hech qanday amal yo'q"
+        )
 
         note_str = lead.note or "yo'q"
         prompt = (
@@ -142,44 +161,49 @@ class LeadViewSet(BaseUserViewSet):
             '{"tips":["..."],"suggested_message":"...","next_action":"call|meeting|comment"}'
         )
 
-        api_key = getattr(settings, 'GROQ_API_KEY', None)
+        api_key = getattr(settings, "GROQ_API_KEY", None)
         if not api_key:
-            return Response({'error': "GROQ_API_KEY sozlanmagan"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response({"error": "GROQ_API_KEY sozlanmagan"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         try:
-            resp = httpx.post('https://api.groq.com/openai/v1/chat/completions',
-                              headers={
-                                  'Authorization': f'Bearer {api_key}',
-                                  'content-type': 'application/json',
-                              },
-                              json={
-                                  'model': 'llama-3.3-70b-versatile',
-                                  'max_tokens': 1024,
-                                  'messages': [{'role': 'user', 'content': prompt}]}, timeout=30)
+            resp = httpx.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "content-type": "application/json",
+                },
+                json={
+                    "model": "llama-3.3-70b-versatile",
+                    "max_tokens": 1024,
+                    "messages": [{"role": "user", "content": prompt}],
+                },
+                timeout=30,
+            )
             resp.raise_for_status()
-            content = resp.json()['choices'][0]['message']['content']
-            match = re.search(r'\{.*\}', content, re.DOTALL)
+            content = resp.json()["choices"][0]["message"]["content"]
+            match = re.search(r"\{.*\}", content, re.DOTALL)
             return Response(
-                json.loads(match.group()) if match
-                else {'tips': [content], 'suggested_message': None, 'next_action': None}
+                json.loads(match.group())
+                if match
+                else {"tips": [content], "suggested_message": None, "next_action": None}
             )
         except httpx.HTTPStatusError:
-            return Response({'error': 'AI xizmatiga ulanishda xato'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response({"error": "AI xizmatiga ulanishda xato"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         except Exception:
-            return Response({'error': 'AI javob qaytarishda xato'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": "AI javob qaytarishda xato"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@extend_schema(tags=['Notifications'])
+@extend_schema(tags=["Notifications"])
 class LeadNotificationViewSet(BaseUserViewSet):
     serializer_class = LeadNotificationSerializer
-    http_method_names = ['get']
+    http_method_names = ["get"]
 
     def get_queryset(self):
         today = timezone.now().date()
         return LeadNotification.objects.filter(
             owner=self.request.user,
             meeting_at__date=today,
-        ).select_related('lead')
+        ).select_related("lead")
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()

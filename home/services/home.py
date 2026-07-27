@@ -6,7 +6,6 @@ from home.services.floorplan_service import FloorPlanService
 
 
 class HomeService:
-
     @staticmethod
     @transaction.atomic
     def create_home(data):
@@ -50,17 +49,20 @@ class HomeService:
         home.home_status = new_status
         home.save(update_fields=["home_status"])
 
-        if (new_status == Home.HomeStatus.AVAILABLE
-                and old in (Home.HomeStatus.RESERVED, Home.HomeStatus.SOLD)):
+        if new_status == Home.HomeStatus.AVAILABLE and old in (Home.HomeStatus.RESERVED, Home.HomeStatus.SOLD):
             Booking.objects.filter(home=home, status=Booking.BookingStatus.ACTIVE).update(
-                status=Booking.BookingStatus.CANCELED)
+                status=Booking.BookingStatus.CANCELED
+            )
 
         if not client:
-            booking = (home.bookings.filter(status=Booking.BookingStatus.ACTIVE).order_by('-created_at').first()
-                       or home.bookings.order_by('-created_at').first())
+            booking = (
+                home.bookings.filter(status=Booking.BookingStatus.ACTIVE).order_by("-created_at").first()
+                or home.bookings.order_by("-created_at").first()
+            )
             client = booking.client if booking else None
 
         HomeStatusHistory.objects.create(
-            home=home, client=client, from_status=old, to_status=new_status, changed_by=user)
+            home=home, client=client, from_status=old, to_status=new_status, changed_by=user
+        )
 
         return home

@@ -44,9 +44,7 @@ class RenovationModelTest(TestCase):
 
 class ProjectServiceTest(TestCase):
     def test_create_project_without_image(self):
-        project = ProjectService.create_project({
-            "title": "No Image", "description": "Desc", "floors": 3
-        })
+        project = ProjectService.create_project({"title": "No Image", "description": "Desc", "floors": 3})
         self.assertIsNotNone(project.pk)
         self.assertEqual(project.title, "No Image")
 
@@ -66,10 +64,12 @@ class ProjectsSelectorTest(TestCase):
     def setUp(self):
         self.project = make_project(title="Stats Project")
         self.blocks = make_blocks(projects=self.project, title="SB")
-        Home.objects.create(blocks=self.blocks, home_number=1,
-                            home_status=Home.HomeStatus.AVAILABLE, price_per_sqm=0, area=0)
-        Home.objects.create(blocks=self.blocks, home_number=2,
-                            home_status=Home.HomeStatus.SOLD, price_per_sqm=0, area=0)
+        Home.objects.create(
+            blocks=self.blocks, home_number=1, home_status=Home.HomeStatus.AVAILABLE, price_per_sqm=0, area=0
+        )
+        Home.objects.create(
+            blocks=self.blocks, home_number=2, home_status=Home.HomeStatus.SOLD, price_per_sqm=0, area=0
+        )
 
     def test_returns_projects(self):
         qs = get_projects_with_stats()

@@ -9,21 +9,21 @@ from projects.models.project_models import Block, Floors
 
 
 class Command(BaseCommand):
-    help = 'Import homes from Excel file'
+    help = "Import homes from Excel file"
 
     def handle(self, *args, **kwargs):
-        file_path = os.path.join(settings.BASE_DIR, 'data', 'homes6.xlsx')
+        file_path = os.path.join(settings.BASE_DIR, "data", "homes6.xlsx")
 
         df = pd.read_excel(file_path)
 
         block_obj, _ = Block.objects.get_or_create(title="A-1")
 
         for _, row in df.iterrows():
-            floor_number = int(row['floor'])
-            home_number = int(row['home_number'])
-            area = float(row['area'])
-            rooms = int(row['rooms'])
-            price = float(row['price'])
+            floor_number = int(row["floor"])
+            home_number = int(row["home_number"])
+            area = float(row["area"])
+            rooms = int(row["rooms"])
+            price = float(row["price"])
 
             floor_obj, _ = Floors.objects.get_or_create(number=floor_number)
 
@@ -36,7 +36,7 @@ class Command(BaseCommand):
                     "rooms": rooms,
                     "price_per_sqm": price,
                     "entrance": 1,
-                }
+                },
             )
 
-        self.stdout.write(self.style.SUCCESS('Import tugadi ✅'))
+        self.stdout.write(self.style.SUCCESS("Import tugadi ✅"))

@@ -13,7 +13,7 @@ class CardSerializer(BaseReadSerializer):
 
     class Meta(BaseReadSerializer.Meta):
         model = Card
-        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by', 'organization']
+        read_only_fields = ["created_at", "updated_at", "created_by", "updated_by", "organization"]
 
 
 class CommentSerializer(BaseReadSerializer):
@@ -23,21 +23,32 @@ class CommentSerializer(BaseReadSerializer):
 
     class Meta(BaseReadSerializer.Meta):
         model = Comment
-        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by']
+        read_only_fields = ["created_at", "updated_at", "created_by", "updated_by"]
 
 
 class ProjectGetSerializer(serializers.ModelSerializer):
     users_full_name = SerializerMethodField()
-    card_title = serializers.CharField(source='card.title', read_only=True)
+    card_title = serializers.CharField(source="card.title", read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
     created_by = UserMiniSerializer(read_only=True)
     updated_by = UserMiniSerializer(read_only=True)
 
     class Meta:
         model = Project
-        fields = ('id', 'users', 'description', 'comments', 'users_full_name', 'card', 'card_title', 'title', 'order',
-                  'created_by', 'updated_by')
-        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by']
+        fields = (
+            "id",
+            "users",
+            "description",
+            "comments",
+            "users_full_name",
+            "card",
+            "card_title",
+            "title",
+            "order",
+            "created_by",
+            "updated_by",
+        )
+        read_only_fields = ["created_at", "updated_at", "created_by", "updated_by"]
 
     def get_users_full_name(self, obj):
         return [user.full_name for user in obj.users.all()]
@@ -46,12 +57,12 @@ class ProjectGetSerializer(serializers.ModelSerializer):
 class ProjectCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = ('users', 'description', 'card', 'title')
-        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by']
+        fields = ("users", "description", "card", "title")
+        read_only_fields = ["created_at", "updated_at", "created_by", "updated_by"]
 
     def create(self, validated_data):
-        users = validated_data.pop('users', [])
-        card = validated_data.pop('card')
+        users = validated_data.pop("users", [])
+        card = validated_data.pop("card")
 
         return create_project(card=card, users=users, order=None, **validated_data)
 
@@ -61,8 +72,8 @@ class ProjectUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ('users', 'description', 'card', 'title', 'order')
-        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by']
+        fields = ("users", "description", "card", "title", "order")
+        read_only_fields = ["created_at", "updated_at", "created_by", "updated_by"]
         validators: list = []
 
     def validate_order(self, value):
@@ -71,9 +82,9 @@ class ProjectUpdateSerializer(serializers.ModelSerializer):
         return value
 
     def update(self, instance, validated_data):
-        users = validated_data.pop('users', None)
-        new_card = validated_data.pop('card', None)
-        new_order = validated_data.pop('order', None)
+        users = validated_data.pop("users", None)
+        new_card = validated_data.pop("card", None)
+        new_order = validated_data.pop("order", None)
 
         updated = update_project(instance, new_card=new_card, new_order=new_order, users=users, **validated_data)
 

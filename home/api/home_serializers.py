@@ -7,19 +7,20 @@ from home.models import FloorPlan, Home, HomeStatusHistory
 class FloorPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = FloorPlan
-        fields = '__all__'
+        fields = "__all__"
 
 
 class HomeGetSerializer(serializers.ModelSerializer):
     block_title = serializers.SerializerMethodField()
     project_title = serializers.SerializerMethodField()
     floor_number = serializers.SerializerMethodField()
-    total_price = serializers.DecimalField(max_digits=50, decimal_places=2, read_only=True,
-                                           source='total_price_annotated')
+    total_price = serializers.DecimalField(
+        max_digits=50, decimal_places=2, read_only=True, source="total_price_annotated"
+    )
 
     class Meta:
         model = Home
-        fields = '__all__'
+        fields = "__all__"
 
     def get_block_title(self, obj):
         return obj.blocks.title if obj.blocks else None
@@ -37,20 +38,29 @@ class HomeCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Home
-        fields = '__all__'
-        read_only_fields = ['organization']
+        fields = "__all__"
+        read_only_fields = ["organization"]
 
 
 class HomeStatusHistorySerializer(serializers.ModelSerializer):
-    changed_by = serializers.StringRelatedField()
+    changed_by = serializers.StringRelatedField()  # type: ignore[var-annotated]
     home_number = SerializerMethodField()
     home_block = SerializerMethodField()
     home_floor = SerializerMethodField()
 
     class Meta:
         model = HomeStatusHistory
-        fields = ["id", "home", "from_status", "to_status", "changed_by", "changed_at", "home_number", "home_block",
-                  "home_floor"]
+        fields = [
+            "id",
+            "home",
+            "from_status",
+            "to_status",
+            "changed_by",
+            "changed_at",
+            "home_number",
+            "home_block",
+            "home_floor",
+        ]
 
     def get_home_number(self, obj):
         return obj.home.home_number if obj.home else None
@@ -63,16 +73,17 @@ class HomeStatusHistorySerializer(serializers.ModelSerializer):
 
 
 class HomeDetailGetSerializer(serializers.ModelSerializer):
-    floorplan = FloorPlanSerializer(source='plans', many=True, read_only=True)
+    floorplan = FloorPlanSerializer(source="plans", many=True, read_only=True)
     block_title = serializers.SerializerMethodField()
     project_title = serializers.SerializerMethodField()
     floor_number = serializers.SerializerMethodField()
-    total_price = serializers.DecimalField(max_digits=50, decimal_places=2, read_only=True,
-                                           source='total_price_annotated')
+    total_price = serializers.DecimalField(
+        max_digits=50, decimal_places=2, read_only=True, source="total_price_annotated"
+    )
 
     class Meta:
         model = Home
-        fields = '__all__'
+        fields = "__all__"
 
     def get_block_title(self, obj):
         return obj.blocks.title if obj.blocks else None

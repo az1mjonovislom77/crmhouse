@@ -10,7 +10,7 @@ class SVGSerializer(BaseReadSerializer):
 
 
 class ShowroomSerializer(serializers.ModelSerializer):
-    label = serializers.SerializerMethodField()
+    label = serializers.SerializerMethodField()  # type: ignore[assignment]
     homes_count = serializers.IntegerField(read_only=True)
     available_homes = serializers.IntegerField(read_only=True)
     sold_homes = serializers.IntegerField(read_only=True)
@@ -20,9 +20,22 @@ class ShowroomSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Showroom
-        fields = ['id', 'title', 'label', 'blocks_number', 'path', 'navigate_to', 'hover_color',
-                  'default_color', 'homes_count', 'available_homes', 'sold_homes', 'reserved_homes',
-                  'project_title', 'project_id']
+        fields = [
+            "id",
+            "title",
+            "label",
+            "blocks_number",
+            "path",
+            "navigate_to",
+            "hover_color",
+            "default_color",
+            "homes_count",
+            "available_homes",
+            "sold_homes",
+            "reserved_homes",
+            "project_title",
+            "project_id",
+        ]
 
     def get_label(self, obj):
         return obj.block.title if obj.block else None
@@ -39,4 +52,4 @@ class ShowroomImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShowroomImage
-        fields = ['id', 'image', 'width', 'height', 'showrooms']
+        fields = ["id", "image", "width", "height", "showrooms"]

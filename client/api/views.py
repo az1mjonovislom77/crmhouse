@@ -8,12 +8,12 @@ from common.mixins import filter_by_org
 from common.search import TransliteratedSearchFilter
 
 
-@extend_schema(tags=['Client'])
+@extend_schema(tags=["Client"])
 class ClientViewSet(BaseUserViewSet):
     serializer_class = ClientSerializer
     pagination_class = DefaultPagination
     filter_backends = [TransliteratedSearchFilter]
-    search_fields = ['full_name', 'phone_number', 'passport', 'address']
+    search_fields = ["full_name", "phone_number", "passport", "address"]
 
     def get_queryset(self):
         return filter_by_org(get_client_queryset(), self.request)

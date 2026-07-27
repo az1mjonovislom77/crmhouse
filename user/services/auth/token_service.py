@@ -25,23 +25,19 @@ class UserTokenService:
     @staticmethod
     def rotate_refresh_token(refresh_token_str: str):
         try:
-            refresh = RefreshToken(refresh_token_str)
+            refresh = RefreshToken(refresh_token_str)  # type: ignore[arg-type]
             new_access = str(refresh.access_token)
             refresh.blacklist()
             refresh.set_jti()
             refresh.set_exp()
             refresh.set_iat()
             return {"access": new_access, "refresh": str(refresh)}
-        except TokenError:
-            raise TokenError("Invalid or expired refresh token")
+        except TokenError as err:
+            raise TokenError("Invalid or expired refresh token") from err
 
     @classmethod
     def set_refresh_cookie(cls, response, refresh_token: str):
-        response.set_cookie(
-            key=cls.COOKIE_NAME,
-            value=refresh_token,
-            **cls.COOKIE_SETTINGS
-        )
+        response.set_cookie(key=cls.COOKIE_NAME, value=refresh_token, **cls.COOKIE_SETTINGS)
         return response
 
     @classmethod

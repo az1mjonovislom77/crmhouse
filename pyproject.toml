@@ -5,12 +5,15 @@ extend-exclude = ["**/migrations/**", ".venv"]
 
 [tool.ruff.lint]
 
-select = ["E", "W", "F", "I", "B", "DJ"]
+select = ["E", "W", "F", "I", "B", "DJ", "UP", "C4", "SIM", "RUF"]
 ignore = [
     "E501",
     "DJ001",
     "DJ008",
-    "B904",
+    "RUF001",
+    "RUF002",
+    "RUF003",
+    "RUF012",
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -36,6 +39,10 @@ omit = [
     "manage.py",
     "config/asgi.py",
     "config/wsgi.py",
+    # Qo'lda ishga tushiriladigan bir martalik import/backfill skriptlari
+    "*/management/commands/*",
+    # Faqat prod muhitida yuklanadi, lokal testda ishlamaydi
+    "config/settings/production.py",
 ]
 
 [tool.coverage.report]
@@ -74,4 +81,4 @@ disable_error_code = ["index", "dict-item"]
 
 [[tool.mypy.overrides]]
 module = ["*.management.commands.*", "add_image"]
-disable_error_code = ["assignment", "operator", "var-annotated"]
+disable_error_code = ["assignment", "operator", "var-annotated", "union-attr"]

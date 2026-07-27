@@ -1,7 +1,7 @@
 from .base import *
 
 DEBUG = True
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]
 
 CORS_ALLOW_ALL_ORIGINS = True
 
@@ -23,8 +23,11 @@ REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = []
 
 import sys
 
-if 'test' in sys.argv:
-    MIDDLEWARE = [m for m in MIDDLEWARE if m != 'common.logging.RequestLoggingMiddleware']
+if "test" in sys.argv:
+    MIDDLEWARE = [m for m in MIDDLEWARE if m != "common.logging.RequestLoggingMiddleware"]
+    # Testlarda parol xeshlash tezligi muhim emas — Argon2 o'rniga MD5
+    # (Django'ning testlar uchun rasmiy tavsiyasi, suite'ni sezilarli tezlashtiradi)
+    PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/0"

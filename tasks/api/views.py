@@ -25,44 +25,44 @@ from tasks.models import Card, Comment, Project
 from tasks.permissions import IsProjectMemberOrAdmin
 
 
-@extend_schema(tags=['Card'])
+@extend_schema(tags=["Card"])
 class CardViewSet(OrganizationMixin, AuditMixin, HistoryMixin, BaseUserViewSet):
     queryset = Card.objects.all()
     serializer_class = CardSerializer
     history_serializer_class = CardHistorySerializer
     filter_backends = [TransliteratedSearchFilter]
-    search_fields = ['title']
-    organization_field = 'organization'
+    search_fields = ["title"]
+    organization_field = "organization"
 
 
-@extend_schema(tags=['Comment'])
+@extend_schema(tags=["Comment"])
 class CommentViewSet(OrganizationMixin, AuditMixin, HistoryMixin, BaseUserViewSet):
-    queryset = Comment.objects.select_related('user', 'project')
+    queryset = Comment.objects.select_related("user", "project")
     serializer_class = CommentSerializer
     history_serializer_class = CommentHistorySerializer
     filter_backends = [TransliteratedSearchFilter]
-    search_fields = ['text']
-    organization_field = 'project__card__organization'
+    search_fields = ["text"]
+    organization_field = "project__card__organization"
 
 
-@extend_schema(tags=['Project'])
+@extend_schema(tags=["Project"])
 class ProjectViewSet(OrganizationMixin, AuditMixin, HistoryMixin, PartialPutMixin, viewsets.ModelViewSet):
-    queryset = Project.objects.select_related('card', 'created_by', 'updated_by').prefetch_related(
-        'users',
-        Prefetch('comments', queryset=Comment.objects.select_related('created_by', 'updated_by')),
+    queryset = Project.objects.select_related("card", "created_by", "updated_by").prefetch_related(
+        "users",
+        Prefetch("comments", queryset=Comment.objects.select_related("created_by", "updated_by")),
     )
     history_serializer_class = ProjectHistorySerializer
     http_method_names = ["get", "post", "put", "delete"]
     permission_classes = [IsAuthenticated, IsProjectMemberOrAdmin]
     pagination_class = None
     filter_backends = [TransliteratedSearchFilter]
-    search_fields = ['title', 'description']
-    organization_field = 'card__organization'
+    search_fields = ["title", "description"]
+    organization_field = "card__organization"
 
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action == "create":
             return ProjectCreateSerializer
-        elif self.action in ['update', 'partial_update']:
+        elif self.action in ["update", "partial_update"]:
             return ProjectUpdateSerializer
         return ProjectGetSerializer
 

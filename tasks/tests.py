@@ -172,7 +172,7 @@ class UpdateProjectServiceTest(TestCase):
 
     def test_no_gaps_after_move(self):
         update_project(self.p2, new_order=3)
-        orders = sorted(Project.objects.filter(card=self.card).values_list('order', flat=True))
+        orders = sorted(Project.objects.filter(card=self.card).values_list("order", flat=True))
         self.assertEqual(orders, [1, 2, 3])
 
     def test_order_beyond_max_appends_to_end(self):
@@ -204,7 +204,7 @@ class DeleteProjectServiceTest(TestCase):
     @unittest.skipIf(IS_SQLITE, "SQLite checks UNIQUE constraint per-row; PostgreSQL handles it atomically")
     def test_delete_middle_project_no_gaps(self):
         delete_project(self.p2)
-        orders = sorted(Project.objects.filter(card=self.card).values_list('order', flat=True))
+        orders = sorted(Project.objects.filter(card=self.card).values_list("order", flat=True))
         self.assertEqual(orders, [1, 2])
 
     def test_delete_last_project_no_shift(self):
@@ -226,6 +226,7 @@ class IsProjectMemberOrAdminPermissionTest(TestCase):
 
     def _make_request(self, user, method="PUT"):
         from rest_framework.test import APIRequestFactory
+
         factory = APIRequestFactory()
         request = factory.put("/") if method == "PUT" else factory.get("/")
         request.user = user

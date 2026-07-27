@@ -1,3 +1,4 @@
+import contextlib
 import warnings
 
 import openpyxl
@@ -5,20 +6,18 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = 'Excel dagi o\'tkazilgan qatorlarni tahlil qiladi'
+    help = "Excel dagi o'tkazilgan qatorlarni tahlil qiladi"
 
     def add_arguments(self, parser):
-        parser.add_argument('--file', default='lead.xlsx')
+        parser.add_argument("--file", default="lead.xlsx")
 
     def handle(self, *args, **options):
-        warnings.filterwarnings('ignore')
-        if hasattr(self.stdout, 'reconfigure'):
-            try:
-                self.stdout.reconfigure(encoding='utf-8')
-            except Exception:
-                pass
+        warnings.filterwarnings("ignore")
+        if hasattr(self.stdout, "reconfigure"):
+            with contextlib.suppress(Exception):
+                self.stdout.reconfigure(encoding="utf-8")
 
-        wb = openpyxl.load_workbook(options['file'])
+        wb = openpyxl.load_workbook(options["file"])
         ws = wb.active
 
         total = 0
@@ -32,7 +31,7 @@ class Command(BaseCommand):
 
         for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             total += 1
-            _, full_name, phone, source, subsidiya, status, manager, *rest = row
+            _, full_name, phone, *_rest = row
 
             all_none = all(v is None for v in row)
             if all_none:
@@ -51,14 +50,14 @@ class Command(BaseCommand):
             if not phone:
                 skipped_no_phone += 1
 
-        self.stdout.write(f'Jami qatorlar (header siz): {total}')
-        self.stdout.write(f'To\'liq bo\'sh qatorlar:      {completely_empty}')
-        self.stdout.write(f'Ism+Telefon ikkalasi yo\'q:  {skipped_both_empty}')
-        self.stdout.write(f'Ma\'lumotli qatorlar:        {has_data}')
-        self.stdout.write(f'  - Ismsiz (telefon bor):   {skipped_no_name}')
-        self.stdout.write(f'  - Telefonsiz (ism bor):   {skipped_no_phone}')
+        self.stdout.write(f"Jami qatorlar (header siz): {total}")
+        self.stdout.write(f"To'liq bo'sh qatorlar:      {completely_empty}")
+        self.stdout.write(f"Ism+Telefon ikkalasi yo'q:  {skipped_both_empty}")
+        self.stdout.write(f"Ma'lumotli qatorlar:        {has_data}")
+        self.stdout.write(f"  - Ismsiz (telefon bor):   {skipped_no_name}")
+        self.stdout.write(f"  - Telefonsiz (ism bor):   {skipped_no_phone}")
 
         if examples_skipped:
-            self.stdout.write('\n=== O\'TKAZILGAN QATORLAR (birinchi 10 ta) ===')
+            self.stdout.write("\n=== O'TKAZILGAN QATORLAR (birinchi 10 ta) ===")
             for row_num, vals in examples_skipped:
-                self.stdout.write(f'  Row {row_num}: {list(vals)}')
+                self.stdout.write(f"  Row {row_num}: {list(vals)}")

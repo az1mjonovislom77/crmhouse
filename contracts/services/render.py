@@ -73,18 +73,20 @@ _CSS_RULE_RE = re.compile(r"([^{}]+)\{([^{}]*)\}")
 _IMPORTANT_RE = re.compile(r"\s*!important\s*", re.IGNORECASE)
 
 # Ota elementdan bolalarga meros bo'lib o'tadigan CSS xususiyatlar
-_INHERITED_PROPS = frozenset({
-    "color",
-    "font-family",
-    "font-size",
-    "font-style",
-    "font-weight",
-    "letter-spacing",
-    "line-height",
-    "text-align",
-    "text-indent",
-    "text-transform",
-})
+_INHERITED_PROPS = frozenset(
+    {
+        "color",
+        "font-family",
+        "font-size",
+        "font-style",
+        "font-weight",
+        "letter-spacing",
+        "line-height",
+        "text-align",
+        "text-indent",
+        "text-transform",
+    }
+)
 
 # Brauzer standart stillari — HTML ko'rinishini DOCX'da ham saqlash uchun
 _UA_DEFAULT_RULES = (
@@ -112,9 +114,21 @@ _DOCX_DEFAULT_FONT = "Arial"
 
 # w:tblPr ichidagi elementlarning sxema bo'yicha tartibi
 _TBLPR_SEQUENCE = (
-    "tblStyle", "tblpPr", "tblOverlap", "bidiVisual", "tblStyleRowBandSize",
-    "tblStyleColBandSize", "tblW", "jc", "tblCellSpacing", "tblInd",
-    "tblBorders", "shd", "tblLayout", "tblCellMar", "tblLook",
+    "tblStyle",
+    "tblpPr",
+    "tblOverlap",
+    "bidiVisual",
+    "tblStyleRowBandSize",
+    "tblStyleColBandSize",
+    "tblW",
+    "jc",
+    "tblCellSpacing",
+    "tblInd",
+    "tblBorders",
+    "shd",
+    "tblLayout",
+    "tblCellMar",
+    "tblLook",
 )
 
 # Word standart katak ichki hoshiyalari (dxa: 1pt = 20 dxa)
@@ -176,6 +190,7 @@ def render_contract_html(contract: Contract) -> str:
 
 # --- PDF ---
 
+
 def _font_face_css(family: str) -> str:
     return (
         f'@font-face {{ font-family: "{family}"; src: url("{_FONT_FACES["regular"]}"); }}'
@@ -189,9 +204,7 @@ def _font_face_css(family: str) -> str:
 def _build_pdf_base_css(html: str) -> str:
     html_lower = html.lower()
     faces = [
-        _font_face_css(family)
-        for family in _PDF_FONT_ALIASES
-        if family == "DejaVuSans" or family.lower() in html_lower
+        _font_face_css(family) for family in _PDF_FONT_ALIASES if family == "DejaVuSans" or family.lower() in html_lower
     ]
     return "<style>" + "".join(faces) + _PDF_PAGE_CSS + "</style>"
 
@@ -210,7 +223,7 @@ def _pdf_link_callback(uri: str, rel: str) -> str:
     )
     for prefix, roots in targets:
         if prefix and relative.startswith(prefix):
-            rest = relative[len(prefix):].lstrip("/")
+            rest = relative[len(prefix) :].lstrip("/")
             for root in roots:
                 if root:
                     path = os.path.join(str(root), rest)
@@ -224,10 +237,8 @@ def html_to_pdf(html: str) -> bytes:
     # keyin kelib, ustunlik qiladi (1:1 ko'rinish uchun).
     base_css = _build_pdf_base_css(html)
     match = _HEAD_TAG_RE.search(html)
-    if match:
-        html = html[: match.end()] + base_css + html[match.end():]
-    else:
-        html = base_css + html
+    insert_at = match.end() if match else 0
+    html = html[:insert_at] + base_css + html[insert_at:]
     buffer = BytesIO()
     result = pisa.CreatePDF(src=html, dest=buffer, encoding="utf-8", link_callback=_pdf_link_callback)
     if result.err:
@@ -239,6 +250,7 @@ def html_to_pdf(html: str) -> bytes:
 # html4docx <head> ichidagi <style> blokini butunlay tashlab yuboradi va faqat
 # inline style="" atributlarini o'qiydi. Shuning uchun DOCX'dan oldin CSS
 # qoidalarini (cascade + meros bilan) elementlarga inline qilib singdiramiz.
+
 
 def _parse_declarations(text: str) -> dict:
     decls = {}
@@ -459,7 +471,7 @@ def _set_cell_margins(table, box: dict) -> None:
 def _postprocess_tables(document, soup: BeautifulSoup) -> None:
     soup_tables = [t for t in soup.find_all("table") if t.find_parent("table") is None]
     for table, table_soup in zip(document.tables, soup_tables, strict=False):
-        styles = _parse_declarations(table_soup.get("style", ""))
+        styles = _parse_declarations(str(table_soup.get("style") or ""))
         if "width" in styles:
             _set_table_width(table, styles["width"])
         padding = _cell_padding(table_soup)
@@ -511,7 +523,7 @@ def _apply_paragraph_spacing(document, soup: BeautifulSoup, body_style: dict) ->
     first_p = soup.find("p")
     if first_p is None:
         return
-    styles = _parse_declarations(first_p.get("style", ""))
+    styles = _parse_declarations(str(first_p.get("style") or ""))
     bottom = styles.get("margin-bottom")
     if bottom is None and "margin" in styles:
         bottom = _expand_box_values(styles["margin"]).get("bottom")

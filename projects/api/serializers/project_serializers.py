@@ -7,13 +7,13 @@ from projects.models.project_models import Block, BlockImage, Floors, Project, R
 class BlockImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = BlockImage
-        fields = '__all__'
+        fields = "__all__"
 
 
 class BlockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Block
-        fields = ['title']
+        fields = ["title"]
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -25,20 +25,20 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = '__all__'
-        read_only_fields = ['user', 'organization']
+        fields = "__all__"
+        read_only_fields = ["user", "organization"]
 
     def get_sold_percent(self, obj):
-        return round(getattr(obj, 'sold_percent', 0) or 0, 2)
+        return round(getattr(obj, "sold_percent", 0) or 0, 2)
 
 
 class BlockGetSerializer(serializers.ModelSerializer):
     project_title = serializers.SerializerMethodField()
-    blockimage = BlockImageSerializer(source='plans', many=True, read_only=True)
+    blockimage = BlockImageSerializer(source="plans", many=True, read_only=True)
 
     class Meta:
         model = Block
-        fields = '__all__'
+        fields = "__all__"
 
     def get_project_title(self, obj):
         return obj.projects.title if obj.projects else None

@@ -9,12 +9,12 @@ from projects.models.project_models import Block, Floors, Renovation
 
 class Home(models.Model):
     class HomeStatus(models.TextChoices):
-        AVAILABLE = 'available', 'Available'
-        RESERVED = 'reserved', 'Reserved'
+        AVAILABLE = "available", "Available"
+        RESERVED = "reserved", "Reserved"
 
-        SOLD = 'sold', 'Sold'
-        KALIT_TOPSHIRILDI = 'kalit_topshirildi', 'Kalit Topshirildi'
-        NOMIGA_OTKAZIB_BERILDI = 'nomiga_otkazib_berildi', 'Nomiga O`tkazib Berildi'
+        SOLD = "sold", "Sold"
+        KALIT_TOPSHIRILDI = "kalit_topshirildi", "Kalit Topshirildi"
+        NOMIGA_OTKAZIB_BERILDI = "nomiga_otkazib_berildi", "Nomiga O`tkazib Berildi"
 
     class EntranceChoice(models.IntegerChoices):
         ONE = 1, "1 p"
@@ -41,14 +41,16 @@ class Home(models.Model):
         TEN = 10, "10 xona"
 
     organization = models.ForeignKey(
-        'organization.Organization', on_delete=models.SET_NULL, null=True, blank=True, related_name='homes')
+        "organization.Organization", on_delete=models.SET_NULL, null=True, blank=True, related_name="homes"
+    )
     home_number = models.PositiveIntegerField(default=0)
-    blocks = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name='homes')
+    blocks = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name="homes")
     floor = models.ForeignKey(Floors, on_delete=models.SET_NULL, null=True, blank=True)
     rooms = models.IntegerField(choices=RoomsChoice.choices, default=RoomsChoice.ONE, db_index=True)
     area = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    home_status = models.CharField(choices=HomeStatus.choices, default=HomeStatus.AVAILABLE, max_length=30,
-                                   db_index=True)
+    home_status = models.CharField(
+        choices=HomeStatus.choices, default=HomeStatus.AVAILABLE, max_length=30, db_index=True
+    )
     renovation = models.ForeignKey(Renovation, on_delete=models.SET_NULL, null=True, blank=True)
     price_per_sqm = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     entrance = models.IntegerField(choices=EntranceChoice.choices, default=EntranceChoice.ONE, db_index=True)
@@ -58,7 +60,7 @@ class Home(models.Model):
 
 
 class HomeStatusHistory(models.Model):
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True, related_name='status_history')
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True, related_name="status_history")
     home = models.ForeignKey(Home, on_delete=models.CASCADE, related_name="status_history")
     from_status = models.CharField(max_length=30, null=True, blank=True)
     to_status = models.CharField(max_length=30)
@@ -68,17 +70,20 @@ class HomeStatusHistory(models.Model):
     class Meta:
         ordering = ["-changed_at"]
         indexes = [
-            models.Index(fields=['to_status', 'changed_at']),
+            models.Index(fields=["to_status", "changed_at"]),
         ]
 
 
 class FloorPlan(models.Model):
-    home = models.ForeignKey(Home, on_delete=models.SET_NULL, null=True, blank=True, related_name='plans')
+    home = models.ForeignKey(Home, on_delete=models.SET_NULL, null=True, blank=True, related_name="plans")
 
-    image = models.ImageField(upload_to='floor_plan/',
-                              validators=[FileExtensionValidator(
-                                  allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']),
-                                  check_image_size])
+    image = models.ImageField(
+        upload_to="floor_plan/",
+        validators=[
+            FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "webp", "heic", "heif"]),
+            check_image_size,
+        ],
+    )
 
     def __str__(self):
         return f"FloorPlan {self.pk}"

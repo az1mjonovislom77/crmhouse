@@ -3,12 +3,32 @@ import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-_RESERVED = frozenset({
-    "name", "msg", "args", "levelname", "levelno", "pathname", "filename",
-    "module", "exc_info", "exc_text", "stack_info", "lineno", "funcName",
-    "created", "msecs", "relativeCreated", "thread", "threadName",
-    "processName", "process", "message", "taskName",
-})
+_RESERVED = frozenset(
+    {
+        "name",
+        "msg",
+        "args",
+        "levelname",
+        "levelno",
+        "pathname",
+        "filename",
+        "module",
+        "exc_info",
+        "exc_text",
+        "stack_info",
+        "lineno",
+        "funcName",
+        "created",
+        "msecs",
+        "relativeCreated",
+        "thread",
+        "threadName",
+        "processName",
+        "process",
+        "message",
+        "taskName",
+    }
+)
 
 _db_pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="req-log")
 
@@ -34,7 +54,7 @@ class JsonFormatter(logging.Formatter):
 
 
 class RequestLoggingMiddleware:
-    _SKIP_PREFIXES = ('/static/', '/media/', '/admin/', '/api/schema/', '/api/swagger/')
+    _SKIP_PREFIXES = ("/static/", "/media/", "/admin/", "/api/schema/", "/api/swagger/")
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -71,25 +91,27 @@ class RequestLoggingMiddleware:
 
     @staticmethod
     def _enqueue_db_write(request, response, duration_ms, user, is_authenticated):
-        ip = request.META.get('HTTP_X_FORWARDED_FOR') or request.META.get('REMOTE_ADDR') or ''
-        if ',' in ip:
-            ip = ip.split(',')[0].strip()
+        ip = request.META.get("HTTP_X_FORWARDED_FOR") or request.META.get("REMOTE_ADDR") or ""
+        if "," in ip:
+            ip = ip.split(",")[0].strip()
 
         payload = {
-            'user_id': user.pk if is_authenticated else None,
-            'method': request.method,
-            'path': request.path[:500],
-            'status_code': response.status_code,
-            'duration_ms': duration_ms,
-            'ip_address': ip or None,
+            "user_id": user.pk if is_authenticated else None,
+            "method": request.method,
+            "path": request.path[:500],
+            "status_code": response.status_code,
+            "duration_ms": duration_ms,
+            "ip_address": ip or None,
         }
         _db_pool.submit(_write_log, payload)
 
 
 def _write_log(payload):
     from django.db import connection
+
     try:
         from user.models import RequestLog
+
         RequestLog.objects.create(**payload)
         _trim_logs(RequestLog)
     except Exception:
@@ -100,7 +122,8 @@ def _write_log(payload):
 
 def _trim_logs(RequestLog):
     from django.conf import settings
-    max_logs = getattr(settings, 'REQUEST_LOG_MAX', 10_000)
-    threshold = RequestLog.objects.order_by('-id').values_list('id', flat=True)[max_logs - 1:max_logs]
+
+    max_logs = getattr(settings, "REQUEST_LOG_MAX", 10_000)
+    threshold = RequestLog.objects.order_by("-id").values_list("id", flat=True)[max_logs - 1 : max_logs]
     if threshold:
         RequestLog.objects.filter(id__lt=threshold[0]).delete()

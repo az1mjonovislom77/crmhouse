@@ -25,17 +25,15 @@ class SignInAPIView(APIView):
         result = AuthService.login_user(
             username=serializer.validated_data.get("username"),
             password=serializer.validated_data.get("password"),
-            ip=ip
+            ip=ip,
         )
 
         tokens = result["tokens"]
 
         response = Response(
-            {
-                "success": True,
-                "message": "User logged in successfully",
-                "data": {"access": tokens["access"]}
-            }, status=status.HTTP_200_OK)
+            {"success": True, "message": "User logged in successfully", "data": {"access": tokens["access"]}},
+            status=status.HTTP_200_OK,
+        )
 
         UserTokenService.set_refresh_cookie(response, tokens["refresh"])
 

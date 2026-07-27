@@ -9,4 +9,4 @@ class RequestLogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RequestLog
-        fields = ['id', 'user', 'method', 'path', 'status_code', 'duration_ms', 'ip_address', 'created_at']
+        fields = ["id", "user", "method", "path", "status_code", "duration_ms", "ip_address", "created_at"]

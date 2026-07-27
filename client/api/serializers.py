@@ -13,7 +13,7 @@ class BookingNestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Booking
-        fields = '__all__'
+        fields = "__all__"
 
     def get_home_number(self, obj):
         return obj.home.home_number if obj.home else None
@@ -28,20 +28,34 @@ class BookingMiniSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Booking
-        fields = '__all__'
+        fields = "__all__"
 
 
 class ClientSerializer(serializers.ModelSerializer):
-    booking = BookingNestSerializer(source='bookings', many=True, read_only=True)
-    user = serializers.PrimaryKeyRelatedField(read_only=True)
-    user_full_name = serializers.CharField(source='user.full_name', read_only=True, default=None)
-    organization = serializers.PrimaryKeyRelatedField(read_only=True)
+    booking = BookingNestSerializer(source="bookings", many=True, read_only=True)
+    user = serializers.PrimaryKeyRelatedField(read_only=True)  # type: ignore[var-annotated]
+    user_full_name = serializers.CharField(source="user.full_name", read_only=True, default=None)
+    organization = serializers.PrimaryKeyRelatedField(read_only=True)  # type: ignore[var-annotated]
 
     class Meta:
         model = Client
-        fields = ['id', 'booking', 'full_name', 'short_name', 'birth_date', 'phone_number',
-                  'phone_number2', 'passport', 'passport_date', 'jshshir', 'address', 'from_who', 'user',
-                  'user_full_name', 'organization']
+        fields = [
+            "id",
+            "booking",
+            "full_name",
+            "short_name",
+            "birth_date",
+            "phone_number",
+            "phone_number2",
+            "passport",
+            "passport_date",
+            "jshshir",
+            "address",
+            "from_who",
+            "user",
+            "user_full_name",
+            "organization",
+        ]
 
 
 class ClientNestSerializer(serializers.ModelSerializer):
@@ -49,8 +63,20 @@ class ClientNestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Client
-        fields = ['id', 'home_status_history', 'full_name', 'short_name', 'birth_date', 'phone_number',
-                  'phone_number2', 'passport', 'passport_date', 'jshshir', 'address', 'from_who']
+        fields = [
+            "id",
+            "home_status_history",
+            "full_name",
+            "short_name",
+            "birth_date",
+            "phone_number",
+            "phone_number2",
+            "passport",
+            "passport_date",
+            "jshshir",
+            "address",
+            "from_who",
+        ]
 
     def get_home_status_history(self, obj):
         return HomeStatusHistorySerializer(obj.status_history.all(), many=True).data

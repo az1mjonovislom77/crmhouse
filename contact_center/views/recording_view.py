@@ -10,7 +10,7 @@ from contact_center.selectors import scope_call_records
 from contact_center.services import IssabelService
 
 
-@extend_schema(tags=['CDR'], summary='Recording download')
+@extend_schema(tags=["CDR"], summary="Recording download")
 class RecordingDownloadAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -18,11 +18,11 @@ class RecordingDownloadAPIView(APIView):
         cdr = get_object_or_404(scope_call_records(CallRecord.objects.all(), request), id=cdr_id)
 
         if not cdr.recordingfile:
-            return Response({'detail': 'Recording not found'}, status=404)
+            return Response({"detail": "Recording not found"}, status=404)
 
         service = IssabelService()
         upstream = service.stream_recording(cdr.recordingfile)
 
-        response = StreamingHttpResponse(upstream.iter_content(chunk_size=8192), content_type='audio/wav')
-        response['Content-Disposition'] = f'attachment; filename="{cdr.recordingfile}"'
+        response = StreamingHttpResponse(upstream.iter_content(chunk_size=8192), content_type="audio/wav")
+        response["Content-Disposition"] = f'attachment; filename="{cdr.recordingfile}"'
         return response

@@ -85,9 +85,7 @@ class BookingViewSet(BaseUserViewSet):
 
     @extend_schema(
         parameters=[
-            OpenApiParameter(
-                name="home_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=True
-            )
+            OpenApiParameter(name="home_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=True)
         ],
         responses=BookingGetSerializer(many=True),
     )

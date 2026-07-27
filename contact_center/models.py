@@ -6,7 +6,8 @@ from common.base.models_base import TimeStampedModel
 
 class CallRecord(TimeStampedModel):
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='call_records')
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="call_records"
+    )
     calldate = models.DateTimeField(db_index=True)
     clid = models.CharField(max_length=255, null=True, blank=True)
     src = models.CharField(max_length=50, null=True, blank=True, db_index=True)
@@ -30,7 +31,7 @@ class CallRecord(TimeStampedModel):
     outbound_cnam = models.CharField(max_length=100, blank=True, null=True)
     dst_cnam = models.CharField(max_length=100, blank=True, null=True)
     did = models.CharField(max_length=50, blank=True, null=True)
-    audio_file = models.FileField(upload_to='call_records/', null=True, blank=True)
+    audio_file = models.FileField(upload_to="call_records/", null=True, blank=True)
     audio_downloaded = models.BooleanField(default=False)
 
     @property
@@ -40,9 +41,9 @@ class CallRecord(TimeStampedModel):
         return None
 
     class Meta:
-        verbose_name = 'Call Detail Record'
-        verbose_name_plural = 'Call Detail Records'
-        ordering = ['-calldate']
+        verbose_name = "Call Detail Record"
+        verbose_name_plural = "Call Detail Records"
+        ordering = ["-calldate"]
 
     def __str__(self):
         return f"{self.src} - {self.disposition}"

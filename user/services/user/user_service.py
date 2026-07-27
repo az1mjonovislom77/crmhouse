@@ -4,7 +4,6 @@ from user.models import User
 
 
 class UserService:
-
     @staticmethod
     @transaction.atomic
     def create_user(validated_data):

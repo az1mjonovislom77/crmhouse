@@ -6,120 +6,113 @@ from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = config("SECRET_KEY")
 
-AUTH_USER_MODEL = 'user.User'
+AUTH_USER_MODEL = "user.User"
 
 PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.Argon2PasswordHasher',
-    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
-    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
-    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
 ]
 
 DJANGO_APPS = [
-    'daphne',
-    'jazzmin',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    "daphne",
+    "jazzmin",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
 ]
 
 LOCAL_APPS = [
-    'organization',
-    'user',
-    'booking',
-    'calculator',
-    'instagram',
-    'projects',
-    'home',
-    'client',
-    'tasks',
-    'leads',
-    'contact_center',
-    'stats',
-    'contracts',
+    "organization",
+    "user",
+    "booking",
+    "calculator",
+    "instagram",
+    "projects",
+    "home",
+    "client",
+    "tasks",
+    "leads",
+    "contact_center",
+    "stats",
+    "contracts",
 ]
 
 THIRD_PARTY_APPS = [
-    'rest_framework',
-    'drf_spectacular',
-    'rest_framework_simplejwt',
-    'rest_framework_simplejwt.token_blacklist',
-    'corsheaders',
-    'simple_history',
-    'channels',
+    "rest_framework",
+    "drf_spectacular",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
+    "corsheaders",
+    "simple_history",
+    "channels",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOWED_ORIGINS = [
-    s.strip()
-    for s in config('CORS_ALLOWED_ORIGINS', default='').split(',')
-    if s.strip()
-]
+CORS_ALLOWED_ORIGINS = [s.strip() for s in config("CORS_ALLOWED_ORIGINS", default="").split(",") if s.strip()]
 
-CSRF_TRUSTED_ORIGINS = [
-    s.strip()
-    for s in config('CSRF_TRUSTED_ORIGINS', default='').split(',')
-    if s.strip()
-]
+CSRF_TRUSTED_ORIGINS = [s.strip() for s in config("CSRF_TRUSTED_ORIGINS", default="").split(",") if s.strip()]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'common.logging.RequestLoggingMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "common.logging.RequestLoggingMiddleware",
 ]
 
-ROOT_URLCONF = 'config.urls'
+ROOT_URLCONF = "config.urls"
 
-TEMPLATES = [{
-    'BACKEND': 'django.template.backends.django.DjangoTemplates',
-    'DIRS': [],
-    'APP_DIRS': True,
-    'OPTIONS': {
-        'context_processors': [
-            'django.template.context_processors.request',
-            'django.contrib.auth.context_processors.auth',
-            'django.contrib.messages.context_processors.messages',
-        ],
-    },
-}]
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
+    }
+]
 
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated'],
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',),
-    'EXCEPTION_HANDLER': 'common.exception_handler.custom_exception_handler',
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20,
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle',
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
+    "EXCEPTION_HANDLER": "common.exception_handler.custom_exception_handler",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
     ],
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': '200/hour',
-        'user': '2000/hour',
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "200/hour",
+        "user": "2000/hour",
     },
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'CRM_Bunyodkorhouse',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
-    'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
+    "TITLE": "CRM_Bunyodkorhouse",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
 }
 
 SIMPLE_JWT = {
@@ -128,7 +121,6 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": False,
-
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
     "VERIFYING_KEY": "",
@@ -137,23 +129,18 @@ SIMPLE_JWT = {
     "JSON_ENCODER": None,
     "JWK_URL": None,
     "LEEWAY": 0,
-
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
     "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
-
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
     "TOKEN_TYPE_CLAIM": "token_type",
     "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
-
     "JTI_CLAIM": "jti",
-
     "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
     "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
-
     "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",
     "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
     "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
@@ -203,56 +190,56 @@ LOGGING = {
     },
 }
 
-LANGUAGE_CODE = 'en'
-TIME_ZONE = 'Asia/Tashkent'
+LANGUAGE_CODE = "en"
+TIME_ZONE = "Asia/Tashkent"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-MEDIA_URL = '/media/'
+MEDIA_URL = "/media/"
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024
 
-ASGI_APPLICATION = 'config.asgi.application'
+ASGI_APPLICATION = "config.asgi.application"
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
     }
 }
 
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 CELERY_BEAT_SCHEDULE = {
-    'check-meeting-notifications': {
-        'task': 'leads.tasks.check_meeting_notifications',
-        'schedule': 300.0,
+    "check-meeting-notifications": {
+        "task": "leads.tasks.check_meeting_notifications",
+        "schedule": 300.0,
     },
-    'sync-cdr-data': {
-        'task': 'contact_center.tasks.sync_cdr_data',
-        'schedule': 3600.0,
+    "sync-cdr-data": {
+        "task": "contact_center.tasks.sync_cdr_data",
+        "schedule": 3600.0,
     },
 }
 
-INSTAGRAM_ACCESS_TOKEN = config('INSTAGRAM_ACCESS_TOKEN')
+INSTAGRAM_ACCESS_TOKEN = config("INSTAGRAM_ACCESS_TOKEN")
 INSTAGRAM_API_VERSION = "v19.0"
 GRAPH_BASE_URL = "https://graph.facebook.com"
-IG_USER_ID = config('IG_USER_ID')
+IG_USER_ID = config("IG_USER_ID")
 
-GROQ_API_KEY = config('GROQ_API_KEY', default='')
+GROQ_API_KEY = config("GROQ_API_KEY", default="")
 
-PBX_BASE_URL = config('PBX_BASE_URL', default='')
-PBX_USER = config('PBX_USER', default='')
-PBX_PASSWORD = config('PBX_PASSWORD', default='')
-PBX_VERIFY_SSL = config('PBX_VERIFY_SSL', default=True, cast=bool)
+PBX_BASE_URL = config("PBX_BASE_URL", default="")
+PBX_USER = config("PBX_USER", default="")
+PBX_PASSWORD = config("PBX_PASSWORD", default="")
+PBX_VERIFY_SSL = config("PBX_VERIFY_SSL", default=True, cast=bool)
 
-SIP_API_USER = config('SIP_API_USER', default='')
-SIP_API_PASSWORD = config('SIP_API_PASSWORD', default='')
+SIP_API_USER = config("SIP_API_USER", default="")
+SIP_API_PASSWORD = config("SIP_API_PASSWORD", default="")
 
-ISSABEL_BASE_URL = config('ISSABEL_BASE_URL', default='')
-ISSABEL_API_USER = config('ISSABEL_API_USER', default='')
-ISSABEL_API_PASSWORD = config('ISSABEL_API_PASSWORD', default='')
+ISSABEL_BASE_URL = config("ISSABEL_BASE_URL", default="")
+ISSABEL_API_USER = config("ISSABEL_API_USER", default="")
+ISSABEL_API_PASSWORD = config("ISSABEL_API_PASSWORD", default="")

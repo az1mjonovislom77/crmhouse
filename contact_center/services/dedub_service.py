@@ -1,5 +1,4 @@
 class CDRDedupService:
-
     @staticmethod
     def should_skip(item, seen_sessions):
         disposition = item.get("disposition")

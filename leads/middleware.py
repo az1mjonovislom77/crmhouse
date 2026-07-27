@@ -13,7 +13,7 @@ User = get_user_model()
 def _get_user(token_str):
     try:
         token = AccessToken(token_str)
-        return User.objects.get(id=token['user_id'])
+        return User.objects.get(id=token["user_id"])
     except (TokenError, User.DoesNotExist, KeyError):
         return AnonymousUser()
 
@@ -23,7 +23,7 @@ class JWTAuthMiddleware:
         self.inner = inner
 
     async def __call__(self, scope, receive, send):
-        params = parse_qs(scope.get('query_string', b'').decode())
-        token_list = params.get('token', [])
-        scope['user'] = await _get_user(token_list[0]) if token_list else AnonymousUser()
+        params = parse_qs(scope.get("query_string", b"").decode())
+        token_list = params.get("token", [])
+        scope["user"] = await _get_user(token_list[0]) if token_list else AnonymousUser()
         return await self.inner(scope, receive, send)

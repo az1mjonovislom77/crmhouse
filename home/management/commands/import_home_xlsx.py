@@ -9,26 +9,43 @@ from home.models import Home
 from projects.models.project_models import Block, Floors
 
 STATUS_MAP = {
-    'sotildi':                 Home.HomeStatus.SOLD,
-    'band':                    Home.HomeStatus.RESERVED,
-    "bo'sh":                   Home.HomeStatus.AVAILABLE,
-    'bosh':                    Home.HomeStatus.AVAILABLE,
-    'shartnoma':               Home.HomeStatus.RESERVED,
-    'kalit topshirildi':       Home.HomeStatus.KALIT_TOPSHIRILDI,
-    'nomiga otkazib berildi':  Home.HomeStatus.NOMIGA_OTKAZIB_BERILDI,
+    "sotildi": Home.HomeStatus.SOLD,
+    "band": Home.HomeStatus.RESERVED,
+    "bo'sh": Home.HomeStatus.AVAILABLE,
+    "bosh": Home.HomeStatus.AVAILABLE,
+    "shartnoma": Home.HomeStatus.RESERVED,
+    "kalit topshirildi": Home.HomeStatus.KALIT_TOPSHIRILDI,
+    "nomiga otkazib berildi": Home.HomeStatus.NOMIGA_OTKAZIB_BERILDI,
 }
 
 
 def parse_rooms(val):
-    match = re.search(r'\d+', str(val or '1'))
+    match = re.search(r"\d+", str(val or "1"))
     return int(match.group()) if match else 1
 
 
-CYR_TO_LAT = str.maketrans({
-    'А': 'A', 'В': 'B', 'С': 'C', 'Е': 'E', 'Н': 'H', 'К': 'K',
-    'М': 'M', 'О': 'O', 'Р': 'P', 'Т': 'T', 'Х': 'X', 'У': 'Y',
-    'а': 'a', 'е': 'e', 'о': 'o', 'р': 'p', 'с': 'c', 'х': 'x',
-})
+CYR_TO_LAT = str.maketrans(
+    {
+        "А": "A",
+        "В": "B",
+        "С": "C",
+        "Е": "E",
+        "Н": "H",
+        "К": "K",
+        "М": "M",
+        "О": "O",
+        "Р": "P",
+        "Т": "T",
+        "Х": "X",
+        "У": "Y",
+        "а": "a",
+        "е": "e",
+        "о": "o",
+        "р": "p",
+        "с": "c",
+        "х": "x",
+    }
+)
 
 
 def normalize_block(val):
@@ -36,37 +53,37 @@ def normalize_block(val):
 
 
 class Command(BaseCommand):
-    help = 'home.xlsx dan Home larni import qiladi / statusni yangilaydi'
+    help = "home.xlsx dan Home larni import qiladi / statusni yangilaydi"
 
     def add_arguments(self, parser):
-        parser.add_argument('--file', default='home.xlsx')
-        parser.add_argument('--block-prefix', default='', help='Block title prefiks, masalan "Block "')
-        parser.add_argument('--block-suffix', default='', help='Block title suffiks, masalan " - Block"')
+        parser.add_argument("--file", default="home.xlsx")
+        parser.add_argument("--block-prefix", default="", help='Block title prefiks, masalan "Block "')
+        parser.add_argument("--block-suffix", default="", help='Block title suffiks, masalan " - Block"')
         parser.add_argument(
-            '--block-title',
+            "--block-title",
             default=None,
             help="Barcha qatorlarni shu bitta blokka bog'laydi (Bino ustuni e'tiborga olinmaydi), masalan \"4A - Block\"",
         )
-        parser.add_argument('--project-id', type=int, default=None)
-        parser.add_argument('--dry-run', action='store_true')
+        parser.add_argument("--project-id", type=int, default=None)
+        parser.add_argument("--dry-run", action="store_true")
 
     def handle(self, *args, **options):
-        if hasattr(self.stdout, 'reconfigure'):
+        if hasattr(self.stdout, "reconfigure"):
             try:
-                self.stdout.reconfigure(encoding='utf-8')
-                self.stderr.reconfigure(encoding='utf-8')
+                self.stdout.reconfigure(encoding="utf-8")
+                self.stderr.reconfigure(encoding="utf-8")
             except Exception:
                 pass
 
-        file_path = options['file']
+        file_path = options["file"]
         if not os.path.isabs(file_path):
             file_path = os.path.join(settings.BASE_DIR, file_path)
 
-        dry_run = options['dry_run']
-        block_prefix = options['block_prefix']
-        block_suffix = options['block_suffix']
-        fixed_block_title = options['block_title']
-        project_id = options['project_id']
+        dry_run = options["dry_run"]
+        block_prefix = options["block_prefix"]
+        block_suffix = options["block_suffix"]
+        fixed_block_title = options["block_title"]
+        project_id = options["project_id"]
 
         wb = openpyxl.load_workbook(file_path, data_only=True)
         ws = wb.active
@@ -77,14 +94,14 @@ class Command(BaseCommand):
         error_count = 0
 
         for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-            bino        = row[1]
+            bino = row[1]
             entrance_raw = row[2]
-            floor_raw   = row[3]
-            home_num    = row[4]
-            rooms_raw   = row[5]
-            area_raw    = row[6]
-            price_raw   = row[7]
-            status_raw  = row[11]
+            floor_raw = row[3]
+            home_num = row[4]
+            rooms_raw = row[5]
+            area_raw = row[6]
+            price_raw = row[7]
+            status_raw = row[11]
 
             if not home_num:
                 skipped_count += 1
@@ -98,19 +115,16 @@ class Command(BaseCommand):
                 price_per_sqm = float(price_raw or 0)
                 rooms = parse_rooms(rooms_raw)
 
-                if fixed_block_title:
-                    block_title = fixed_block_title
-                else:
-                    block_title = f"{block_prefix}{normalize_block(bino)}{block_suffix}"
+                block_title = fixed_block_title or f"{block_prefix}{normalize_block(bino)}{block_suffix}"
                 block_qs = Block.objects.filter(title=block_title)
                 if project_id:
                     block_qs = block_qs.filter(projects_id=project_id)
                 block_obj = block_qs.first()
 
                 if not block_obj:
-                    self.stdout.write(self.style.WARNING(
-                        f"Qator {row_idx}: Block '{block_title}' topilmadi — o'tkazildi"
-                    ))
+                    self.stdout.write(
+                        self.style.WARNING(f"Qator {row_idx}: Block '{block_title}' topilmadi — o'tkazildi")
+                    )
                     skipped_count += 1
                     continue
 
@@ -120,18 +134,16 @@ class Command(BaseCommand):
                 if status_raw:
                     new_status = STATUS_MAP.get(str(status_raw).strip().lower())
                     if not new_status:
-                        self.stdout.write(self.style.WARNING(
-                            f"Qator {row_idx}: noma'lum status '{status_raw}'"
-                        ))
+                        self.stdout.write(self.style.WARNING(f"Qator {row_idx}: noma'lum status '{status_raw}'"))
 
                 defaults = {
-                    'area': area,
-                    'rooms': rooms,
-                    'price_per_sqm': price_per_sqm,
-                    'entrance': entrance,
+                    "area": area,
+                    "rooms": rooms,
+                    "price_per_sqm": price_per_sqm,
+                    "entrance": entrance,
                 }
                 if new_status:
-                    defaults['home_status'] = new_status
+                    defaults["home_status"] = new_status
 
                 if not dry_run:
                     _, created = Home.objects.update_or_create(
@@ -145,22 +157,22 @@ class Command(BaseCommand):
                     else:
                         updated_count += 1
                 else:
-                    exists = Home.objects.filter(
-                        home_number=home_number, floor=floor_obj, blocks=block_obj
-                    ).exists()
+                    exists = Home.objects.filter(home_number=home_number, floor=floor_obj, blocks=block_obj).exists()
                     if exists:
                         updated_count += 1
                     else:
                         created_count += 1
 
             except Exception as e:
-                self.stderr.write(f'Qator {row_idx} xato: {e}')
+                self.stderr.write(f"Qator {row_idx} xato: {e}")
                 error_count += 1
 
-        label = '[DRY RUN] ' if dry_run else ''
-        self.stdout.write(self.style.SUCCESS(
-            f'\n{label}Yaratildi: {created_count} | '
-            f'Yangilandi: {updated_count} | '
-            f"O'tkazildi: {skipped_count} | "
-            f'Xato: {error_count}'
-        ))
+        label = "[DRY RUN] " if dry_run else ""
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"\n{label}Yaratildi: {created_count} | "
+                f"Yangilandi: {updated_count} | "
+                f"O'tkazildi: {skipped_count} | "
+                f"Xato: {error_count}"
+            )
+        )

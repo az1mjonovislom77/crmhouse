@@ -4,13 +4,13 @@ from datetime import datetime, time, timedelta
 from django.db.models import Q
 from django.utils import timezone
 
-MONTH_LABELS_UZ = ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyun', 'Iyul', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek']
+MONTH_LABELS_UZ = ["Yan", "Fev", "Mar", "Apr", "May", "Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy", "Dek"]
 
 
 def normalize_phone(phone: str | None) -> str:
     if not phone:
-        return ''
-    digits = re.sub(r'\D', '', phone)
+        return ""
+    digits = re.sub(r"\D", "", phone)
     return digits[-9:] if len(digits) >= 9 else digits
 
 
@@ -21,9 +21,9 @@ def local_day_start(day):
 def date_range_q(field, date_from=None, date_to=None):
     q = Q()
     if date_from:
-        q &= Q(**{f'{field}__gte': local_day_start(date_from)})
+        q &= Q(**{f"{field}__gte": local_day_start(date_from)})
     if date_to:
-        q &= Q(**{f'{field}__lt': local_day_start(date_to + timedelta(days=1))})
+        q &= Q(**{f"{field}__lt": local_day_start(date_to + timedelta(days=1))})
     return q
 
 

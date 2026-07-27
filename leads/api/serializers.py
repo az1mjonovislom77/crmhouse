@@ -8,11 +8,11 @@ User = get_user_model()
 
 
 class LeadEventSerializer(serializers.ModelSerializer):
-    by = serializers.StringRelatedField()
+    by = serializers.StringRelatedField()  # type: ignore[var-annotated]
 
     class Meta:
         model = LeadEvent
-        fields = ['id', 'type', 'from_value', 'to_value', 'text', 'meeting_at', 'meeting_type', 'subsidiya', 'by', 'at']
+        fields = ["id", "type", "from_value", "to_value", "text", "meeting_at", "meeting_type", "subsidiya", "by", "at"]
 
 
 class LeadListSerializer(serializers.ModelSerializer):
@@ -28,9 +28,27 @@ class LeadListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lead
         fields = [
-            'id', 'full_name', 'phone', 'email', 'source', 'board', 'status', 'sub_status',
-            'owner_id', 'owner_name', 'assignee_id', 'assignee_name', 'score', 'note',
-            'meeting_at', 'meeting_type', 'subsidiya', 'contacted_at', 'last_contacted', 'created_at', 'updated_at',
+            "id",
+            "full_name",
+            "phone",
+            "email",
+            "source",
+            "board",
+            "status",
+            "sub_status",
+            "owner_id",
+            "owner_name",
+            "assignee_id",
+            "assignee_name",
+            "score",
+            "note",
+            "meeting_at",
+            "meeting_type",
+            "subsidiya",
+            "contacted_at",
+            "last_contacted",
+            "created_at",
+            "updated_at",
         ]
 
 
@@ -48,37 +66,58 @@ class LeadDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lead
         fields = [
-            'id', 'full_name', 'phone', 'email', 'source', 'board', 'status', 'sub_status',
-            'owner_id', 'owner_name', 'assignee_id', 'assignee_name', 'score', 'note', 'meeting_at', 'meeting_type', 'subsidiya',
-            'contacted_at', 'last_contacted', 'created_at', 'updated_at', 'events']
+            "id",
+            "full_name",
+            "phone",
+            "email",
+            "source",
+            "board",
+            "status",
+            "sub_status",
+            "owner_id",
+            "owner_name",
+            "assignee_id",
+            "assignee_name",
+            "score",
+            "note",
+            "meeting_at",
+            "meeting_type",
+            "subsidiya",
+            "contacted_at",
+            "last_contacted",
+            "created_at",
+            "updated_at",
+            "events",
+        ]
 
 
 class LeadCreateSerializer(serializers.ModelSerializer):
     meeting_at = serializers.DateTimeField(required=False, write_only=True)
     meeting_type = serializers.ChoiceField(
-        choices=[c[0] for c in LeadEvent.MEETING_TYPE_CHOICES], required=False, write_only=True)
+        choices=[c[0] for c in LeadEvent.MEETING_TYPE_CHOICES], required=False, write_only=True
+    )
 
     class Meta:
         model = Lead
-        fields = ['full_name', 'phone', 'email', 'source', 'board', 'note', 'subsidiya', 'meeting_at', 'meeting_type']
-        extra_kwargs = {'board': {'required': True}}
+        fields = ["full_name", "phone", "email", "source", "board", "note", "subsidiya", "meeting_at", "meeting_type"]
+        extra_kwargs = {"board": {"required": True}}
 
     def validate(self, data):
-        if data.get('meeting_at') and not data.get('meeting_type'):
-            raise serializers.ValidationError({'meeting_type': 'Bu maydon majburiy'})
-        if data.get('meeting_type') and not data.get('meeting_at'):
-            raise serializers.ValidationError({'meeting_at': 'Bu maydon majburiy'})
+        if data.get("meeting_at") and not data.get("meeting_type"):
+            raise serializers.ValidationError({"meeting_type": "Bu maydon majburiy"})
+        if data.get("meeting_type") and not data.get("meeting_at"):
+            raise serializers.ValidationError({"meeting_at": "Bu maydon majburiy"})
         return data
 
 
 class LeadNotificationSerializer(serializers.ModelSerializer):
-    lead_name = serializers.CharField(source='lead.full_name', read_only=True)
-    lead_phone = serializers.CharField(source='lead.phone', read_only=True)
+    lead_name = serializers.CharField(source="lead.full_name", read_only=True)
+    lead_phone = serializers.CharField(source="lead.phone", read_only=True)
 
     class Meta:
         model = LeadNotification
-        fields = ['id', 'lead_id', 'lead_name', 'lead_phone', 'meeting_at', 'created_at']
-        read_only_fields = ['id', 'lead_id', 'lead_name', 'lead_phone', 'meeting_at', 'created_at']
+        fields = ["id", "lead_id", "lead_name", "lead_phone", "meeting_at", "created_at"]
+        read_only_fields = ["id", "lead_id", "lead_name", "lead_phone", "meeting_at", "created_at"]
 
 
 class LeadBulkAssignSerializer(serializers.Serializer):
@@ -89,16 +128,15 @@ class LeadBulkAssignSerializer(serializers.Serializer):
     assignee_to = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
 
     def validate_assignee_to(self, value):
-        request = self.context.get('request')
-        if request is not None and not request.user.is_staff:
-            if value.organization_id != request.user.organization_id:
-                raise serializers.ValidationError("Bu foydalanuvchi sizning tashkilotingizga tegishli emas.")
+        request = self.context.get("request")
+        if request is not None and not request.user.is_staff and value.organization_id != request.user.organization_id:
+            raise serializers.ValidationError("Bu foydalanuvchi sizning tashkilotingizga tegishli emas.")
         return value
 
     def validate(self, data):
-        request = self.context.get('request')
+        request = self.context.get("request")
         if request is not None and not can_assign_leads(request.user):
-            raise serializers.ValidationError('Faqat admin lead topshira oladi.')
+            raise serializers.ValidationError("Faqat admin lead topshira oladi.")
         return data
 
     def validate_lead_ids(self, value):
@@ -111,36 +149,46 @@ class LeadUpdateSerializer(serializers.ModelSerializer):
     assignee = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False)
 
     def validate_assignee(self, value):
-        request = self.context.get('request')
-        if request is not None and not request.user.is_staff:
-            if value.organization_id != request.user.organization_id:
-                raise serializers.ValidationError("Bu foydalanuvchi sizning tashkilotingizga tegishli emas.")
+        request = self.context.get("request")
+        if request is not None and not request.user.is_staff and value.organization_id != request.user.organization_id:
+            raise serializers.ValidationError("Bu foydalanuvchi sizning tashkilotingizga tegishli emas.")
         return value
+
     comment = serializers.CharField(required=False, write_only=True)
     call_result = serializers.CharField(required=False, write_only=True)
     meeting_at = serializers.DateTimeField(required=False, write_only=True)
     meeting_type = serializers.ChoiceField(
-        choices=[c[0] for c in LeadEvent.MEETING_TYPE_CHOICES], required=False, write_only=True)
+        choices=[c[0] for c in LeadEvent.MEETING_TYPE_CHOICES], required=False, write_only=True
+    )
 
     class Meta:
         model = Lead
         fields = [
-            'full_name', 'phone', 'email', 'source', 'note', 'subsidiya',
-            'status', 'sub_status', 'assignee',
-            'comment', 'call_result', 'meeting_at', 'meeting_type',
+            "full_name",
+            "phone",
+            "email",
+            "source",
+            "note",
+            "subsidiya",
+            "status",
+            "sub_status",
+            "assignee",
+            "comment",
+            "call_result",
+            "meeting_at",
+            "meeting_type",
         ]
 
     def validate(self, data):
-        if data.get('meeting_at') and not data.get('meeting_type'):
-            raise serializers.ValidationError({'meeting_type': 'Bu maydon majburiy'})
-        if data.get('meeting_type') and not data.get('meeting_at'):
-            raise serializers.ValidationError({'meeting_at': 'Bu maydon majburiy'})
-        request = self.context.get('request')
-        new_assignee = data.get('assignee')
-        assignee_changed = (
-            new_assignee is not None
-            and (self.instance is None or new_assignee != self.instance.assignee)
+        if data.get("meeting_at") and not data.get("meeting_type"):
+            raise serializers.ValidationError({"meeting_type": "Bu maydon majburiy"})
+        if data.get("meeting_type") and not data.get("meeting_at"):
+            raise serializers.ValidationError({"meeting_at": "Bu maydon majburiy"})
+        request = self.context.get("request")
+        new_assignee = data.get("assignee")
+        assignee_changed = new_assignee is not None and (
+            self.instance is None or new_assignee != self.instance.assignee
         )
         if assignee_changed and request is not None and not can_assign_leads(request.user):
-            raise serializers.ValidationError({'assignee': 'Faqat admin lead topshira oladi.'})
+            raise serializers.ValidationError({"assignee": "Faqat admin lead topshira oladi."})
         return data

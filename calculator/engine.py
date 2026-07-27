@@ -27,7 +27,7 @@ def annuity_factor(annual_rate_pct, years):
 
 
 def round_som(value):
-    return _d(value).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+    return _d(value).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
 
 
 _round_som = round_som
@@ -36,5 +36,5 @@ _round_som = round_som
 def calculate(*, config, **kwargs):
     from calculator.formulas import get_formula
 
-    formula = get_formula(getattr(config, 'formula_key', 'standart'))
+    formula = get_formula(getattr(config, "formula_key", "standart"))
     return formula(config=config, **kwargs)

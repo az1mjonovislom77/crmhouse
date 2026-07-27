@@ -9,7 +9,7 @@ class CRSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CallRecord
-        fields = '__all__'
+        fields = "__all__"
 
     def get_audio_url(self, obj):
         if obj.audio_file:
@@ -18,7 +18,7 @@ class CRSerializer(serializers.ModelSerializer):
 
     def get_audio_status(self, obj):
         if obj.audio_downloaded:
-            return 'ready'
+            return "ready"
         elif obj.recordingfile:
-            return 'processing'
-        return 'none'
+            return "processing"
+        return "none"

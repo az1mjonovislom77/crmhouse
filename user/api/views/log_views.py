@@ -11,8 +11,7 @@ from user.models import RequestLog, User
 
 class IsAdminOrSuperAdmin(IsAuthenticated):
     def has_permission(self, request, view):
-        return super().has_permission(request, view) and request.user.role in ('a', 'sa')
-
+        return super().has_permission(request, view) and request.user.role in ("a", "sa")
 
 
 @extend_schema(tags=["RequestLogs"])
@@ -21,11 +20,11 @@ class RequestLogListView(ListAPIView):
     permission_classes = [IsAdminOrSuperAdmin]
     pagination_class = DefaultPagination
     filter_backends = [filters.OrderingFilter]
-    ordering_fields = ['created_at', 'status_code', 'duration_ms']
-    ordering = ['-created_at']
+    ordering_fields = ["created_at", "status_code", "duration_ms"]
+    ordering = ["-created_at"]
 
     def get_queryset(self):
-        qs = RequestLog.objects.select_related('user')
+        qs = RequestLog.objects.select_related("user")
 
         user = self.request.user
         if user.role == User.UserRoles.ADMIN:
@@ -36,24 +35,24 @@ class RequestLogListView(ListAPIView):
         params = self.request.query_params
         errors = {}
 
-        user_id = params.get('user_id')
-        method = params.get('method')
-        status_code = params.get('status_code')
-        path = params.get('path')
-        date_from = params.get('date_from')
-        date_to = params.get('date_to')
+        user_id = params.get("user_id")
+        method = params.get("method")
+        status_code = params.get("status_code")
+        path = params.get("path")
+        date_from = params.get("date_from")
+        date_to = params.get("date_to")
 
         if user_id:
             try:
                 qs = qs.filter(user_id=int(user_id))
             except ValueError:
-                errors['user_id'] = 'Must be an integer.'
+                errors["user_id"] = "Must be an integer."
 
         if status_code:
             try:
                 qs = qs.filter(status_code=int(status_code))
             except ValueError:
-                errors['status_code'] = 'Must be an integer.'
+                errors["status_code"] = "Must be an integer."
 
         if errors:
             raise ValidationError(errors)

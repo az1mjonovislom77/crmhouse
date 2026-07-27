@@ -10,13 +10,14 @@ from common.utils import MONTH_LABELS_UZ, apply_date_range, last_months, local_d
 MONEY: DecimalField = DecimalField(max_digits=16, decimal_places=2)
 ZERO = Value(Decimal("0"), output_field=MONEY)
 
-CONTRACT_PRICE = (Coalesce(F("home__area") * F("home__price_per_sqm"), ZERO)
-                  + Coalesce(F("home__renovation__price"), ZERO))
+CONTRACT_PRICE = Coalesce(F("home__area") * F("home__price_per_sqm"), ZERO) + Coalesce(
+    F("home__renovation__price"), ZERO
+)
 
 
 def get_total_contract(date_from=None, date_to=None):
     qs = Booking.objects.exclude(status=Booking.BookingStatus.CANCELED)
-    return apply_date_range(qs, 'created_at', date_from, date_to)
+    return apply_date_range(qs, "created_at", date_from, date_to)
 
 
 def get_total_contract_price(qs):
@@ -42,15 +43,11 @@ def get_total_unpaid(qs):
     total_price = CONTRACT_PRICE
 
     paid_subquery = (
-        Payment.objects.filter(booking=OuterRef("pk"))
-        .values("booking")
-        .annotate(total=Sum("amount"))
-        .values("total")
+        Payment.objects.filter(booking=OuterRef("pk")).values("booking").annotate(total=Sum("amount")).values("total")
     )
 
     remaining = ExpressionWrapper(
-        total_price
-        - Coalesce(Subquery(paid_subquery, output_field=MONEY), ZERO),
+        total_price - Coalesce(Subquery(paid_subquery, output_field=MONEY), ZERO),
         output_field=MONEY,
     )
 
@@ -64,24 +61,24 @@ def get_monthly_revenue(booking_qs, payment_qs, months=8):
 
     contract_rows = (
         booking_qs.filter(created_at__gte=local_day_start(start))
-        .annotate(month=TruncMonth('created_at'))
-        .values('month')
+        .annotate(month=TruncMonth("created_at"))
+        .values("month")
         .annotate(total=Sum(CONTRACT_PRICE, output_field=MONEY))
     )
     collected_rows = (
         payment_qs.filter(payment_date__gte=start)
-        .annotate(month=TruncMonth('payment_date'))
-        .values('month')
-        .annotate(total=Sum('amount'))
+        .annotate(month=TruncMonth("payment_date"))
+        .values("month")
+        .annotate(total=Sum("amount"))
     )
-    contract = {(r['month'].year, r['month'].month): r['total'] for r in contract_rows}
-    collected = {(r['month'].year, r['month'].month): r['total'] for r in collected_rows}
+    contract = {(r["month"].year, r["month"].month): r["total"] for r in contract_rows}
+    collected = {(r["month"].year, r["month"].month): r["total"] for r in collected_rows}
 
     return [
         {
-            'month': MONTH_LABELS_UZ[month - 1],
-            'contract': to_millions(contract.get((year, month))),
-            'collected': to_millions(collected.get((year, month))),
+            "month": MONTH_LABELS_UZ[month - 1],
+            "contract": to_millions(contract.get((year, month))),
+            "collected": to_millions(collected.get((year, month))),
         }
         for year, month in window
     ]

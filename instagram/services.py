@@ -19,8 +19,7 @@ class InstagramService:
         url = f"{self.base_url}/{endpoint}"
 
         headers = {"Authorization": f"Bearer {self.token}"}
-        response = requests.request(method=method, url=url, params=params, json=data,
-                                    headers=headers, timeout=10)
+        response = requests.request(method=method, url=url, params=params, json=data, headers=headers, timeout=10)
 
         if response.status_code != 200:
             logger.error("Instagram API xatosi [%s %s]: %s", method, endpoint, response.text)

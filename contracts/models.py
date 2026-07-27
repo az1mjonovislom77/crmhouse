@@ -7,36 +7,45 @@ from django.utils import timezone
 from booking.models import Booking
 
 MONTH_NAMES_UZ = (
-    "yanvar", "fevral", "mart", "aprel", "may", "iyun",
-    "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr",
+    "yanvar",
+    "fevral",
+    "mart",
+    "aprel",
+    "may",
+    "iyun",
+    "iyul",
+    "avgust",
+    "sentabr",
+    "oktabr",
+    "noyabr",
+    "dekabr",
 )
 
 
 class ContractTemplate(models.Model):
     organization = models.ForeignKey(
-        'organization.Organization', on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='contract_templates')
+        "organization.Organization", on_delete=models.SET_NULL, null=True, blank=True, related_name="contract_templates"
+    )
     name = models.CharField(max_length=200)
     file = models.FileField(
-        upload_to='contracts/templates/',
-        validators=[FileExtensionValidator(allowed_extensions=['html', 'htm'])])
+        upload_to="contracts/templates/", validators=[FileExtensionValidator(allowed_extensions=["html", "htm"])]
+    )
     created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return self.name
 
     def read_html(self) -> str:
-        with self.file.open('rb') as f:
-            return f.read().decode('utf-8')
+        with self.file.open("rb") as f:
+            return f.read().decode("utf-8")
 
 
 class Contract(models.Model):
     organization = models.ForeignKey(
-        'organization.Organization', on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='contracts')
-    template = models.ForeignKey(ContractTemplate, on_delete=models.PROTECT, related_name='contracts')
-    booking = models.ForeignKey(
-        Booking, on_delete=models.SET_NULL, null=True, blank=True, related_name='contracts')
+        "organization.Organization", on_delete=models.SET_NULL, null=True, blank=True, related_name="contracts"
+    )
+    template = models.ForeignKey(ContractTemplate, on_delete=models.PROTECT, related_name="contracts")
+    booking = models.ForeignKey(Booking, on_delete=models.SET_NULL, null=True, blank=True, related_name="contracts")
     number = models.CharField(max_length=200, null=True, blank=True)
     contract_date = models.DateField(null=True, blank=True)
     data = models.JSONField(default=dict, blank=True)

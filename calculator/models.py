@@ -7,12 +7,12 @@ def default_term_options():
 
 class CalculatorConfig(models.Model):
     class Formula(models.TextChoices):
-        STANDART = 'standart', 'Standart (annuitet)'
-        TENG_ULUSH = 'teng_ulush', 'Teng ulush (foizsiz)'
+        STANDART = "standart", "Standart (annuitet)"
+        TENG_ULUSH = "teng_ulush", "Teng ulush (foizsiz)"
 
     organization = models.OneToOneField(
-        'organization.Organization', on_delete=models.CASCADE,
-        null=True, blank=True, related_name='calculator_config')
+        "organization.Organization", on_delete=models.CASCADE, null=True, blank=True, related_name="calculator_config"
+    )
     formula_key = models.CharField(max_length=30, choices=Formula.choices, default=Formula.STANDART)
 
     annual_rate_pct = models.DecimalField(max_digits=5, decimal_places=2, default=17)
@@ -26,8 +26,16 @@ class CalculatorConfig(models.Model):
     def __str__(self):
         return f"Config ({self.organization or 'global'})"
 
-    _COPY_FIELDS = ['formula_key', 'annual_rate_pct', 'state_threshold_pct', 'subsidy_years',
-                    'firm_markup_pct', 'round_step', 'default_price_per_m2', 'term_options']
+    _COPY_FIELDS = [
+        "formula_key",
+        "annual_rate_pct",
+        "state_threshold_pct",
+        "subsidy_years",
+        "firm_markup_pct",
+        "round_step",
+        "default_price_per_m2",
+        "term_options",
+    ]
 
     @classmethod
     def for_org(cls, organization=None):
@@ -54,8 +62,8 @@ class CalculatorConfig(models.Model):
 
 class GuaranteeOption(models.Model):
     organization = models.ForeignKey(
-        'organization.Organization', on_delete=models.CASCADE,
-        null=True, blank=True, related_name='guarantee_options')
+        "organization.Organization", on_delete=models.CASCADE, null=True, blank=True, related_name="guarantee_options"
+    )
     key = models.CharField(max_length=50)
     label = models.CharField(max_length=100)
     percent = models.DecimalField(max_digits=5, decimal_places=2)
@@ -63,8 +71,8 @@ class GuaranteeOption(models.Model):
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
-        ordering = ['order', 'id']
-        unique_together = [('organization', 'key')]
+        ordering = ["order", "id"]
+        unique_together = [("organization", "key")]
 
     def __str__(self):
         return self.label
@@ -72,8 +80,8 @@ class GuaranteeOption(models.Model):
 
 class SubsidyOption(models.Model):
     organization = models.ForeignKey(
-        'organization.Organization', on_delete=models.CASCADE,
-        null=True, blank=True, related_name='subsidy_options')
+        "organization.Organization", on_delete=models.CASCADE, null=True, blank=True, related_name="subsidy_options"
+    )
     key = models.CharField(max_length=50)
     label = models.CharField(max_length=100)
     amount = models.DecimalField(max_digits=16, decimal_places=2, default=0)
@@ -81,8 +89,8 @@ class SubsidyOption(models.Model):
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
-        ordering = ['order', 'id']
-        unique_together = [('organization', 'key')]
+        ordering = ["order", "id"]
+        unique_together = [("organization", "key")]
 
     def __str__(self):
         return self.label
@@ -98,10 +106,7 @@ def options_for(model, organization=None):
 def materialize_org_options(model, organization):
     if organization is None or model.objects.filter(organization=organization).exists():
         return
-    field_names = [
-        f.name for f in model._meta.concrete_fields
-        if f.name not in ('id', 'organization')
-    ]
+    field_names = [f.name for f in model._meta.concrete_fields if f.name not in ("id", "organization")]
     copies = [
         model(organization=organization, **{name: getattr(base, name) for name in field_names})
         for base in model.objects.filter(organization__isnull=True)

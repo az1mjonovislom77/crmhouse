@@ -7,23 +7,22 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from common.health import health_check
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('health/', health_check, name='health'),
-    path('user/', include('user.api.urls')),
-    path('instagram/', include('instagram.urls')),
-    path('projects/', include('projects.api.urls')),
-    path('home/', include('home.api.urls')),
-    path('booking/', include('booking.api.urls')),
-    path('calculator/', include('calculator.api.urls')),
-    path('client/', include('client.api.urls')),
-    path('tasks/', include('tasks.api.urls')),
-    path('leads/', include('leads.api.urls')),
-    path('contact-center/', include('contact_center.urls')),
-    path('stats/', include('stats.api.urls')),
-    path('contracts/', include('contracts.api.urls')),
-
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path("admin/", admin.site.urls),
+    path("health/", health_check, name="health"),
+    path("user/", include("user.api.urls")),
+    path("instagram/", include("instagram.urls")),
+    path("projects/", include("projects.api.urls")),
+    path("home/", include("home.api.urls")),
+    path("booking/", include("booking.api.urls")),
+    path("calculator/", include("calculator.api.urls")),
+    path("client/", include("client.api.urls")),
+    path("tasks/", include("tasks.api.urls")),
+    path("leads/", include("leads.api.urls")),
+    path("contact-center/", include("contact_center.urls")),
+    path("stats/", include("stats.api.urls")),
+    path("contracts/", include("contracts.api.urls")),
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("api/swagger/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
 ]
 
 if settings.DEBUG:

@@ -11,29 +11,29 @@ from .services import CDRService
 
 logger = logging.getLogger(__name__)
 
-SYNC_LOCK_KEY = 'cdr_sync_running'
+SYNC_LOCK_KEY = "cdr_sync_running"
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=120)
 def sync_cdr_data(self):
     if not cache.add(SYNC_LOCK_KEY, 1, timeout=25 * 60):
-        logger.info('CDR sync allaqachon ishlamoqda, o\'tkazib yuborildi')
+        logger.info("CDR sync allaqachon ishlamoqda, o'tkazib yuborildi")
         return
 
     today = date.today()
     start_date = today - timedelta(days=7)
 
     params = {
-        'startdate': start_date.strftime('%Y-%m-%d'),
-        'enddate': today.strftime('%Y-%m-%d'),
+        "startdate": start_date.strftime("%Y-%m-%d"),
+        "enddate": today.strftime("%Y-%m-%d"),
     }
 
     try:
         saved = CDRService.fetch_and_save_cdr(params)
-        logger.info(f'CDR sync muvaffaqiyatli: {saved} ta yozuv qayta ishlandi')
+        logger.info(f"CDR sync muvaffaqiyatli: {saved} ta yozuv qayta ishlandi")
     except Exception as e:
-        logger.error(f'CDR sync xatosi: {str(e)}', exc_info=True)
-        raise self.retry(exc=e)
+        logger.error(f"CDR sync xatosi: {e!s}", exc_info=True)
+        raise self.retry(exc=e) from e
     finally:
         cache.delete(SYNC_LOCK_KEY)
 
@@ -45,7 +45,7 @@ def download_recording_task(self, record_id):
 
     record = CallRecord.objects.filter(id=record_id).first()
     if record is None:
-        logger.warning('CallRecord %s topilmadi, yuklab olish bekor qilindi', record_id)
+        logger.warning("CallRecord %s topilmadi, yuklab olish bekor qilindi", record_id)
         return
 
     if record.audio_downloaded or not record.recordingfile:
@@ -63,15 +63,15 @@ def download_recording_task(self, record_id):
                 if chunk:
                     tmp_file.write(chunk)
 
-        with open(temp_path, 'rb') as f:
+        with open(temp_path, "rb") as f:
             filename = os.path.basename(record.recordingfile)
             record.audio_file.save(filename, File(f), save=False)
 
         record.audio_downloaded = True
-        record.save(update_fields=['audio_file', 'audio_downloaded'])
+        record.save(update_fields=["audio_file", "audio_downloaded"])
 
     except Exception as e:
-        raise self.retry(exc=e, countdown=60)
+        raise self.retry(exc=e, countdown=60) from e
 
     finally:
         if temp_path and os.path.exists(temp_path):

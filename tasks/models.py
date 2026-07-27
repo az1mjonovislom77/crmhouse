@@ -9,7 +9,8 @@ from config import settings
 
 class Card(TimeStampedModel):
     organization = models.ForeignKey(
-        'organization.Organization', on_delete=models.SET_NULL, null=True, blank=True, related_name='cards')
+        "organization.Organization", on_delete=models.SET_NULL, null=True, blank=True, related_name="cards"
+    )
     title = models.CharField(max_length=200)
 
     history = HistoricalRecords()
@@ -19,8 +20,8 @@ class Card(TimeStampedModel):
 
 
 class Project(TimeStampedModel):
-    users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='task_projects', blank=True)
-    card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name='projects')
+    users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="task_projects", blank=True)  # type: ignore[var-annotated]
+    card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name="projects")
     title = models.CharField(max_length=200)
     description = models.TextField()
     order = models.PositiveIntegerField()
@@ -30,32 +31,29 @@ class Project(TimeStampedModel):
     history = HistoricalRecords()
 
     class Meta:
-        ordering = ['order']
-        constraints = [
-            models.UniqueConstraint(
-                fields=['card', 'order'], name='unique_order_per_card'
-            )
-        ]
-        indexes = [
-            models.Index(fields=['card', 'order'], name='card_order_idx')
-        ]
+        ordering = ["order"]
+        constraints = [models.UniqueConstraint(fields=["card", "order"], name="unique_order_per_card")]
+        indexes = [models.Index(fields=["card", "order"], name="card_order_idx")]
 
     def __str__(self):
         return self.title
 
 
 class Comment(TimeStampedModel):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='comments')
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="comments")
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="comments")
     text = models.TextField()
     file = models.FileField(
-        upload_to='comments/', null=True, blank=True,
+        upload_to="comments/",
+        null=True,
+        blank=True,
         validators=[
             FileExtensionValidator(
-                allowed_extensions=['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt',
-                                    'jpg', 'jpeg', 'png', 'webp']),
+                allowed_extensions=["pdf", "doc", "docx", "xls", "xlsx", "txt", "jpg", "jpeg", "png", "webp"]
+            ),
             check_image_size,
-        ])
+        ],
+    )
 
     history = HistoricalRecords()
 

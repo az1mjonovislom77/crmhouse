@@ -1,3 +1,5 @@
+import contextlib
+
 from django.contrib.auth import authenticate
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
@@ -7,7 +9,6 @@ from user.services.auth.token_service import UserTokenService
 
 
 class AuthService:
-
     @staticmethod
     def login_user(username, password, ip):
         if not check_login_rate_limit(ip, username):
@@ -22,10 +23,7 @@ class AuthService:
 
         reset_login_rate_limit(ip, username)
 
-        return {
-            "user": user,
-            "tokens": tokens
-        }
+        return {"user": user, "tokens": tokens}
 
     @staticmethod
     def refresh_user_token(refresh_token):
@@ -33,14 +31,12 @@ class AuthService:
             raise ValidationError({"detail": "Refresh token not found"})
         try:
             return UserTokenService.rotate_refresh_token(refresh_token)
-        except TokenError:
-            raise ValidationError({"detail": "Invalid or expired refresh token."})
+        except TokenError as err:
+            raise ValidationError({"detail": "Invalid or expired refresh token."}) from err
 
     @staticmethod
     def logout_user(refresh_token):
         if not refresh_token:
             return
-        try:
+        with contextlib.suppress(TokenError):
             RefreshToken(refresh_token).blacklist()
-        except TokenError:
-            pass

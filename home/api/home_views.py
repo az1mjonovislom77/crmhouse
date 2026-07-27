@@ -27,14 +27,14 @@ class HomePagination(DefaultPagination):
     max_page_size = 100
 
 
-@extend_schema(tags=['Home'])
+@extend_schema(tags=["Home"])
 class HomeViewSet(BaseUserViewSet):
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['blocks__projects', 'blocks', 'home_status']
+    filterset_fields = ["blocks__projects", "blocks", "home_status"]
 
     def get_queryset(self):
         qs = get_homes_with_finance()
-        return filter_by_org(qs, self.request, field='organization')
+        return filter_by_org(qs, self.request, field="organization")
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -45,7 +45,7 @@ class HomeViewSet(BaseUserViewSet):
 
     def perform_create(self, serializer):
         data = serializer.validated_data
-        data['organization'] = getattr(self.request.user, 'organization', None)
+        data["organization"] = getattr(self.request.user, "organization", None)
         serializer.instance = HomeService.create_home(data)
 
     def perform_update(self, serializer):
@@ -65,7 +65,7 @@ class HomeViewSet(BaseUserViewSet):
         return Response(serializer.data)
 
 
-@extend_schema(tags=['HomeHistory'])
+@extend_schema(tags=["HomeHistory"])
 class HomeHistoryListAPIView(ListAPIView):
     serializer_class = HomeStatusHistorySerializer
     pagination_class = HomePagination
@@ -74,10 +74,10 @@ class HomeHistoryListAPIView(ListAPIView):
     filterset_fields = ["home", "changed_by", "to_status"]
 
     def get_queryset(self):
-        qs = HomeStatusHistory.objects.select_related(
-            "home", "home__blocks", "home__floor", "changed_by"
-        ).order_by("-changed_at")
-        qs = filter_by_org(qs, self.request, field='home__organization')
+        qs = HomeStatusHistory.objects.select_related("home", "home__blocks", "home__floor", "changed_by").order_by(
+            "-changed_at"
+        )
+        qs = filter_by_org(qs, self.request, field="home__organization")
         date_from = self.request.query_params.get("from")
         date_to = self.request.query_params.get("to")
         if date_from:

@@ -19,6 +19,7 @@ class HomeModelTest(TestCase):
         home = Home.objects.create(home_number=1, price_per_sqm=0, area=0)
         self.assertEqual(home.home_status, Home.HomeStatus.AVAILABLE)
 
+
 class HomeStatusHistoryModelTest(TestCase):
     def setUp(self):
         self.home = make_home()
@@ -34,11 +35,13 @@ class HomeStatusHistoryModelTest(TestCase):
 
 class HomeServiceCreateTest(TestCase):
     def test_create_home_basic(self):
-        home = HomeService.create_home({
-            "home_number": 7,
-            "price_per_sqm": 300,
-            "area": 45,
-        })
+        home = HomeService.create_home(
+            {
+                "home_number": 7,
+                "price_per_sqm": 300,
+                "area": 45,
+            }
+        )
         self.assertIsNotNone(home.pk)
         self.assertEqual(home.home_number, 7)
 
@@ -48,12 +51,14 @@ class HomeServiceCreateTest(TestCase):
 
     def test_create_home_with_blocks(self):
         blocks = make_blocks()
-        home = HomeService.create_home({
-            "home_number": 9,
-            "blocks": blocks,
-            "price_per_sqm": 0,
-            "area": 0,
-        })
+        home = HomeService.create_home(
+            {
+                "home_number": 9,
+                "blocks": blocks,
+                "price_per_sqm": 0,
+                "area": 0,
+            }
+        )
         self.assertEqual(home.blocks, blocks)
 
 
@@ -97,11 +102,7 @@ class HomeServiceChangeStatusTest(TestCase):
             new_status=Home.HomeStatus.SOLD,
             user=self.user,
         )
-        self.assertTrue(
-            HomeStatusHistory.objects.filter(
-                home=self.home, to_status=Home.HomeStatus.SOLD
-            ).exists()
-        )
+        self.assertTrue(HomeStatusHistory.objects.filter(home=self.home, to_status=Home.HomeStatus.SOLD).exists())
 
     def test_change_status_records_from_status(self):
         HomeService.change_status(
@@ -145,8 +146,7 @@ class HomeSelectorTest(TestCase):
         self.blocks = make_blocks()
         self.floor = make_floors()
         self.ren = make_renovation(price=1000)
-        self.home = make_home(blocks=self.blocks, floor=self.floor, renovation=self.ren,
-                              price_per_sqm=100, area=50)
+        self.home = make_home(blocks=self.blocks, floor=self.floor, renovation=self.ren, price_per_sqm=100, area=50)
 
     def test_get_homes_with_finance_returns_queryset(self):
         qs = get_homes_with_finance()

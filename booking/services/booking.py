@@ -34,11 +34,7 @@ def create_booking(data, user=None, home_status=None):
     booking = Booking.objects.create(**data)
 
     if home_status:
-        HomeService.change_status(
-            home_id=booking.home.id,
-            new_status=home_status,
-            user=user,
-            client=booking.client)
+        HomeService.change_status(home_id=booking.home.id, new_status=home_status, user=user, client=booking.client)
 
     return booking
 
@@ -49,17 +45,16 @@ def set_booking_status(booking_id, new_status, user=None):
     if new_status not in valid:
         raise ValidationError({"status": f"Noto'g'ri status. Ruxsat etilganlar: {', '.join(sorted(valid))}."})
 
-    booking = Booking.objects.select_related('home', 'client').get(id=booking_id)
+    booking = Booking.objects.select_related("home", "client").get(id=booking_id)
     if booking.status == new_status:
         return booking
 
     home = Home.objects.select_for_update().get(id=booking.home_id)
 
     if new_status == Booking.BookingStatus.ACTIVE:
-        other_active = (Booking.objects
-                        .filter(home=home, status=Booking.BookingStatus.ACTIVE)
-                        .exclude(pk=booking.pk)
-                        .exists())
+        other_active = (
+            Booking.objects.filter(home=home, status=Booking.BookingStatus.ACTIVE).exclude(pk=booking.pk).exists()
+        )
         if other_active:
             raise ValidationError({"home": "Bu uyda allaqachon aktiv booking mavjud."})
 
@@ -69,22 +64,24 @@ def set_booking_status(booking_id, new_status, user=None):
     if new_status == Booking.BookingStatus.CANCELED:
         if not Booking.objects.filter(home=home, status=Booking.BookingStatus.ACTIVE).exists():
             HomeService.change_status(
-                home_id=home.id, new_status=Home.HomeStatus.AVAILABLE, user=user, client=booking.client)
-    elif new_status == Booking.BookingStatus.ACTIVE:
-        if home.home_status == Home.HomeStatus.AVAILABLE:
-            HomeService.change_status(
-                home_id=home.id, new_status=Home.HomeStatus.RESERVED, user=user, client=booking.client)
+                home_id=home.id, new_status=Home.HomeStatus.AVAILABLE, user=user, client=booking.client
+            )
+    elif new_status == Booking.BookingStatus.ACTIVE and home.home_status == Home.HomeStatus.AVAILABLE:
+        HomeService.change_status(
+            home_id=home.id, new_status=Home.HomeStatus.RESERVED, user=user, client=booking.client
+        )
 
     return booking
 
 
 @transaction.atomic
 def delete_booking(booking_id, user=None):
-    booking = Booking.objects.select_related('home', 'client').get(id=booking_id)
+    booking = Booking.objects.select_related("home", "client").get(id=booking_id)
 
     if booking.payments.exists():
         raise ValidationError(
-            {"detail": "Bu bookingda to'lovlar mavjud. Avval to'lovlar bilan bog'liq masalani hal qiling."})
+            {"detail": "Bu bookingda to'lovlar mavjud. Avval to'lovlar bilan bog'liq masalani hal qiling."}
+        )
 
     home = Home.objects.select_for_update().get(id=booking.home_id)
     client = booking.client
@@ -92,8 +89,7 @@ def delete_booking(booking_id, user=None):
     booking.delete()
 
     HomeStatusHistory.objects.create(
-        home=home, client=client, from_status=home.home_status,
-        to_status="booking_deleted", changed_by=user
+        home=home, client=client, from_status=home.home_status, to_status="booking_deleted", changed_by=user
     )
 
     if not Booking.objects.filter(home=home, status=Booking.BookingStatus.ACTIVE).exists():

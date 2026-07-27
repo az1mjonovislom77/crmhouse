@@ -3,7 +3,6 @@ from projects.models.project_models import Project
 
 
 class ProjectService:
-
     @staticmethod
     def create_project(validated_data):
         image = validated_data.get("image")

@@ -4,7 +4,7 @@ from django.db import models
 from django.utils import timezone
 
 
-class UserManager(BaseUserManager):
+class UserManager(BaseUserManager["User"]):
     use_in_migrations = True
 
     def create_user(self, username, password=None, **extra_fields):
@@ -33,16 +33,17 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     class UserRoles(models.TextChoices):
-        SELLER = 's', "SELLER"
-        SUPERADMIN = 'sa', "SUPERADMIN"
-        ADMIN = 'a', "ADMIN"
+        SELLER = "s", "SELLER"
+        SUPERADMIN = "sa", "SUPERADMIN"
+        ADMIN = "a", "ADMIN"
 
     full_name = models.CharField(max_length=100)
     username = models.CharField(max_length=100, unique=True)
     phone_number = models.CharField(max_length=20, null=True, blank=True)
     role = models.CharField(max_length=10, choices=UserRoles.choices, default=UserRoles.SELLER)
     organization = models.ForeignKey(
-        'organization.Organization', on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
+        "organization.Organization", on_delete=models.SET_NULL, null=True, blank=True, related_name="users"
+    )
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now, editable=False)
@@ -66,7 +67,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class RequestLog(models.Model):
-    user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='request_logs')
+    user = models.ForeignKey("User", on_delete=models.SET_NULL, null=True, blank=True, related_name="request_logs")
     method = models.CharField(max_length=10)
     path = models.CharField(max_length=500)
     status_code = models.PositiveSmallIntegerField()
@@ -75,15 +76,15 @@ class RequestLog(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'request_logs'
-        ordering = ['-created_at']
+        db_table = "request_logs"
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['user']),
-            models.Index(fields=['created_at']),
-            models.Index(fields=['method']),
-            models.Index(fields=['status_code']),
+            models.Index(fields=["user"]),
+            models.Index(fields=["created_at"]),
+            models.Index(fields=["method"]),
+            models.Index(fields=["status_code"]),
         ]
 
     def __str__(self):
-        user_str = str(self.user) if self.user else 'anonymous'
+        user_str = str(self.user) if self.user else "anonymous"
         return f"{self.method} {self.path} [{self.status_code}] by {user_str}"

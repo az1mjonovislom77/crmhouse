@@ -9,13 +9,13 @@ from calculator.models import CalculatorConfig, GuaranteeOption, SubsidyOption, 
 class GuaranteeOptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = GuaranteeOption
-        fields = ['id', 'key', 'label', 'percent', 'is_active', 'order']
+        fields = ["id", "key", "label", "percent", "is_active", "order"]
 
 
 class SubsidyOptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubsidyOption
-        fields = ['id', 'key', 'label', 'amount', 'is_active', 'order']
+        fields = ["id", "key", "label", "amount", "is_active", "order"]
 
 
 class CalculatorConfigSerializer(serializers.ModelSerializer):
@@ -24,9 +24,18 @@ class CalculatorConfigSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CalculatorConfig
-        fields = ['formula_key', 'annual_rate_pct', 'state_threshold_pct', 'subsidy_years',
-                  'firm_markup_pct', 'round_step', 'default_price_per_m2', 'term_options',
-                  'guarantee_options', 'subsidy_options']
+        fields = [
+            "formula_key",
+            "annual_rate_pct",
+            "state_threshold_pct",
+            "subsidy_years",
+            "firm_markup_pct",
+            "round_step",
+            "default_price_per_m2",
+            "term_options",
+            "guarantee_options",
+            "subsidy_options",
+        ]
 
     def get_guarantee_options(self, obj):
         return GuaranteeOptionSerializer(active_guarantees(obj.organization), many=True).data
@@ -44,12 +53,12 @@ class CalculateInputSerializer(serializers.Serializer):
     subsidy_key = serializers.CharField(required=False)
     credit_years = serializers.IntegerField(min_value=1)
     price_per_m2 = serializers.DecimalField(
-        max_digits=14, decimal_places=2, required=False, allow_null=True, min_value=Decimal('0.01'))
-    manual_down_payment = serializers.DecimalField(
-        max_digits=16, decimal_places=2, required=False, allow_null=True)
+        max_digits=14, decimal_places=2, required=False, allow_null=True, min_value=Decimal("0.01")
+    )
+    manual_down_payment = serializers.DecimalField(max_digits=16, decimal_places=2, required=False, allow_null=True)
     rounding = serializers.BooleanField(default=True)
 
     def validate(self, attrs):
-        if not attrs.get('guarantee_id') and not attrs.get('guarantee_key'):
-            raise serializers.ValidationError({'guarantee_id': 'Kafillik turi majburiy.'})
+        if not attrs.get("guarantee_id") and not attrs.get("guarantee_key"):
+            raise serializers.ValidationError({"guarantee_id": "Kafillik turi majburiy."})
         return attrs

@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 def custom_exception_handler(exc, context):
     if isinstance(exc, DjangoValidationError):
-        detail = exc.message_dict if hasattr(exc, 'message_dict') else exc.messages
+        detail = exc.message_dict if hasattr(exc, "message_dict") else exc.messages
         exc = DRFValidationError(detail=detail)
 
     response = exception_handler(exc, context)
@@ -24,10 +24,11 @@ def custom_exception_handler(exc, context):
         logger.warning("Integrity error: %s", exc, exc_info=exc)
         return Response(
             {"detail": "Ma'lumotlar ziddiyati: yozuv allaqachon mavjud yoki bog'liq yozuv topilmadi."},
-            status=status.HTTP_400_BAD_REQUEST)
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     logger.exception("Unhandled server error", exc_info=exc)
 
     return Response(
-        {"detail": "Internal server error. Please try again later."},
-        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        {"detail": "Internal server error. Please try again later."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+    )

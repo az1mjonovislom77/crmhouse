@@ -6,15 +6,64 @@ CANONICAL_APOSTROPHE = "'"
 LATIN_TO_CYRILLIC_PAIRS = (("o'", "ў"), ("g'", "ғ"), ("sh", "ш"), ("ch", "ч"), ("ya", "я"), ("yo", "ё"), ("yu", "ю"))
 
 LATIN_TO_CYRILLIC_CHARS = {
-    "a": "а", "b": "б", "d": "д", "e": "е", "f": "ф", "g": "г", "h": "ҳ", "i": "и", "j": "ж", "k": "к", "l": "л",
-    "m": "м", "n": "н", "o": "о", "p": "п", "q": "қ", "r": "р", "s": "с", "t": "т", "u": "у", "v": "в", "x": "х",
-    "y": "й", "z": "з",
+    "a": "а",
+    "b": "б",
+    "d": "д",
+    "e": "е",
+    "f": "ф",
+    "g": "г",
+    "h": "ҳ",
+    "i": "и",
+    "j": "ж",
+    "k": "к",
+    "l": "л",
+    "m": "м",
+    "n": "н",
+    "o": "о",
+    "p": "п",
+    "q": "қ",
+    "r": "р",
+    "s": "с",
+    "t": "т",
+    "u": "у",
+    "v": "в",
+    "x": "х",
+    "y": "й",
+    "z": "з",
 }
 
 CYRILLIC_TO_LATIN_CHARS = {
-    "а": "a", "б": "b", "д": "d", "е": "e", "ф": "f", "г": "g", "ҳ": "h", "и": "i", "ж": "j", "к": "k", "л": "l",
-    "м": "m", "н": "n", "о": "o", "п": "p", "қ": "q", "р": "r", "с": "s", "т": "t", "у": "u", "в": "v", "х": "x",
-    "й": "y", "з": "z", "ш": "sh", "ч": "ch", "я": "ya", "ё": "yo", "ю": "yu", "ў": "o'", "ғ": "g'",
+    "а": "a",
+    "б": "b",
+    "д": "d",
+    "е": "e",
+    "ф": "f",
+    "г": "g",
+    "ҳ": "h",
+    "и": "i",
+    "ж": "j",
+    "к": "k",
+    "л": "l",
+    "м": "m",
+    "н": "n",
+    "о": "o",
+    "п": "p",
+    "қ": "q",
+    "р": "r",
+    "с": "s",
+    "т": "t",
+    "у": "u",
+    "в": "v",
+    "х": "x",
+    "й": "y",
+    "з": "z",
+    "ш": "sh",
+    "ч": "ch",
+    "я": "ya",
+    "ё": "yo",
+    "ю": "yu",
+    "ў": "o'",
+    "ғ": "g'",
 }
 
 
@@ -80,10 +129,7 @@ class TransliteratedSearchFilter(SearchFilter):
         if not search_fields or not search_terms:
             return queryset
 
-        orm_lookups = [
-            self.construct_search(str(search_field), queryset)
-            for search_field in search_fields
-        ]
+        orm_lookups = [self.construct_search(str(search_field), queryset) for search_field in search_fields]
 
         for search_term in search_terms:
             term_query = Q()
