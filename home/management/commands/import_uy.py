@@ -129,6 +129,8 @@ class Command(BaseCommand):
                     skipped_count += 1
                     continue
 
+                organization = block_obj.projects.organization if block_obj.projects else None
+
                 if dry_run:
                     exists = Home.objects.filter(
                         home_number=home_number,
@@ -139,6 +141,7 @@ class Command(BaseCommand):
                     action = "YANGILANADI" if exists else "YARATILADI"
                     self.stdout.write(
                         f"Qator {row_idx}: {action} | block='{block_obj.title}' (id={block_obj.id}) "
+                        f"org='{organization}' "
                         f"floor={floor_number} home_number={home_number} "
                         f"area={area} rooms={rooms} price_per_sqm={price_per_sqm} "
                         f"department={department} entrance={entrance}"
@@ -158,6 +161,7 @@ class Command(BaseCommand):
                         "area": area,
                         "rooms": rooms,
                         "price_per_sqm": price_per_sqm,
+                        "organization": organization,
                     },
                 )
 
