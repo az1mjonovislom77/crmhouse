@@ -219,7 +219,18 @@ class Command(BaseCommand):
         self.unmatched = {}
         self.sheet_rows = {}
         self.stats = dict.fromkeys(
-            ("created", "updated", "unchanged", "skipped", "duplicates", "phones_fixed", "errors", "events"), 0
+            (
+                "created",
+                "updated",
+                "unchanged",
+                "skipped",
+                "duplicates",
+                "status_conflicts",
+                "phones_fixed",
+                "errors",
+                "events",
+            ),
+            0,
         )
 
         if self.dry_run:
@@ -288,10 +299,12 @@ class Command(BaseCommand):
         return colmap
 
     def _collect(self, sheets):
-        """Barcha varaqlarni o'qib, kalit (telefon yoki ism) bo'yicha dedup qiladi — oxirgi qator g'olib.
+        """Barcha varaqlarni o'qib, kalit (telefon yoki ism) bo'yicha dedup qiladi.
 
-        Excelning o'zida bir telefon bir necha marta uchraydi; dedupsiz ular har importda
-        navbat bilan bir-birini qayta yozadi va log doim "yangilandi" ko'rsatadi.
+        Excelning o'zida bir telefon bir necha varaqda, turli status bilan uchraydi
+        (masalan LID_BAZA da "Uchrashuv belgilandi", "Atkaz qilganlar" da "Atkaz qildi").
+        G'olibni "Gaplashilgan sana" belgilaydi — eng so'nggi aloqa. Sana teng yoki
+        yo'q bo'lsa, oxirgi uchragan qator olinadi.
         """
         by_key = {}
         for ws in sheets:
@@ -315,11 +328,42 @@ class Command(BaseCommand):
                     continue
                 if entry is None:
                     continue
-                if entry["key"] in by_key:
+
+                previous = by_key.get(entry["key"])
+                if previous is not None:
                     self.stats["duplicates"] += 1
+                    if not self._wins(entry, previous):
+                        self._log_conflict(previous, entry, kept=previous)
+                        continue
+                    self._log_conflict(previous, entry, kept=entry)
                 by_key[entry["key"]] = entry
 
         return list(by_key.values())
+
+    @staticmethod
+    def _wins(candidate, current):
+        """Yangi qator eskisini almashtirsinmi — "Gaplashilgan sana" bo'yicha."""
+        new_dt, old_dt = candidate["contact_dt"], current["contact_dt"]
+        if new_dt and old_dt:
+            return new_dt >= old_dt
+        # Faqat bittasida sana bo'lsa — o'sha g'olib; ikkalasida ham yo'q bo'lsa oxirgisi
+        return not (old_dt and not new_dt)
+
+    def _log_conflict(self, first, second, kept):
+        """Statusi farq qiladigan takroriy qatorlarni ko'rsatadi (jim qolmaslik uchun)."""
+        if first["values"]["status"] == second["values"]["status"]:
+            return
+        self.stats["status_conflicts"] += 1
+        loser = second if kept is first else first
+        self.stdout.write(
+            self.style.WARNING(
+                f"  status konflikti {kept['phone']}: "
+                f"[{kept['sheet']}:{kept['row_num']}] {kept['values']['status']} "
+                f"({kept['contact_dt'].date() if kept['contact_dt'] else 'sanasiz'}) OLINDI, "
+                f"[{loser['sheet']}:{loser['row_num']}] {loser['values']['status']} "
+                f"({loser['contact_dt'].date() if loser['contact_dt'] else 'sanasiz'}) rad etildi"
+            )
+        )
 
     def _report_duplicate_leads(self):
         """Bir telefonda bir nechta Lead qolganini xabar qiladi.
