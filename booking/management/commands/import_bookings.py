@@ -33,6 +33,7 @@ COLUMN_ALIASES = {
     "home_number": ["xonadon raqami", "home_number"],
     "block": ["bino", "block", "blok"],
     "entrance": ["pod'ezd", "podezd", "kirish", "entrance"],
+    "floor": ["qavat", "floor"],
     "home_status": ["status", "home_status", "holat"],
     "client_full_name": ["mijoz f.i.sh", "mijoz fish", "client_full_name"],
     "address": ["manzil", "address"],
@@ -55,6 +56,8 @@ COLUMN_ALIASES = {
 REQUIRED_COLUMNS = ("home_number", "home_status", "client_full_name")
 
 BOOKING_MONEY_FIELDS = ("price_per_m2", "contract_price", "manual_down_payment")
+
+PLACEHOLDER_PHONE = "+998000000000"
 
 
 def norm_header(value):
@@ -129,6 +132,22 @@ def parse_date(value):
     return None if pd.isna(parsed) else parsed.date()
 
 
+def differs(current, value):
+    """Qiymat haqiqatan o'zgarganini tekshiradi.
+
+    str() bo'yicha solishtirish yaramaydi: created_at bazada UTC da saqlanadi
+    (12:00+05:00 -> 07:00+00:00), matn sifatida har safar "o'zgargan" ko'rinadi.
+    """
+    if isinstance(current, datetime) and isinstance(value, datetime):
+        return current != value
+    if isinstance(current, Decimal) or isinstance(value, Decimal):
+        try:
+            return Decimal(str(current)) != Decimal(str(value))
+        except (InvalidOperation, ValueError):
+            pass
+    return str(current) != str(value)
+
+
 class SkipRow(Exception):
     pass
 
@@ -166,16 +185,38 @@ class Command(BaseCommand):
         parser.add_argument("--org-id", type=int, default=None, help="Organization ID (--org o`rniga)")
         parser.add_argument("--company-id", type=int, default=None, help="Booking uchun Company ID")
         parser.add_argument(
+            "--replace-client",
+            action="store_true",
+            help="Uyda boshqa mijozning aktiv bookingi bo`lsa, mijozni exceldagisiga almashtirsin "
+            "(default: bunday qator skip qilinadi)",
+        )
+        parser.add_argument(
             "--overwrite",
             action="store_true",
             help="Mavjud booking/client maydonlarini ham qayta yozsin (default: faqat bo`sh maydonlar to`ldiriladi)",
         )
+        parser.add_argument(
+            "--excel-wins",
+            action="store_true",
+            help="Excel yagona haqiqat manbai: prodda boshqa ma`lumot bo`lsa ham exceldagisi yoziladi "
+            "(--overwrite va --replace-client ni birga yoqadi). Exceldagi bo`sh kataklar hech narsani o`chirmaydi.",
+        )
 
     def handle(self, *args, **options):
         self.dry_run = options["dry_run"]
-        self.overwrite = options["overwrite"]
+        excel_wins = options["excel_wins"]
+        self.overwrite = options["overwrite"] or excel_wins
+        self.replace_client = options["replace_client"] or excel_wins
         self.block_prefix = options["block_prefix"]
         self.strict_block = options["strict_block"]
+
+        if excel_wins:
+            self.stdout.write(
+                self.style.WARNING(
+                    "EXCEL-WINS: proddagi mavjud booking/mijoz ma`lumotlari exceldagisi bilan almashtiriladi "
+                    "(bo`sh kataklar tegmaydi)"
+                )
+            )
 
         file_path = options["file"]
         if not os.path.isabs(file_path):
@@ -214,6 +255,7 @@ class Command(BaseCommand):
             "skipped": 0,
             "errors": 0,
             "clients_created": 0,
+            "conflicts": 0,
         }
 
         try:
@@ -242,6 +284,18 @@ class Command(BaseCommand):
             f"{s['skipped']} skip, {s['errors']} xato"
         )
         self.stdout.write(self.style.SUCCESS(summary))
+        if s["conflicts"]:
+            if self.replace_client:
+                detail = (
+                    "mijoz exceldagisiga almashtirildi. Eski mijoz yozuvlari bazada qoldi (bookingsiz) — "
+                    "yuqoridagi KONFLIKT loglarini saqlab qo`ying."
+                )
+            else:
+                detail = (
+                    "qatorlar o`tkazib yuborildi. Loglarni tekshiring — map_key mos kelsa bazadagi yozuv "
+                    "eskirgan (--excel-wins bering), mos kelmasa uy noto`g`ri topilgan."
+                )
+            self.stdout.write(self.style.ERROR(f"{s['conflicts']} ta KONFLIKT: {detail}"))
         if self.dry_run:
             self.stdout.write(self.style.WARNING("DRY-RUN yakunlandi — baza o'zgarmadi."))
 
@@ -311,7 +365,7 @@ class Command(BaseCommand):
             raise SkipRow("xonadon raqami yo`q")
         home_number = int(float(raw_number))
 
-        qs = Home.objects.all()
+        qs = Home.objects.select_related("blocks__projects", "floor")
         if self.organization:
             qs = qs.filter(organization=self.organization)
         block_title = to_str(data.get("block"))
@@ -356,6 +410,15 @@ class Command(BaseCommand):
     def _org_id_for(self, home):
         return home.organization_id or (self.organization.pk if self.organization else None)
 
+    def _home_label(self, home):
+        """Qaysi uy topilganini aniq ko'rsatish uchun (konflikt/diagnostika loglarida)."""
+        block = home.blocks
+        project = block.projects.title if block and block.projects_id else "-"
+        return (
+            f"home_id={home.id} blok='{block.title if block else '-'}' (project='{project}') "
+            f"xonadon={home.home_number} kirish={home.entrance} qavat={home.floor.number if home.floor_id else '-'}"
+        )
+
     def _resolve_user(self, data, row_num):
         name = to_str(data.get("locked_by"))
         if not name:
@@ -374,8 +437,9 @@ class Command(BaseCommand):
         if not full_name:
             raise SkipRow("mijoz F.I.Sh yo`q")
 
+        # Excelda bo'sh bo'lgan katak hech qachon proddagi qiymatni o'chirmaydi (_fill None/"" ni tashlab ketadi)
         values = {
-            "phone_number": fmt_phone(data.get("phone_number")) or "+998000000000",
+            "phone_number": fmt_phone(data.get("phone_number")),
             "phone_number2": fmt_phone(data.get("phone_number2")),
             "passport": (to_str(data.get("passport")) or "")[:20],
             "passport_date": parse_date(data.get("passport_date")),
@@ -391,10 +455,13 @@ class Command(BaseCommand):
 
         client = candidates.first()
         if client:
-            self._fill(client, values, skip_defaults={"phone_number": "+998000000000"})
+            changed = self._fill(client, values, skip_defaults={"phone_number": PLACEHOLDER_PHONE})
+            if changed:
+                self.stdout.write(f"  [{row_num}] mijoz yangilandi: {client.full_name} -> {', '.join(changed)}")
             return client
 
-        client = Client(full_name=full_name, **values)
+        # Client.phone_number majburiy — excelda raqam bo'lmasa faqat YARATISHDA placeholder qo'yiladi
+        client = Client(full_name=full_name, **dict(values, phone_number=values["phone_number"] or PLACEHOLDER_PHONE))
         client.save()
         self.stats["clients_created"] += 1
         self.stdout.write(f"  [{row_num}] mijoz yaratildi: {full_name}")
@@ -409,7 +476,7 @@ class Command(BaseCommand):
                 continue
             current = getattr(instance, field)
             is_empty = current in (None, "") or current == skip_defaults.get(field)
-            if (is_empty or self.overwrite) and str(current) != str(value):
+            if (is_empty or self.overwrite) and differs(current, value):
                 setattr(instance, field, value)
                 changed.append(field)
         if changed:
@@ -455,12 +522,26 @@ class Command(BaseCommand):
 
         if existing:
             if existing.client_id != client.id:
+                self.stats["conflicts"] += 1
                 self.stdout.write(
-                    self.style.WARNING(
-                        f"  [{row_num}] xonadon={home.home_number} bookingdagi mijoz farq qiladi: "
-                        f'"{existing.client.full_name}" != "{client.full_name}" — mijoz almashtirilmadi'
+                    self.style.ERROR(
+                        f"  [{row_num}] KONFLIKT: {self._home_label(home)} da allaqachon boshqa mijozning "
+                        f"aktiv bookingi bor\n"
+                        f'      bazada:  #{existing.id} "{existing.client.full_name}" '
+                        f"shartnoma={existing.booking_no} map_key={existing.map_key} "
+                        f"sana={existing.created_at:%Y-%m-%d}\n"
+                        f'      excelda: "{client.full_name}" shartnoma={booking_values["booking_no"]} '
+                        f"map_key={booking_values['map_key']} (excel: bino={to_str(data.get('block'))} "
+                        f"pod'ezd={to_str(data.get('entrance'))} qavat={to_str(data.get('floor'))})"
                     )
                 )
+                if not self.replace_client:
+                    raise SkipRow("konflikt — qator o`tkazib yuborildi (--replace-client bilan majburlash mumkin)")
+
+                existing.client = client
+                existing.save(update_fields=["client"])
+                self.stdout.write(self.style.WARNING(f"  [{row_num}] booking #{existing.id} mijozi almashtirildi"))
+
             values = dict(booking_values, company_id=company.id, organization_id=self._org_id_for(home))
             if created_at:
                 values["created_at"] = created_at
