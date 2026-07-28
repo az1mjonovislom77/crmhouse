@@ -42,9 +42,6 @@ _FONT_FACES = {
     "bold_italic": (_FONT_DIR / "DejaVuSans-BoldOblique.ttf").as_posix(),
 }
 
-# xhtml2pdf faqat o'zi ro'yxatdan o'tgan shriftlarni ishlata oladi; shablonlarda
-# uchraydigan keng tarqalgan shrift nomlarini DejaVu'ga bog'laymiz, aks holda
-# kirill matni Helvetica fallback tufayli kvadratlarga aylanadi.
 _PDF_FONT_ALIASES = (
     "DejaVuSans",
     "DejaVu Sans",
@@ -72,7 +69,6 @@ _CSS_AT_LINE_RE = re.compile(r"@[^{};]*;")
 _CSS_RULE_RE = re.compile(r"([^{}]+)\{([^{}]*)\}")
 _IMPORTANT_RE = re.compile(r"\s*!important\s*", re.IGNORECASE)
 
-# Ota elementdan bolalarga meros bo'lib o'tadigan CSS xususiyatlar
 _INHERITED_PROPS = frozenset(
     {
         "color",
@@ -88,7 +84,6 @@ _INHERITED_PROPS = frozenset(
     }
 )
 
-# Brauzer standart stillari — HTML ko'rinishini DOCX'da ham saqlash uchun
 _UA_DEFAULT_RULES = (
     ("h1", {"font-size": "24pt", "font-weight": "bold", "color": "#000000"}),
     ("h2", {"font-size": "18pt", "font-weight": "bold", "color": "#000000"}),
@@ -109,10 +104,8 @@ _GENERIC_FONT_MAP = {
 
 _CSS_SIZE_RE = re.compile(r"([\d.]+)\s*(px|pt|em|rem|%)?")
 
-# Body shrift ko'rsatilmaganda ishlatiladi — PDF'dagi DejaVuSans'ga vizual yaqin
 _DOCX_DEFAULT_FONT = "Arial"
 
-# w:tblPr ichidagi elementlarning sxema bo'yicha tartibi
 _TBLPR_SEQUENCE = (
     "tblStyle",
     "tblpPr",
@@ -131,7 +124,6 @@ _TBLPR_SEQUENCE = (
     "tblLook",
 )
 
-# Word standart katak ichki hoshiyalari (dxa: 1pt = 20 dxa)
 _DEFAULT_CELL_MARGINS_DXA = {"top": 0, "left": 108, "bottom": 0, "right": 108}
 
 
@@ -188,9 +180,6 @@ def render_contract_html(contract: Contract) -> str:
     return _TEMPLATE_ENGINE.from_string(source).render(Context(build_context(contract)))
 
 
-# --- PDF ---
-
-
 def _font_face_css(family: str) -> str:
     return (
         f'@font-face {{ font-family: "{family}"; src: url("{_FONT_FACES["regular"]}"); }}'
@@ -210,7 +199,6 @@ def _build_pdf_base_css(html: str) -> str:
 
 
 def _pdf_link_callback(uri: str, rel: str) -> str:
-    """Shablondagi rasm URL'larini (media/static) lokal fayl yo'liga aylantiradi."""
     if uri.startswith(("data:", "http://", "https://")) or os.path.isfile(uri):
         return uri
     relative = uri.lstrip("/")
@@ -233,8 +221,6 @@ def _pdf_link_callback(uri: str, rel: str) -> str:
 
 
 def html_to_pdf(html: str) -> bytes:
-    # Bazaviy CSS <head> boshiga qo'yiladi — shablonning o'z stillari
-    # keyin kelib, ustunlik qiladi (1:1 ko'rinish uchun).
     base_css = _build_pdf_base_css(html)
     match = _HEAD_TAG_RE.search(html)
     insert_at = match.end() if match else 0
@@ -244,12 +230,6 @@ def html_to_pdf(html: str) -> bytes:
     if result.err:
         raise ValueError("PDF generatsiya qilishda xatolik yuz berdi.")
     return buffer.getvalue()
-
-
-# --- DOCX ---
-# html4docx <head> ichidagi <style> blokini butunlay tashlab yuboradi va faqat
-# inline style="" atributlarini o'qiydi. Shuning uchun DOCX'dan oldin CSS
-# qoidalarini (cascade + meros bilan) elementlarga inline qilib singdiramiz.
 
 
 def _parse_declarations(text: str) -> dict:
@@ -317,8 +297,6 @@ def _stamp_element(el, matched: dict, inherited: dict) -> dict:
     if computed:
         el["style"] = _serialize_styles(computed)
     next_inherited = {prop: value for prop, value in computed.items() if prop in _INHERITED_PROPS}
-    # Katak ichidagi yalang'och matn alohida parser bilan o'qiladi va meros
-    # stillarni yo'qotadi — uni style'li span bilan o'raymiz.
     if el.name in ("td", "th") and next_inherited:
         for child in list(el.children):
             if isinstance(child, NavigableString) and child.strip():
@@ -331,14 +309,11 @@ def _stamp_element(el, matched: dict, inherited: dict) -> dict:
 
 
 def _inline_styles(soup: BeautifulSoup) -> dict:
-    """CSS qoidalarini elementlarga inline qiladi, body'ning hisoblangan stilini qaytaradi."""
     rules = _collect_css_rules(soup)
     matched = _match_rules(soup, rules)
     for tag in soup.find_all(["style", "script", "link", "meta", "title"]):
         tag.decompose()
     root = soup.body or soup
-    # Shablon shrift bermasa ham hamma element bir xil shriftga ega bo'lsin
-    # (aks holda Word sarlavhalarga Calibri Light, matnga Calibri qo'yadi).
     seed = {"font-family": _DOCX_DEFAULT_FONT}
     if soup.body is not None:
         body_style = _stamp_element(soup.body, matched, seed)
@@ -373,7 +348,6 @@ def _first_font_family(value: str | None):
 
 
 def _apply_document_defaults(document, body_style: dict) -> None:
-    """PDF bilan bir xil sahifa (A4, 2cm) va bazaviy shriftni o'rnatadi."""
     section = document.sections[0]
     section.page_width, section.page_height = Cm(21.0), Cm(29.7)
     section.top_margin = section.bottom_margin = Cm(2.0)
@@ -391,7 +365,6 @@ def _local_name(element) -> str:
 
 
 def _tblpr_insert(tbl_pr, element) -> None:
-    """w:tblPr ichiga elementni sxema tartibini buzmasdan qo'yadi."""
     pos = _TBLPR_SEQUENCE.index(_local_name(element))
     for child in tbl_pr:
         local = _local_name(child)
@@ -402,7 +375,6 @@ def _tblpr_insert(tbl_pr, element) -> None:
 
 
 def _expand_box_values(value: str) -> dict:
-    """CSS qisqartmasini (padding/margin) 4 tomonga yoyadi."""
     parts = _IMPORTANT_RE.sub("", value).split()
     if not parts:
         return {}
@@ -416,7 +388,6 @@ def _expand_box_values(value: str) -> dict:
 
 
 def _set_table_width(table, width_value: str) -> None:
-    """HTML'dagi table width (%, px, pt...) ni Word jadvaliga o'tkazadi."""
     value = _IMPORTANT_RE.sub("", width_value).strip()
     tbl_w = OxmlElement("w:tblW")
     if value.endswith("%"):
@@ -439,7 +410,6 @@ def _set_table_width(table, width_value: str) -> None:
 
 
 def _cell_padding(table_soup) -> dict | None:
-    """Jadvalning o'z kataklaridan birinchi topilgan padding qiymatlarini oladi."""
     for cell in table_soup.find_all(["td", "th"]):
         if cell.find_parent("table") is not table_soup:
             continue
@@ -480,8 +450,6 @@ def _postprocess_tables(document, soup: BeautifulSoup) -> None:
 
 
 def _fix_border_sizes(document) -> None:
-    """html4docx chegara o'lchamini kasr ko'rinishda yozadi (sz="6.0"),
-    Word esa faqat butun son qabul qiladi — aks holda chegara yo'qoladi."""
     for border in document.element.xpath(".//w:tcBorders/*"):
         size = border.get(qn("w:sz"))
         if size is None:
@@ -499,8 +467,6 @@ def _is_visually_empty(paragraph) -> bool:
 
 
 def _remove_empty_paragraphs(document) -> None:
-    """html4docx har bir div uchun bo'sh paragraf qo'shadi — HTML'da ular
-    ko'rinmaydi, Word'da esa ortiqcha bo'sh qatorlar hosil qiladi."""
     paragraphs = document.paragraphs
     remaining = len(paragraphs)
     for paragraph in paragraphs:
@@ -511,7 +477,6 @@ def _remove_empty_paragraphs(document) -> None:
         prev_is_tbl = prev_el is not None and _local_name(prev_el) == "tbl"
         next_is_tbl = next_el is not None and _local_name(next_el) == "tbl"
         next_is_end = next_el is None or _local_name(next_el) == "sectPr"
-        # Ikki jadval orasidagi va hujjat oxiridagi paragraf majburiy
         if prev_is_tbl and (next_is_tbl or next_is_end):
             continue
         p.getparent().remove(p)
@@ -519,7 +484,6 @@ def _remove_empty_paragraphs(document) -> None:
 
 
 def _apply_paragraph_spacing(document, soup: BeautifulSoup, body_style: dict) -> None:
-    """HTML'dagi paragraf oralig'ini (standart 1em margin) Word'ga o'tkazadi."""
     first_p = soup.find("p")
     if first_p is None:
         return

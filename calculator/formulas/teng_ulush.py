@@ -49,8 +49,6 @@ def calculate(
     client_payment = _d(0)
     credit = _d(0)
 
-    # Pedagogda kredit va subsidiya bir-biriga bog'liq — mos kelguncha iteratsiya,
-    # boshqa holatlarda birinchi aylanishdayoq tugaydi.
     for _ in range(60):
         const_sub = fixed_sub if is_oddiy else (sub if is_pedagog else _d(0))
 

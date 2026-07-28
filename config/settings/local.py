@@ -25,8 +25,6 @@ import sys
 
 if "test" in sys.argv:
     MIDDLEWARE = [m for m in MIDDLEWARE if m != "common.logging.RequestLoggingMiddleware"]
-    # Testlarda parol xeshlash tezligi muhim emas — Argon2 o'rniga MD5
-    # (Django'ning testlar uchun rasmiy tavsiyasi, suite'ni sezilarli tezlashtiradi)
     PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 CELERY_BROKER_URL = "redis://localhost:6379/0"

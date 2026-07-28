@@ -39,9 +39,7 @@ omit = [
     "manage.py",
     "config/asgi.py",
     "config/wsgi.py",
-    # Qo'lda ishga tushiriladigan bir martalik import/backfill skriptlari
     "*/management/commands/*",
-    # Faqat prod muhitida yuklanadi, lokal testda ishlamaydi
     "config/settings/production.py",
 ]
 

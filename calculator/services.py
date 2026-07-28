@@ -41,8 +41,6 @@ def effective_guarantee_percent(
     contract = _d(contract_price or 0)
     if contract <= 0:
         return guarantee_percent
-    # Formula manual to'lovni minimalgacha ko'tarishi yoki limit oshganda unga farq
-    # qo'shishi mumkin — foiz kiritilgan summadan emas, haqiqiy to'lovdan hisoblanadi.
     paid = client_payment if client_payment is not None else manual_down_payment
     return (_d(paid) * 100 / contract).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 

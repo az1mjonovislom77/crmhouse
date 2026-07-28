@@ -156,7 +156,6 @@ class TengUlushFormulaTest(TestCase):
         self.assertIsNone(r["monthly_stage1"])
 
     def test_discount_under_200mln(self):
-        # 200 mln gacha tannarxda 15% bosh to'lov avtomatik 5% bo'ladi
         config = CalculatorConfig.load()
         config.formula_key = "teng_ulush"
         r = calculate(
@@ -170,11 +169,10 @@ class TengUlushFormulaTest(TestCase):
             config=config,
         )
         self.assertEqual(r["contract_price"], Decimal("175000000"))
-        self.assertEqual(r["client_payment"], Decimal("8750000"))  # 5%
+        self.assertEqual(r["client_payment"], Decimal("8750000"))
         self.assertEqual(r["credit_amount"], Decimal("166250000"))
 
     def test_credit_limit_380mln(self):
-        # Limitdan oshgan qism mijoz to'loviga qo'shiladi
         config = CalculatorConfig.load()
         config.formula_key = "teng_ulush"
         r = calculate(
@@ -189,7 +187,6 @@ class TengUlushFormulaTest(TestCase):
         )
         self.assertEqual(r["contract_price"], Decimal("1000000000"))
         self.assertEqual(r["credit_amount"], Decimal("380000000"))
-        # 20% = 200 mln + limitdan oshgan 420 mln
         self.assertEqual(r["client_payment"], Decimal("620000000"))
 
     def test_manual_down_payment_used(self):
@@ -206,7 +203,6 @@ class TengUlushFormulaTest(TestCase):
             rounding=True,
             config=config,
         )
-        # manual minimal bosh to'lovdan katta bo'lsa, manual ishlatiladi
         self.assertEqual(r["client_payment"], Decimal("100000000"))
         self.assertEqual(r["credit_amount"], Decimal("279995000"))
 
@@ -224,10 +220,8 @@ class TengUlushFormulaTest(TestCase):
             config=config,
             subsidy_key="pedagog",
         )
-        # subsidiya = kredit * (0.15 * 0.25) / 0.85 ga yaqinlashadi
         expected_sub = r["credit_amount"] * (Decimal("0.15") * Decimal("0.25")) / Decimal("0.85")
         self.assertLess(abs(r["subsidy_amount"] - expected_sub), Decimal("1"))
-        # pedagogda foiz bo'yicha davlat yordami yo'q
         self.assertIsNone(r["monthly_stage1"])
 
     def test_dispatcher_picks_by_formula_key(self):

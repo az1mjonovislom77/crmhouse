@@ -11,8 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # config/settings/__init__.py fail-secure tarzda production'ni yuklaydi;
-      # CI'da local sozlamalar ishlatilishi uchun ENVIRONMENT majburiy
       ENVIRONMENT: "local"
       SECRET_KEY: "dummy-secret-key-for-ci"
       INSTAGRAM_ACCESS_TOKEN: "dummy-token"
