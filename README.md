@@ -1,124 +1,137 @@
 # CRM House
 
-## Project Overview
-
-CRM House is a comprehensive Customer Relationship Management (CRM) system designed to manage client interactions, sales processes, and project information for a real estate or construction company. This system aims to streamline operations, improve customer service, and enhance overall business efficiency. It includes a web interface for administration and management, as well as a Telegram bot for quick interactions and notifications.
+CRM system for a real estate / construction company: clients, leads, bookings,
+apartments, installment calculator, contract generation (PDF/DOCX), call-center
+and Instagram integrations — behind a single REST API with JWT authentication.
 
 ## Features
 
-*   **Client Management**: Track and manage customer information, leads, and communication history.
-*   **Project Management**: Oversee various construction or real estate projects, including stages, deadlines, and associated clients.
-*   **Booking Management**: Handle property bookings and reservations.
-*   **Sales & Deals Tracking**: Monitor sales pipelines, deal statuses, and performance.
-*   **Task Management**: Assign and track tasks related to clients, projects, and sales.
-*   **Telegram Bot Integration**: Provide quick access to information, notifications, and basic interactions via a Telegram bot.
-*   **Internationalization**: Support for multiple languages in the administrative interface.
-*   **API Endpoints**: Robust RESTful API for integration with other services and mobile applications.
-*   **Admin Panel**: Enhanced Django Admin interface for easy data management.
-*   **Reporting**: Generate reports (e.g., Excel, Word) for various business metrics.
-*   **Authentication**: Secure user authentication using JWT.
+| Module | What it does |
+|---|---|
+| `user` | JWT auth (access + rotating refresh token in an httponly cookie), Argon2 password hashing, roles |
+| `client` | Client base, per-organization scoping |
+| `leads` | Lead pipeline, real-time updates over WebSocket (Django Channels + JWT middleware), AI assistance via Groq API |
+| `projects` / `home` / `booking` | Projects → blocks → apartments, interactive showrooms (SVG), reservations and sales |
+| `calculator` | Installment/mortgage formulas (subsidy, credit limit, iterative calculation) with a configurable formula engine |
+| `contracts` | Contract templates with placeholders, rendered to HTML / PDF (xhtml2pdf + DejaVu fonts for Cyrillic) / DOCX |
+| `contact_center` | PBX / Issabel / SIP call-center integration |
+| `instagram` | Instagram Graph API: media, comments, replies |
+| `stats` | Sales and activity statistics |
+| `tasks` | Task management with change history (django-simple-history) |
+| `organization` | Multi-organization support, logo processing (auto-convert to WebP) |
 
-## Technologies Used
+Admin panel — Jazzmin-themed Django admin with model translation (uz/ru/en).
 
-The project is built using modern web technologies and best practices:
+## Architecture
 
-*   **Backend**:
-    *   Python 3.x
-    *   [Django](https://www.djangoproject.com/): High-level Python Web framework.
-    *   [Django REST Framework (DRF)](https://www.django-rest-framework.org/): Powerful and flexible toolkit for building Web APIs.
-    *   [Celery](https://docs.celeryq.dev/en/stable/): Asynchronous task queue/job queue based on distributed message passing.
-    *   [Redis](https://redis.io/): In-memory data structure store, used as a message broker for Celery and caching.
-    *   [Gunicorn](https://gunicorn.org/): Python WSGI HTTP Server for UNIX.
-    *   [djangorestframework-simplejwt](https://pypi.org/project/djangorestframework-simplejwt/): JWT authentication for DRF.
-    *   [django-modeltranslation](https://django-modeltranslation.readthedocs.io/en/latest/): Translate model fields in Django.
-    *   [django-jazzmin](https://django-jazzmin.readthedocs.io/): Jazzy and configurable Django admin.
-    *   [drf-spectacular](https://drf-spectacular.readthedocs.io/en/latest/): API documentation generation (OpenAPI/Swagger).
-    *   [django-cors-headers](https://pypi.org/project/django-cors-headers/): Handles Cross-Origin Resource Sharing (CORS).
-    *   [Pillow](https://python-pillow.org/): Image processing library.
-    *   [openpyxl](https://openpyxl.readthedocs.io/en/stable/) / [python-docx](https://python-docx.readthedocs.io/en/latest/): Libraries for reading/writing Excel and Word files.
-    *   [pandas](https://pandas.pydata.org/): Data analysis and manipulation tool.
+The codebase follows a layered, HackSoft-style structure:
 
-*   **Telegram Bot**:
-    *   [aiogram](https://docs.aiogram.dev/en/latest/): Asynchronous Telegram Bot API framework for Python.
+- **`<app>/services/`** — business logic (writes, orchestration)
+- **`<app>/selectors/`** — read-only queries
+- **`<app>/api/`** — serializers, views, urls; views stay thin
+- **`common/base/`** — shared base classes (viewsets, serializers, pagination)
+- **`config/settings/`** — `base.py` + `local.py` / `production.py` split;
+  the environment is selected by the `ENVIRONMENT` variable and **fails secure**:
+  anything other than `local` loads production settings
 
-## Installation
+## Tech stack
 
-To set up the project locally, follow these steps:
+- Python 3.12, Django 5.2, Django REST Framework
+- SimpleJWT (token rotation + blacklist), drf-spectacular (OpenAPI)
+- Django Channels + Daphne (WebSockets; Redis channel layer in production)
+- Celery + Redis (background jobs, beat schedule)
+- PostgreSQL (production) / SQLite (local development)
+- xhtml2pdf, python-docx, html-for-docx, openpyxl, pandas (documents & imports)
+- Ruff (lint + format), mypy (django-stubs + drf-stubs), coverage, pre-commit
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/az1mjonovislom77/crm_house.git
-    cd crm_house
-    ```
+## Getting started
 
-2.  **Create and activate a virtual environment:**
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-    ```
+Requirements: Python 3.12. Redis and PostgreSQL are only needed for
+production-like runs — local development uses SQLite and an in-memory
+channel layer.
 
-3.  **Install dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
+```bash
+git clone https://github.com/az1mjonovislom77/crm_house.git
+cd crm_house
 
-4.  **Set up environment variables:**
-    Create a `.env` file in the `config` directory (or project root, depending on your `python-decouple` setup) and add your environment-specific variables.
-    Example `.env`:
-    ```
-    SECRET_KEY=your_django_secret_key
-    DEBUG=True
-    DATABASE_URL=postgres://user:password@host:port/dbname
-    REDIS_URL=redis://localhost:.../0
-    TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-    ```
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
 
-5.  **Apply database migrations:**
-    ```bash
-    python manage.py migrate
-    ```
+pip install -r requirements.txt
+```
 
-6.  **Create a superuser (for Django Admin access):**
-    ```bash
-    python manage.py createsuperuser
-    ```
+Create a `.env` file in the project root:
 
-7.  **Run the development server:**
-    ```bash
-    python manage.py runserver
-    ```
+```env
+# Required
+ENVIRONMENT=local                # anything else loads production settings
+SECRET_KEY=change-me
+INSTAGRAM_ACCESS_TOKEN=dummy     # real token only needed for the instagram module
+IG_USER_ID=dummy
 
-8.  **Start Celery worker (in a separate terminal):**
-    ```bash
-    celery -A config worker -l info
-    ```
+# Optional integrations
+GROQ_API_KEY=
+PBX_BASE_URL=
+ISSABEL_BASE_URL=
+```
 
-9.  **Start Celery Beat (for scheduled tasks, in another separate terminal):**
-    ```bash
-    celery -A config beat -l info
-    ```
+Production additionally requires `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`,
+`REDIS_URL`, `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS`
+(see `config/settings/production.py` for the full list).
 
-10. **Run the Telegram Bot (if applicable, in another separate terminal):**
-    (You might need to locate the main bot script, e.g., `python instagram/bot.py` or similar, depending on your project structure)
+Run it:
 
-The web application will be accessible at `http://127.0.0.1:8000/`.
-The Django Admin panel will be at `http://127.0.0.1:8000/admin/`.
-API documentation (Swagger UI) will be at `http://127.0.0.1:8000/swagger/` or `http://127.0.0.1:8000/redoc/`.
+```bash
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
+```
 
-## Usage
+- API docs (Swagger UI): http://127.0.0.1:8000/api/swagger/
+- OpenAPI schema: http://127.0.0.1:8000/api/schema/
+- Admin: http://127.0.0.1:8000/admin/
+- Health check: http://127.0.0.1:8000/health/
 
-*   **Web Interface**: Access the Django Admin panel to manage clients, projects, bookings, and other data.
-*   **API**: Utilize the RESTful API for programmatic access to the CRM functionalities. Refer to the API documentation (`/swagger/` or `/redoc/`) for available endpoints and schemas.
-*   **Telegram Bot**: Interact with the Telegram bot for quick queries, notifications, or specific actions (e.g., `/status`, `/new_lead`).
+WebSockets (leads real-time) require the ASGI server:
 
-## Contributing
+```bash
+daphne config.asgi:application
+```
 
-Contributions are welcome! Please follow these steps:
+Background jobs (optional, needs Redis):
 
-1.  Fork the repository.
-2.  Create a new branch (`git checkout -b feature/your-feature-name`).
-3.  Make your changes.
-4.  Commit your changes (`git commit -m 'Add some feature'`).
-5.  Push to the branch (`git push origin feature/your-feature-name`).
-6.  Open a Pull Request.
+```bash
+celery -A config worker -l info
+celery -A config beat -l info
+```
 
+## Quality & testing
+
+```bash
+python manage.py test            # 386 tests, ~3s (external APIs are mocked)
+ruff check .                     # lint
+ruff format --check .            # formatting
+mypy .                           # strict-ish typing, 0 errors
+coverage run manage.py test && coverage report   # 83%, CI gate at 78%
+```
+
+Enable the git hooks once:
+
+```bash
+pre-commit install
+```
+
+CI (GitHub Actions, on every push/PR to `main`) runs the full chain:
+ruff lint → format check → mypy → Django system check →
+tests with coverage → coverage gate (`--fail-under=78`).
+
+Test conventions: `APITestCase` + `force_authenticate`, external HTTP mocked
+with `unittest.mock`, media written to a temp dir via
+`override_settings(MEDIA_ROOT=...)`, MD5 password hasher in test mode for speed.
+
+## Notes
+
+- `static/fonts/` (DejaVu TTFs) is required for PDF generation with Cyrillic
+  text — do not remove it.
+- One-off data import/backfill scripts live in `*/management/commands/` and are
+  intentionally excluded from coverage.
