@@ -72,10 +72,8 @@ def _require_same_org(serializer, attrs, home=None, client=None, booking=None):
         raise serializers.ValidationError("Sizga tashkilot biriktirilmagan.")
     if home is not None and _home_org_id(home) != org_id:
         raise serializers.ValidationError({"home": "Bu uy sizning tashkilotingizga tegishli emas."})
-    if client is not None:
-        client_org_id = client.user.organization_id if client.user else None
-        if client_org_id != org_id:
-            raise serializers.ValidationError({"client": "Bu mijoz sizning tashkilotingizga tegishli emas."})
+    if client is not None and client.organization_id != org_id:
+        raise serializers.ValidationError({"client": "Bu mijoz sizning tashkilotingizga tegishli emas."})
     if booking is not None and _home_org_id(booking.home) != org_id:
         raise serializers.ValidationError({"booking": "Bu booking sizning tashkilotingizga tegishli emas."})
 
