@@ -142,9 +142,9 @@ class PaymentViewSet(BaseUserViewSet):
         amount = serializer.validated_data["amount"]
 
         with transaction.atomic():
-            locked_booking = (
-                Booking.objects.select_for_update().select_related("home", "home__renovation").get(pk=booking.pk)
-            )
+            # select_related bilan qo'shib bo'lmaydi: home__renovation nullable FK bo'lgani uchun
+            # PostgreSQL "FOR UPDATE cannot be applied to the nullable side of an outer join" xatosini otadi.
+            locked_booking = Booking.objects.select_for_update().get(pk=booking.pk)
             remaining = locked_booking.remaining_debt
 
             if remaining <= 0:
@@ -162,11 +162,7 @@ class PaymentViewSet(BaseUserViewSet):
             old_amount = instance.amount
 
             with transaction.atomic():
-                locked_booking = (
-                    Booking.objects.select_for_update()
-                    .select_related("home", "home__renovation")
-                    .get(pk=instance.booking_id)
-                )
+                locked_booking = Booking.objects.select_for_update().get(pk=instance.booking_id)
                 available = locked_booking.remaining_debt + old_amount
                 if new_amount > available:
                     raise ValidationError(
