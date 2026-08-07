@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.db.models import Sum
 from rest_framework import serializers
 
-from booking.models import Booking, Company, Payment
+from booking.models import Booking, Commitment, Company, Payment
 from client.api.serializers import ClientNestSerializer
 from common.base.serializers_base import BaseReadSerializer
 from home.models import Home
@@ -176,3 +176,93 @@ class PaymentSerializer(serializers.ModelSerializer):
         else:
             paid = booking.payments.aggregate(total=Sum("amount"))["total"] or 0
         return total_price - paid
+
+
+class CommitmentSerializer(serializers.ModelSerializer):
+    amount = serializers.DecimalField(max_digits=16, decimal_places=2, min_value=Decimal("0.01"))
+
+    class Meta:
+        model = Commitment
+        fields = ["id", "booking", "expected_date", "amount", "note", "status", "reminder", "created_at", "created_by"]
+        read_only_fields = ["id", "created_at", "created_by"]
+
+    def validate(self, attrs):
+        booking = attrs.get("booking") or (self.instance.booking if self.instance else None)
+        if self.instance is not None and "booking" in attrs and attrs["booking"].pk != self.instance.booking_id:
+            raise serializers.ValidationError({"booking": "Kelishuvning bookingini o'zgartirib bo'lmaydi."})
+        _require_same_org(self, attrs, booking=booking)
+        return attrs
+
+
+# --- To'lov jadvali javobi (faqat o'qish uchun, hisoblanadi — modelga bog'lanmagan) ---
+
+
+def _money(**kwargs):
+    return serializers.DecimalField(max_digits=18, decimal_places=2, coerce_to_string=False, **kwargs)
+
+
+class NextDueSerializer(serializers.Serializer):
+    no = serializers.IntegerField()
+    due_date = serializers.DateField()
+    amount = _money()
+    remaining = _money()
+
+
+class ScheduleKpiSerializer(serializers.Serializer):
+    total_planned = _money()
+    total_paid = _money()
+    remaining = _money()
+    arrears = _money()
+    advance = _money()
+    prepaid_months = serializers.IntegerField()
+    next_due = NextDueSerializer(allow_null=True)
+
+
+class DownPaymentSerializer(serializers.Serializer):
+    amount = _money()
+    paid = _money()
+    status = serializers.CharField()
+    payment_ids = serializers.ListField(child=serializers.IntegerField())
+
+
+class InstallmentSerializer(serializers.Serializer):
+    no = serializers.IntegerField()
+    due_date = serializers.DateField()
+    planned_amount = _money()
+    filled = _money()
+    remaining = _money()
+    stage = serializers.IntegerField()
+    status = serializers.CharField()
+    paid_on = serializers.DateField(allow_null=True)
+    payment_ids = serializers.ListField(child=serializers.IntegerField())
+
+
+class BookingScheduleSerializer(serializers.Serializer):
+    kpi = ScheduleKpiSerializer()
+    down_payment = DownPaymentSerializer()
+    installments = InstallmentSerializer(many=True)
+    payments = PaymentSerializer(many=True)
+    commitments = CommitmentSerializer(many=True)
+
+
+class ReminderItemSerializer(serializers.Serializer):
+    kind = serializers.CharField()
+    booking_id = serializers.IntegerField()
+    client = serializers.CharField(allow_null=True)
+    phone = serializers.CharField(allow_null=True)
+    apartment = serializers.CharField(allow_null=True)
+    contract_no = serializers.CharField(allow_null=True)
+    no = serializers.IntegerField(allow_null=True)
+    due_date = serializers.DateField()
+    amount = _money()
+    days = serializers.IntegerField()
+    note = serializers.CharField(allow_null=True)
+
+
+class RemindersSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    days = serializers.IntegerField()
+    counts = serializers.DictField(child=serializers.IntegerField())
+    overdue = ReminderItemSerializer(many=True)
+    upcoming = ReminderItemSerializer(many=True)
+    commitments = ReminderItemSerializer(many=True)

@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+from booking.api.reminders import RemindersView
 from common.health import health_check
 
 urlpatterns = [
@@ -14,6 +15,7 @@ urlpatterns = [
     path("projects/", include("projects.api.urls")),
     path("home/", include("home.api.urls")),
     path("booking/", include("booking.api.urls")),
+    path("reminders/", RemindersView.as_view(), name="reminders"),
     path("calculator/", include("calculator.api.urls")),
     path("client/", include("client.api.urls")),
     path("tasks/", include("tasks.api.urls")),

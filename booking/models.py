@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models import Sum
@@ -105,13 +106,36 @@ class Booking(models.Model):
     def client_payment_inword(self):
         return number_to_words_uz(self.client_payment)
 
+    def paid_total(self):
+        if hasattr(self, "payments_total"):
+            return self.payments_total or 0
+        return self.payments.aggregate(total=Sum("amount"))["total"] or 0
+
     @property
     def remaining_debt(self):
-        if hasattr(self, "payments_total"):
-            paid = self.payments_total or 0
-        else:
-            paid = self.payments.aggregate(total=Sum("amount"))["total"] or 0
-        return self.total_price - paid
+        """Shartnoma narxidan qolgan qarz (foizsiz). Statistika va mijoz kartochkasi shundan foydalanadi."""
+        return self.total_price - self.paid_total()
+
+    @property
+    def total_planned(self):
+        """To'lov jadvali bo'yicha jami: bosh to'lov + barcha oyliklar (foiz bilan).
+
+        Installment shartlari yo'q bookingda None.
+        """
+        from booking.services.schedule import total_planned
+
+        return total_planned(self)
+
+    @property
+    def payable_remaining(self):
+        """To'lov qabul qilish uchun qoldiq.
+
+        Jadvali bor bo'lsa foizli umumiy summadan, aks holda shartnoma narxidan hisoblanadi.
+        """
+        planned = self.total_planned
+        if planned is None:
+            return self.remaining_debt
+        return planned - self.paid_total()
 
 
 class Payment(models.Model):
@@ -131,6 +155,34 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"Payment {self.id} - {self.amount}"
+
+
+class Commitment(models.Model):
+    """Mijoz bilan kelishuv: "falon sanada falon pul beraman". Oylik jadvaldan mustaqil."""
+
+    class CommitmentStatus(models.TextChoices):
+        PENDING = "pending", "Kutilmoqda"
+        FULFILLED = "fulfilled", "Bajarildi"
+        BROKEN = "broken", "Buzildi"
+
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name="commitments")
+    expected_date = models.DateField(db_index=True)
+    amount = models.DecimalField(max_digits=16, decimal_places=2)
+    note = models.TextField(null=True, blank=True)
+    status = models.CharField(
+        max_length=20, choices=CommitmentStatus.choices, default=CommitmentStatus.PENDING, db_index=True
+    )
+    reminder = models.BooleanField(default=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="commitments"
+    )
+
+    class Meta:
+        ordering = ["expected_date", "id"]
+
+    def __str__(self):
+        return f"Commitment {self.id} - {self.amount} ({self.expected_date})"
 
 
 @receiver(post_delete, sender=Payment)

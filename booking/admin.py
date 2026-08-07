@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from booking.models import Booking, Company, Payment
+from booking.models import Booking, Commitment, Company, Payment
 
 
 @admin.register(Booking)
@@ -17,3 +17,10 @@ class CompanyAdmin(admin.ModelAdmin):
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
     list_display = ["id", "amount", "note"]
+
+
+@admin.register(Commitment)
+class CommitmentAdmin(admin.ModelAdmin):
+    list_display = ["id", "booking", "expected_date", "amount", "status", "reminder"]
+    list_filter = ["status", "reminder"]
+    list_select_related = ["booking"]

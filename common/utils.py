@@ -3,6 +3,8 @@ from datetime import datetime, time, timedelta
 
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.dateparse import parse_date
+from rest_framework.exceptions import ValidationError
 
 MONTH_LABELS_UZ = ["Yan", "Fev", "Mar", "Apr", "May", "Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy", "Dek"]
 
@@ -44,3 +46,13 @@ def last_months(months):
 
 def to_millions(value):
     return round(float(value or 0) / 1_000_000, 1)
+
+
+def parse_date_param(value, field="date"):
+    """Query paramdagi YYYY-MM-DD sanani date'ga aylantiradi. Bo'sh bo'lsa None."""
+    if not value:
+        return None
+    parsed = parse_date(value)
+    if parsed is None:
+        raise ValidationError({field: "Sana YYYY-MM-DD formatida bo'lishi kerak."})
+    return parsed

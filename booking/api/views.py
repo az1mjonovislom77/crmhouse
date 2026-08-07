@@ -3,18 +3,29 @@ from decimal import Decimal
 from django.db import transaction
 from django.db.models import DecimalField, OuterRef, Prefetch, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
+from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from booking.api.serializers import BookingCreateSerializer, BookingGetSerializer, CompanySerializer, PaymentSerializer
-from booking.models import Booking, Company, Payment
+from booking.api.serializers import (
+    BookingCreateSerializer,
+    BookingGetSerializer,
+    BookingScheduleSerializer,
+    CommitmentSerializer,
+    CompanySerializer,
+    PaymentSerializer,
+)
+from booking.models import Booking, Commitment, Company, Payment
 from booking.services.booking import create_booking, delete_booking, set_booking_status
+from booking.services.schedule import booking_schedule
 from common.base.views_base import BaseUserViewSet
 from common.mixins import filter_by_org
 from common.search import TransliteratedSearchFilter
+from common.utils import parse_date_param
 from home.models import HomeStatusHistory
 from home.services.home import HomeService
 
@@ -112,6 +123,45 @@ class BookingViewSet(BaseUserViewSet):
         serializer = BookingGetSerializer(self.get_queryset().get(pk=booking.pk), context={"request": request})
         return Response(serializer.data)
 
+    @extend_schema(
+        parameters=[OpenApiParameter(name="date", type=OpenApiTypes.DATE, location=OpenApiParameter.QUERY)],
+        responses=BookingScheduleSerializer,
+    )
+    @action(detail=True, methods=["get"], url_path="schedule")
+    def schedule(self, request, pk=None):
+        """Oyma-oy reja + FIFO taqsimot + KPI. Reja saqlanmaydi, har safar generatsiya qilinadi."""
+        booking = self.get_object()
+        today = parse_date_param(request.query_params.get("date")) or timezone.localdate()
+
+        payments = list(booking.payments.all())
+        data = booking_schedule(booking, today=today, payments=payments)
+        context = {"request": request}
+        data["payments"] = PaymentSerializer(
+            sorted(payments, key=lambda p: (p.payment_date or timezone.localdate(), p.id)),
+            many=True,
+            context=context,
+        ).data
+        data["commitments"] = CommitmentSerializer(booking.commitments.all(), many=True, context=context).data
+        return Response(data)
+
+    @extend_schema(
+        methods=["GET"], responses=CommitmentSerializer(many=True), request=None, filters=False, parameters=[]
+    )
+    @extend_schema(methods=["POST"], request=CommitmentSerializer, responses=CommitmentSerializer, parameters=[])
+    @action(detail=True, methods=["get", "post"], url_path="commitments")
+    def commitments(self, request, pk=None):
+        booking = self.get_object()
+        if request.method == "GET":
+            serializer = CommitmentSerializer(booking.commitments.all(), many=True, context={"request": request})
+            return Response(serializer.data)
+
+        data = request.data.copy()
+        data["booking"] = booking.pk
+        serializer = CommitmentSerializer(data=data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save(created_by=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 @extend_schema(
     tags=["Payment"],
@@ -145,7 +195,7 @@ class PaymentViewSet(BaseUserViewSet):
             # select_related bilan qo'shib bo'lmaydi: home__renovation nullable FK bo'lgani uchun
             # PostgreSQL "FOR UPDATE cannot be applied to the nullable side of an outer join" xatosini otadi.
             locked_booking = Booking.objects.select_for_update().get(pk=booking.pk)
-            remaining = locked_booking.remaining_debt
+            remaining = locked_booking.payable_remaining
 
             if remaining <= 0:
                 raise ValidationError({"detail": "Qarz to'liq qoplangan, qo'shimcha to'lov qilib bo'lmaydi."})
@@ -163,7 +213,7 @@ class PaymentViewSet(BaseUserViewSet):
 
             with transaction.atomic():
                 locked_booking = Booking.objects.select_for_update().get(pk=instance.booking_id)
-                available = locked_booking.remaining_debt + old_amount
+                available = locked_booking.payable_remaining + old_amount
                 if new_amount > available:
                     raise ValidationError(
                         {"amount": f"Kiritilgan summa qoldiq qarzdan ({available}) ko'p bo'lishi mumkin emas."}
@@ -171,6 +221,33 @@ class PaymentViewSet(BaseUserViewSet):
                 serializer.save()
         else:
             serializer.save()
+
+
+@extend_schema(
+    tags=["Commitment"],
+    parameters=[
+        OpenApiParameter(name="booking_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY),
+        OpenApiParameter(name="status", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY),
+    ],
+)
+class CommitmentViewSet(BaseUserViewSet):
+    """Mijoz kelishuvlari (va'dalar) — oylik jadvaldan mustaqil."""
+
+    serializer_class = CommitmentSerializer
+
+    def get_queryset(self):
+        qs = Commitment.objects.select_related("booking").all()
+        qs = filter_by_org(qs, self.request, field="booking__organization")
+        booking_id = self.request.query_params.get("booking_id")
+        if booking_id:
+            qs = qs.filter(booking_id=booking_id)
+        commitment_status = self.request.query_params.get("status")
+        if commitment_status:
+            qs = qs.filter(status=commitment_status)
+        return qs
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
 
 
 @extend_schema(tags=["Company"])
