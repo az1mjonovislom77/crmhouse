@@ -129,7 +129,6 @@ class BookingViewSet(BaseUserViewSet):
     )
     @action(detail=True, methods=["get"], url_path="schedule")
     def schedule(self, request, pk=None):
-        """Oyma-oy reja + FIFO taqsimot + KPI. Reja saqlanmaydi, har safar generatsiya qilinadi."""
         booking = self.get_object()
         today = parse_date_param(request.query_params.get("date")) or timezone.localdate()
 
@@ -192,8 +191,6 @@ class PaymentViewSet(BaseUserViewSet):
         amount = serializer.validated_data["amount"]
 
         with transaction.atomic():
-            # select_related bilan qo'shib bo'lmaydi: home__renovation nullable FK bo'lgani uchun
-            # PostgreSQL "FOR UPDATE cannot be applied to the nullable side of an outer join" xatosini otadi.
             locked_booking = Booking.objects.select_for_update().get(pk=booking.pk)
             remaining = locked_booking.payable_remaining
 
@@ -231,8 +228,6 @@ class PaymentViewSet(BaseUserViewSet):
     ],
 )
 class CommitmentViewSet(BaseUserViewSet):
-    """Mijoz kelishuvlari (va'dalar) — oylik jadvaldan mustaqil."""
-
     serializer_class = CommitmentSerializer
 
     def get_queryset(self):

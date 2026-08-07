@@ -28,7 +28,6 @@ STATUS_MAP = {
     "nomiga otkazib berildi": Home.HomeStatus.NOMIGA_OTKAZIB_BERILDI,
 }
 
-# Ichki kalit -> Excel sarlavhalari (fz.xlsx o'zbekcha + eski inglizcha nomlar)
 COLUMN_ALIASES = {
     "home_number": ["xonadon raqami", "home_number"],
     "block": ["bino", "block", "blok"],
@@ -61,7 +60,6 @@ PLACEHOLDER_PHONE = "+998000000000"
 
 
 def norm_header(value):
-    """Sarlavhani solishtirish uchun normallashtirish: registr, apostrof, `№`, ortiqcha bo'shliqlar."""
     s = str(value).strip().lower()
     for ch in "’‘`´ʻʼ":
         s = s.replace(ch, "'")
@@ -133,11 +131,6 @@ def parse_date(value):
 
 
 def differs(current, value):
-    """Qiymat haqiqatan o'zgarganini tekshiradi.
-
-    str() bo'yicha solishtirish yaramaydi: created_at bazada UTC da saqlanadi
-    (12:00+05:00 -> 07:00+00:00), matn sifatida har safar "o'zgargan" ko'rinadi.
-    """
     if isinstance(current, datetime) and isinstance(value, datetime):
         return current != value
     if isinstance(current, Decimal) or isinstance(value, Decimal):
@@ -299,8 +292,6 @@ class Command(BaseCommand):
         if self.dry_run:
             self.stdout.write(self.style.WARNING("DRY-RUN yakunlandi — baza o'zgarmadi."))
 
-    # --- yordamchilar -------------------------------------------------
-
     def _build_colmap(self, df):
         available = {norm_header(c): c for c in df.columns}
         colmap = {}
@@ -411,7 +402,6 @@ class Command(BaseCommand):
         return home.organization_id or (self.organization.pk if self.organization else None)
 
     def _home_label(self, home):
-        """Qaysi uy topilganini aniq ko'rsatish uchun (konflikt/diagnostika loglarida)."""
         block = home.blocks
         project = block.projects.title if block and block.projects_id else "-"
         return (
@@ -437,7 +427,6 @@ class Command(BaseCommand):
         if not full_name:
             raise SkipRow("mijoz F.I.Sh yo`q")
 
-        # Excelda bo'sh bo'lgan katak hech qachon proddagi qiymatni o'chirmaydi (_fill None/"" ni tashlab ketadi)
         values = {
             "phone_number": fmt_phone(data.get("phone_number")),
             "phone_number2": fmt_phone(data.get("phone_number2")),
@@ -448,7 +437,6 @@ class Command(BaseCommand):
             "organization_id": self._org_id_for(home),
         }
 
-        # mijoz qidiruvi ham organization ichida cheklanadi (boshqa org mijozini ulab yubormaslik uchun)
         candidates = Client.objects.filter(full_name__iexact=full_name)
         if values["organization_id"]:
             candidates = candidates.filter(organization_id=values["organization_id"])
@@ -460,7 +448,6 @@ class Command(BaseCommand):
                 self.stdout.write(f"  [{row_num}] mijoz yangilandi: {client.full_name} -> {', '.join(changed)}")
             return client
 
-        # Client.phone_number majburiy — excelda raqam bo'lmasa faqat YARATISHDA placeholder qo'yiladi
         client = Client(full_name=full_name, **dict(values, phone_number=values["phone_number"] or PLACEHOLDER_PHONE))
         client.save()
         self.stats["clients_created"] += 1
@@ -468,7 +455,6 @@ class Command(BaseCommand):
         return client
 
     def _fill(self, instance, values, skip_defaults=None):
-        """Bo'sh maydonlarni to'ldiradi (--overwrite bilan hammasini qayta yozadi)."""
         skip_defaults = skip_defaults or {}
         changed = []
         for field, value in values.items():

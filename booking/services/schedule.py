@@ -1,10 +1,3 @@
-"""To'lov jadvali: reja generatsiyasi va to'lovlarni FIFO taqsimlash.
-
-Reja bazada saqlanmaydi — har safar booking maydonlaridan generatsiya qilinadi
-(240 tagacha qator, hisoblash arzon). To'lovlar (`booking.payments`) sana bo'yicha
-eski→yangi tartibda avval bosh to'lovni, keyin eng eski to'lanmagan oylarni yopadi.
-"""
-
 from calendar import monthrange
 from dataclasses import dataclass, field
 from datetime import date
@@ -32,7 +25,6 @@ def _d(value):
 
 
 def add_months(start, months, day=None):
-    """start + months oy. Kun `day`ga o'rnatiladi, oy qisqa bo'lsa oxirgi kunga qisqaradi."""
     total = start.year * 12 + (start.month - 1) + months
     year, month = divmod(total, 12)
     month += 1
@@ -71,7 +63,6 @@ class Installment:
 
 
 def schedule_start_date(booking):
-    """Jadval boshlanish sanasi — shartnoma imzolangan sana."""
     if booking.payment_start_date:
         return booking.payment_start_date
     if booking.created_at:
@@ -80,14 +71,12 @@ def schedule_start_date(booking):
 
 
 def down_payment_amount(booking):
-    """Bosh to'lov — mijoz imzolashda to'laydigan summa (oylik jadvaldan tashqarida)."""
     if booking.client_payment is not None:
         return _d(booking.client_payment)
     return _d(booking.manual_down_payment)
 
 
 def build_schedule(booking):
-    """Booking maydonlaridan oyma-oy installment rejasini generatsiya qiladi."""
     months = int(booking.credit_years or 0) * 12
     if months <= 0 or booking.monthly_full is None:
         return []
@@ -96,7 +85,6 @@ def build_schedule(booking):
     pay_day = booking.monthly_payment_day or start.day
     monthly_full = _d(booking.monthly_full)
 
-    # Subsidiya davri faqat past stavkadagi oylik ma'lum bo'lsa qo'llanadi.
     stage1_months = 0
     if booking.monthly_stage1 is not None:
         stage1_months = min(int(booking.subsidy_years or 0) * 12, months)
@@ -117,11 +105,6 @@ def build_schedule(booking):
 
 
 def total_planned(booking):
-    """Foiz bilan birga to'lanadigan jami: bosh to'lov + barcha oyliklar.
-
-    Installment shartlari (credit_years / monthly_full) to'ldirilmagan bo'lsa None —
-    chaqiruvchi shartnoma narxi bo'yicha eski hisobga qaytadi.
-    """
     schedule = build_schedule(booking)
     if not schedule:
         return None
@@ -136,29 +119,23 @@ def _payment_sort_key(payment):
 
 
 def allocate(down_payment, schedule, payments, today):
-    """To'lovlarni FIFO taqsimlaydi: avval bosh to'lov, keyin eng eski to'lanmagan oy.
-
-    `schedule` joyida o'zgartiriladi (filled / status / paid_on / payment_ids).
-    """
     down_total = _d(down_payment)
     down_filled = ZERO
     down_payment_ids = []
     advance = ZERO
-    cursor = 0  # birinchi to'liq yopilmagan installment indeksi
+    cursor = 0
 
     for payment in sorted(payments, key=_payment_sort_key):
         remaining = _d(payment.amount)
         if remaining <= ZERO:
             continue
 
-        # 1) avval bosh to'lov qoplanadi
         if down_filled < down_total:
             take = min(remaining, down_total - down_filled)
             down_filled += take
             remaining -= take
             down_payment_ids.append(payment.id)
 
-        # 2) qolgani oyliklarga — eng eski qarzdan boshlab
         while remaining > ZERO and cursor < len(schedule):
             installment = schedule[cursor]
             need = installment.planned_amount - installment.filled
@@ -173,7 +150,6 @@ def allocate(down_payment, schedule, payments, today):
                 installment.paid_on = payment.payment_date
                 cursor += 1
 
-        # 3) barcha oylar yopilgan bo'lsa — oshgani oldindan to'lov
         if remaining > ZERO:
             advance += remaining
 
@@ -219,7 +195,6 @@ def allocate(down_payment, schedule, payments, today):
 
 
 def booking_schedule(booking, today=None, payments=None):
-    """Bitta booking uchun to'liq jadval: KPI + bosh to'lov + installmentlar."""
     today = today or timezone.localdate()
     payments = list(booking.payments.all()) if payments is None else list(payments)
 
@@ -231,7 +206,6 @@ def booking_schedule(booking, today=None, payments=None):
     total_paid = sum((_d(p.amount) for p in payments), ZERO)
     next_due = result["next_due"]
 
-    # Bosh to'lov ham kechikkan bo'lsa alohida belgilanadi (oylik jadvaldan tashqarida).
     if down["status"] != STATUS_PAID and schedule_start_date(booking) < today:
         down["status"] = STATUS_OVERDUE
 

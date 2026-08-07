@@ -113,25 +113,16 @@ class Booking(models.Model):
 
     @property
     def remaining_debt(self):
-        """Shartnoma narxidan qolgan qarz (foizsiz). Statistika va mijoz kartochkasi shundan foydalanadi."""
         return self.total_price - self.paid_total()
 
     @property
     def total_planned(self):
-        """To'lov jadvali bo'yicha jami: bosh to'lov + barcha oyliklar (foiz bilan).
-
-        Installment shartlari yo'q bookingda None.
-        """
         from booking.services.schedule import total_planned
 
         return total_planned(self)
 
     @property
     def payable_remaining(self):
-        """To'lov qabul qilish uchun qoldiq.
-
-        Jadvali bor bo'lsa foizli umumiy summadan, aks holda shartnoma narxidan hisoblanadi.
-        """
         planned = self.total_planned
         if planned is None:
             return self.remaining_debt
@@ -158,8 +149,6 @@ class Payment(models.Model):
 
 
 class Commitment(models.Model):
-    """Mijoz bilan kelishuv: "falon sanada falon pul beraman". Oylik jadvaldan mustaqil."""
-
     class CommitmentStatus(models.TextChoices):
         PENDING = "pending", "Kutilmoqda"
         FULFILLED = "fulfilled", "Bajarildi"

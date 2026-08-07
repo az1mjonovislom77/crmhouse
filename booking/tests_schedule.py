@@ -1,9 +1,3 @@
-"""To'lov jadvali (installment schedule) testlari.
-
-Asosiy senariy — spetsifikatsiyadagi mock booking: 20 yil, 240 oy, bosh to'lov + 21 ta
-oylik to'lov (shundan 3 tasi bitta batch to'lovda), 22-23 oylar to'lanmagan (qarz).
-"""
-
 from datetime import date
 from decimal import Decimal
 
@@ -50,14 +44,11 @@ def make_installment_booking(**kwargs):
 
 
 def add_mock_payments(booking):
-    """Spetsifikatsiyadagi to'lov tarixi: bosh to'lov, 1-9 oy, 10-12 batch, 13-21 oy."""
     Payment.objects.create(booking=booking, amount=DOWN_PAYMENT, payment_date=SIGN_DATE, note="Bosh to'lov")
-    for index in range(9):  # 1-9 oy: 2024-09 .. 2025-05
+    for index in range(9):
         Payment.objects.create(booking=booking, amount=MONTHLY, payment_date=add_months(date(2024, 9, 27), index))
-    Payment.objects.create(  # 10-11-12 oy birga
-        booking=booking, amount=MONTHLY * 3, payment_date=date(2025, 8, 5), note="3 oylik birga"
-    )
-    for index in range(9):  # 13-21 oy: 2025-09 .. 2026-05
+    Payment.objects.create(booking=booking, amount=MONTHLY * 3, payment_date=date(2025, 8, 5), note="3 oylik birga")
+    for index in range(9):
         Payment.objects.create(booking=booking, amount=MONTHLY, payment_date=add_months(date(2025, 9, 26), index))
 
 
@@ -118,10 +109,10 @@ class AllocateTest(TestCase):
         self.assertEqual(data["down_payment"]["paid"], DOWN_PAYMENT)
 
         self.assertTrue(all(i["status"] == "paid" for i in installments[:21]))
-        self.assertEqual(installments[21]["status"], "overdue")  # #22 — 26.06.2026
+        self.assertEqual(installments[21]["status"], "overdue")
         self.assertEqual(installments[21]["due_date"], date(2026, 6, 26))
-        self.assertEqual(installments[22]["status"], "overdue")  # #23 — 26.07.2026
-        self.assertEqual(installments[23]["status"], "pending")  # #24 — kelajakda
+        self.assertEqual(installments[22]["status"], "overdue")
+        self.assertEqual(installments[23]["status"], "pending")
 
         kpi = data["kpi"]
         self.assertEqual(kpi["total_planned"], Decimal("1005158640"))
@@ -146,13 +137,11 @@ class AllocateTest(TestCase):
         )
         Payment.objects.create(booking=booking, amount=DOWN_PAYMENT + Decimal("1000000"), payment_date=SIGN_DATE)
 
-        # #1 hali muddati kelmagan → partial
         data = booking_schedule(booking, today=date(2024, 9, 1))
         self.assertEqual(data["installments"][0]["status"], "partial")
         self.assertEqual(data["installments"][0]["filled"], Decimal("1000000"))
         self.assertEqual(data["kpi"]["arrears"], Decimal("0"))
 
-        # muddati o'tgach → overdue, qarz qoldiqqa teng
         data = booking_schedule(booking, today=date(2024, 10, 1))
         self.assertEqual(data["installments"][0]["status"], "overdue")
         self.assertEqual(data["kpi"]["arrears"], MONTHLY - Decimal("1000000"))
@@ -164,7 +153,6 @@ class AllocateTest(TestCase):
             credit_years=1,
             monthly_full=MONTHLY,
         )
-        # Bosh to'lov + 12 oylik + ortiqcha
         Payment.objects.create(
             booking=booking, amount=DOWN_PAYMENT + MONTHLY * 12 + Decimal("500000"), payment_date=SIGN_DATE
         )
@@ -214,8 +202,6 @@ class AllocateTest(TestCase):
 
 
 class PayableRemainingTest(APITestCase):
-    """To'lov qabul qilish chegarasi shartnoma narxi emas, foizli umumiy summa bo'yicha."""
-
     def setUp(self):
         self.user = make_user(username="payable_user")
         self.client.force_authenticate(self.user)
@@ -228,11 +214,9 @@ class PayableRemainingTest(APITestCase):
     def test_total_planned_covers_interest(self):
         self.assertEqual(self.booking.total_planned, Decimal("1005158640"))
         self.assertEqual(self.booking.payable_remaining, Decimal("1005158640"))
-        # Foizsiz shartnoma qoldig'i o'zgarmagan — statistika shundan foydalanadi.
         self.assertEqual(self.booking.remaining_debt, CONTRACT_PRICE)
 
     def test_payment_above_contract_price_is_accepted(self):
-        # contract_price = 369 685 000. Eski qoida bo'yicha bu rad etilardi.
         response = self._pay(500000000)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -247,7 +231,7 @@ class PayableRemainingTest(APITestCase):
 
     def test_update_uses_same_limit(self):
         self._pay(1000000)
-        payment = Payment.objects.filter(booking=self.booking).first()
+        payment = Payment.objects.get(booking=self.booking)
         detail_url = reverse("payment-detail", args=[payment.id])
 
         ok = self.client.put(detail_url, {"booking": self.booking.id, "amount": "500000000"})
@@ -365,7 +349,7 @@ class RemindersApiTest(APITestCase):
         Commitment.objects.create(
             booking=self.booking, expected_date=date(2026, 8, 20), amount=Decimal("12000000"), note="Va'da"
         )
-        response = self.client.get(self.url, {"date": "2026-08-07", "days": 30})
+        response = self.client.get(self.url, {"date": "2026-08-07", "days": "30"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         data = response.json()
@@ -377,18 +361,17 @@ class RemindersApiTest(APITestCase):
         self.assertEqual(data["commitments"][0]["note"], "Va'da")
 
     def test_upcoming_window_is_respected(self):
-        # #24 — 26.08.2026. 7 kunlik oynaga tushmaydi, 30 kunlikka tushadi.
-        narrow = self.client.get(self.url, {"date": "2026-08-07", "days": 7}).json()
+        narrow = self.client.get(self.url, {"date": "2026-08-07", "days": "7"}).json()
         self.assertEqual(narrow["counts"]["upcoming"], 0)
 
-        wide = self.client.get(self.url, {"date": "2026-08-07", "days": 30}).json()
+        wide = self.client.get(self.url, {"date": "2026-08-07", "days": "30"}).json()
         self.assertEqual([item["no"] for item in wide["upcoming"]], [24])
         self.assertEqual(wide["upcoming"][0]["days"], 19)
 
     def test_canceled_booking_is_excluded(self):
         self.booking.status = Booking.BookingStatus.CANCELED
         self.booking.save(update_fields=["status"])
-        data = self.client.get(self.url, {"date": "2026-08-07", "days": 30}).json()
+        data = self.client.get(self.url, {"date": "2026-08-07", "days": "30"}).json()
         self.assertEqual(data["counts"]["overdue"], 0)
 
     def test_rejects_invalid_days(self):

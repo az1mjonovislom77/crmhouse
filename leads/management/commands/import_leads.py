@@ -20,7 +20,6 @@ SKIP_SHEETS = {"users"}
 
 NO_PHONE = "Noma'lum"
 
-# Excel "Varonka Etapi" -> (status, sub_status). Kalitlar norm() bilan solishtiriladi.
 STATUS_MAP = {
     "murojaat qildi": ("yangi_murojaat", "murojaat_qildi"),
     "ko'rdi / eshitdi": ("yangi_murojaat", "kordi_eshitdi"),
@@ -49,7 +48,6 @@ SOURCE_MAP = {
     "noma'lum": "Boshqa",
 }
 
-# Ichki kalit -> sarlavha boshlanishi (tartib muhim: aniqrog'i oldinda)
 COLUMN_ALIASES = {
     "full_name": ["i.f.sh", "f.i.sh yoki tashkilot", "deriktor f.i.sh", "f.i.sh"],
     "org_name": ["tashkilot nomi", "mahallasi"],
@@ -63,7 +61,6 @@ COLUMN_ALIASES = {
     "contact_date": ["gaplashilgan sana", "gaplashilgan san"],
 }
 
-# Excel ustuvor rejimida yangilanadigan Lead maydonlari
 UPDATABLE_FIELDS = (
     "full_name",
     "source",
@@ -82,12 +79,10 @@ COMMENT_RE = re.compile(
     re.DOTALL,
 )
 
-# "{Shartnoma qildi} qolgan izoh" ko'rinishidagi status
 BRACED_STATUS_RE = re.compile(r"^\{([^}]+)\}\s*(.*)$", re.DOTALL)
 
 
 def norm(val):
-    """Solishtirish uchun: apostroflarni birlashtirish, registr, ortiqcha bo'shliqlar."""
     if val is None:
         return ""
     s = str(val).strip()
@@ -97,7 +92,6 @@ def norm(val):
 
 
 def normalize(val):
-    """Ko'rsatish uchun: apostroflarni birlashtiradi, registrni saqlaydi."""
     if not val:
         return ""
     s = str(val).strip()
@@ -107,7 +101,6 @@ def normalize(val):
 
 
 def clean_phone(val):
-    """Excel raqamli katakni to'g'ri o'qiydi: 972667470.0 -> "972667470"."""
     if val is None or val == "":
         return NO_PHONE
     if isinstance(val, float) and val.is_integer():
@@ -118,10 +111,6 @@ def clean_phone(val):
 
 
 def legacy_phone(val):
-    """Eski (xato) formatlash: float ".0" tufayli oxiriga ortiqcha nol qo'shardi.
-
-    Prodda shu ko'rinishda saqlangan leadlarni topib, raqamini to'g'rilash uchun kerak.
-    """
     if not val:
         return NO_PHONE
     phone = str(val).split("\n")[0].strip()
@@ -155,7 +144,6 @@ def parse_comments(text):
 
 
 def parse_status(raw):
-    """(status, sub_status, qoldiq_izoh) qaytaradi. Noma'lum status -> yangi_murojaat."""
     text = normalize(raw)
     extra = ""
     braced = BRACED_STATUS_RE.match(text)
@@ -284,8 +272,6 @@ class Command(BaseCommand):
         if self.dry_run:
             self.stdout.write(self.style.WARNING("DRY-RUN yakunlandi — baza o'zgarmadi."))
 
-    # --- varaq ---------------------------------------------------------
-
     def _build_colmap(self, header):
         headers = [(i, norm(h)) for i, h in enumerate(header) if h and norm(h)]
         colmap, taken = {}, set()
@@ -299,13 +285,6 @@ class Command(BaseCommand):
         return colmap
 
     def _collect(self, sheets):
-        """Barcha varaqlarni o'qib, kalit (telefon yoki ism) bo'yicha dedup qiladi.
-
-        Excelning o'zida bir telefon bir necha varaqda, turli status bilan uchraydi
-        (masalan LID_BAZA da "Uchrashuv belgilandi", "Atkaz qilganlar" da "Atkaz qildi").
-        G'olibni "Gaplashilgan sana" belgilaydi — eng so'nggi aloqa. Sana teng yoki
-        yo'q bo'lsa, oxirgi uchragan qator olinadi.
-        """
         by_key = {}
         for ws in sheets:
             rows = list(ws.iter_rows(values_only=True))
@@ -342,15 +321,12 @@ class Command(BaseCommand):
 
     @staticmethod
     def _wins(candidate, current):
-        """Yangi qator eskisini almashtirsinmi — "Gaplashilgan sana" bo'yicha."""
         new_dt, old_dt = candidate["contact_dt"], current["contact_dt"]
         if new_dt and old_dt:
             return new_dt >= old_dt
-        # Faqat bittasida sana bo'lsa — o'sha g'olib; ikkalasida ham yo'q bo'lsa oxirgisi
         return not (old_dt and not new_dt)
 
     def _log_conflict(self, first, second, kept):
-        """Statusi farq qiladigan takroriy qatorlarni ko'rsatadi (jim qolmaslik uchun)."""
         if first["values"]["status"] == second["values"]["status"]:
             return
         self.stats["status_conflicts"] += 1
@@ -366,11 +342,6 @@ class Command(BaseCommand):
         )
 
     def _report_duplicate_leads(self):
-        """Bir telefonda bir nechta Lead qolganini xabar qiladi.
-
-        Telefonlar to'g'rilangach, ilgari har xil ko'ringan yozuvlar bir xil raqamga
-        tushib qolishi mumkin. Avtomatik birlashtirilmaydi — qo'lda ko'rib chiqiladi.
-        """
         dupes = (
             Lead.objects.exclude(phone=NO_PHONE).values("phone").annotate(n=Count("id")).filter(n__gt=1).order_by("-n")
         )
@@ -401,15 +372,12 @@ class Command(BaseCommand):
                 f"{b['unchanged']} o'zgarishsiz"
             )
 
-    # --- qator ---------------------------------------------------------
-
     def _parse_row(self, data, sheet_title, row_num):
         full_name = normalize(data.get("full_name"))
         org_name = normalize(data.get("org_name"))
         phone = clean_phone(data.get("phone"))
         legacy = legacy_phone(data.get("phone"))
 
-        # Bo'lim sarlavhalari va bo'sh qatorlar: na ism, na tashkilot, na telefon
         if not full_name and not org_name and phone == NO_PHONE:
             self.stats["skipped"] += 1
             return
@@ -434,7 +402,6 @@ class Command(BaseCommand):
 
         structured_comments, general_note = parse_comments(data.get("note"))
 
-        # Tashkilot/mahalla nomi ism ustunidan alohida bo'lsa, izohda saqlanadi
         note_parts = [p for p in (org_name if full_name else None, status_note, general_note) if p]
         note = "\n".join(note_parts) or None
 
@@ -477,14 +444,12 @@ class Command(BaseCommand):
 
     def _find_lead(self, phone, legacy, display_name):
         if phone == NO_PHONE:
-            # Telefonsiz qatorlar takror importda dublikat bo'lmasligi uchun ism bo'yicha qidiriladi
             return Lead.objects.filter(phone=NO_PHONE, full_name__iexact=display_name).order_by("id").first()
 
         lead = Lead.objects.filter(phone=phone).order_by("id").first()
         if lead or legacy == phone:
             return lead
 
-        # Prodda eski (ortiqcha nolli) formatda saqlangan bo'lsa — topib, raqamini to'g'rilaymiz
         lead = Lead.objects.filter(phone=legacy).order_by("id").first()
         if lead:
             lead.phone = phone
@@ -529,7 +494,6 @@ class Command(BaseCommand):
 
         for field in UPDATABLE_FIELDS:
             new = values.get(field)
-            # Exceldagi bo'sh katak proddagi qiymatni o'chirmaydi
             if new in (None, "") or (field == "subsidiya" and not new):
                 continue
             current = getattr(lead, field)
@@ -572,7 +536,6 @@ class Command(BaseCommand):
         return "updated"
 
     def _sync_comments(self, lead, meeting_note, structured_comments, contact_dt, owner):
-        """Izohlarni event sifatida qo'shadi; takroriy importda dublikat yaratmaydi."""
         if not self.write_events:
             return
 

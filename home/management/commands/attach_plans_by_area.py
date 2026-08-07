@@ -77,7 +77,6 @@ class Command(BaseCommand):
             deleted, _ = FloorPlan.objects.filter(home__in=homes).delete()
             self.stdout.write(self.style.WARNING(f"{deleted} ta mavjud floor plan o'chirildi"))
 
-        # Har bir rasm faylini diskka bir marta yuklaymiz, qolgan homelar shu faylga ulanadi
         masters = {}
         for fname in files:
             plan = FloorPlan(home=homes[0])

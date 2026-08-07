@@ -194,9 +194,6 @@ class CommitmentSerializer(serializers.ModelSerializer):
         return attrs
 
 
-# --- To'lov jadvali javobi (faqat o'qish uchun, hisoblanadi — modelga bog'lanmagan) ---
-
-
 def _money(**kwargs):
     return serializers.DecimalField(max_digits=18, decimal_places=2, coerce_to_string=False, **kwargs)
 

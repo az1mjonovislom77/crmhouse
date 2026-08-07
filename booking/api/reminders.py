@@ -1,5 +1,3 @@
-"""Eslatmalar: bugungi/yaqin to'lovlar, qarzlar va kelishuvlar (quruvchi uchun ro'yxat)."""
-
 from datetime import timedelta
 
 from django.utils import timezone
@@ -109,7 +107,6 @@ class RemindersView(APIView):
                         }
                     )
                 else:
-                    # Jadval sanalar bo'yicha tartiblangan — bundan keyingilari oynadan tashqarida.
                     break
 
         commitments_qs = Commitment.objects.filter(

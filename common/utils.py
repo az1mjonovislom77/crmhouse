@@ -49,7 +49,6 @@ def to_millions(value):
 
 
 def parse_date_param(value, field="date"):
-    """Query paramdagi YYYY-MM-DD sanani date'ga aylantiradi. Bo'sh bo'lsa None."""
     if not value:
         return None
     parsed = parse_date(value)
