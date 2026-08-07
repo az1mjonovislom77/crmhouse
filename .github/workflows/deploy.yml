@@ -24,7 +24,8 @@ jobs:
             cd ${{ secrets.PROJECT_PATH }}
 
             echo "Pulling latest code..."
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
 
             echo "Activating venv..."
             source venv/bin/activate
