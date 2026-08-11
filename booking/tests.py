@@ -439,3 +439,75 @@ class PaymentViewSetTest(APITestCase):
         self._create_payment(total)
         resp = self._create_payment(1)
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class PaxtazorNoTest(TestCase):
+    def setUp(self):
+        from organization.models import Organization
+
+        self.org = Organization.objects.create(name="Paxtazor Xonadonlar")
+        self.other_org = Organization.objects.create(name="Boshqa Tashkilot")
+        self.client_obj = make_client()
+        self.company = make_company()
+        self.user = make_user(username="paxtazor_user")
+        self._home_no = 0
+
+    def _make(self, **kwargs):
+        self._home_no += 1
+        kwargs.setdefault("organization", self.org)
+        return Booking.objects.create(
+            home=make_home(home_number=self._home_no),
+            client=self.client_obj,
+            company=self.company,
+            **kwargs,
+        )
+
+    def test_sequential_numbers(self):
+        bookings = [self._make() for _ in range(6)]
+        self.assertEqual([b.paxtazor_no for b in bookings], [1, 2, 3, 4, 5, 6])
+
+    def test_canceled_number_is_reused(self):
+        from booking.services.booking import set_booking_status
+
+        bookings = [self._make() for _ in range(6)]
+        set_booking_status(booking_id=bookings[2].id, new_status=Booking.BookingStatus.CANCELED, user=self.user)
+
+        seventh = self._make()
+        self.assertEqual(seventh.paxtazor_no, 3)
+
+        eighth = self._make()
+        self.assertEqual(eighth.paxtazor_no, 7)
+
+    def test_canceled_booking_keeps_its_number(self):
+        from booking.services.booking import set_booking_status
+
+        booking = self._make()
+        set_booking_status(booking_id=booking.id, new_status=Booking.BookingStatus.CANCELED, user=self.user)
+        booking.refresh_from_db()
+        self.assertEqual(booking.paxtazor_no, 1)
+
+    def test_reactivated_booking_gets_free_number(self):
+        from booking.services.booking import set_booking_status
+
+        first = self._make()
+        second = self._make()
+        set_booking_status(booking_id=first.id, new_status=Booking.BookingStatus.CANCELED, user=self.user)
+
+        third = self._make()
+        self.assertEqual(third.paxtazor_no, 1)
+
+        set_booking_status(booking_id=first.id, new_status=Booking.BookingStatus.ACTIVE, user=self.user)
+        first.refresh_from_db()
+        self.assertEqual(first.paxtazor_no, 3)
+        self.assertEqual(second.paxtazor_no, 2)
+
+    def test_other_organization_has_no_number(self):
+        booking = self._make(organization=self.other_org)
+        self.assertIsNone(booking.paxtazor_no)
+
+    def test_booking_without_organization_has_no_number(self):
+        self.assertIsNone(self._make(organization=None).paxtazor_no)
+
+    def test_canceled_booking_created_directly_has_no_number(self):
+        booking = self._make(status=Booking.BookingStatus.CANCELED)
+        self.assertIsNone(booking.paxtazor_no)

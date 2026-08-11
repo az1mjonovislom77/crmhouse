@@ -232,6 +232,8 @@ IG_USER_ID = config("IG_USER_ID")
 
 GROQ_API_KEY = config("GROQ_API_KEY", default="")
 
+PAXTAZOR_ORG_NAME = config("PAXTAZOR_ORG_NAME", default="Paxtazor Xonadonlar")
+
 PBX_BASE_URL = config("PBX_BASE_URL", default="")
 PBX_USER = config("PBX_USER", default="")
 PBX_PASSWORD = config("PBX_PASSWORD", default="")

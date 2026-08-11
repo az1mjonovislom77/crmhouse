@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
@@ -48,6 +48,7 @@ class Booking(models.Model):
     deadline = models.DateField(null=True, blank=True)
     map_key = models.CharField(max_length=200, null=True, blank=True)
     booking_no = models.CharField(max_length=200, null=True, blank=True)
+    paxtazor_no = models.PositiveIntegerField(null=True, blank=True, db_index=True)
     payment_type = models.CharField(max_length=20, choices=PaymentType.choices, null=True, blank=True)
     status = models.CharField(max_length=20, choices=BookingStatus.choices, default=BookingStatus.ACTIVE, db_index=True)
     price_per_m2 = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
@@ -80,10 +81,25 @@ class Booking(models.Model):
                 condition=models.Q(status="active"),
                 name="unique_active_booking_per_home",
             ),
+            models.UniqueConstraint(
+                fields=["organization", "paxtazor_no"],
+                condition=models.Q(status="active", paxtazor_no__isnull=False),
+                name="unique_active_paxtazor_no_per_org",
+            ),
         ]
 
     def __str__(self):
         return str(self.id)
+
+    def save(self, *args, **kwargs):
+        if self._state.adding and self.status == self.BookingStatus.ACTIVE:
+            from booking.services.paxtazor import resolve_paxtazor_no
+
+            with transaction.atomic():
+                self.paxtazor_no = resolve_paxtazor_no(self)
+                super().save(*args, **kwargs)
+            return
+        super().save(*args, **kwargs)
 
     @property
     def total_price(self):

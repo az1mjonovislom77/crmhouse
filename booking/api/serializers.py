@@ -91,6 +91,7 @@ class BookingCreateSerializer(serializers.ModelSerializer):
             "created_at",
             "organization",
             "status",
+            "paxtazor_no",
             "guarantee_percent",
             "subsidy_amount",
             "annual_rate_pct",

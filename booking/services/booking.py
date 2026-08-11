@@ -2,6 +2,7 @@ from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
 from booking.models import Booking, Company
+from booking.services.paxtazor import resolve_paxtazor_no
 from home.models import Home, HomeStatusHistory
 from home.services.home import HomeService
 
@@ -59,7 +60,15 @@ def set_booking_status(booking_id, new_status, user=None):
             raise ValidationError({"home": "Bu uyda allaqachon aktiv booking mavjud."})
 
     booking.status = new_status
-    booking.save(update_fields=["status"])
+    update_fields = ["status"]
+
+    if new_status == Booking.BookingStatus.ACTIVE:
+        paxtazor_no = resolve_paxtazor_no(booking)
+        if paxtazor_no != booking.paxtazor_no:
+            booking.paxtazor_no = paxtazor_no
+            update_fields.append("paxtazor_no")
+
+    booking.save(update_fields=update_fields)
 
     if new_status == Booking.BookingStatus.CANCELED:
         if not Booking.objects.filter(home=home, status=Booking.BookingStatus.ACTIVE).exists():
