@@ -45,7 +45,7 @@ class Showroom(models.Model):
     title = models.CharField(max_length=200, null=True, blank=True)
     block = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name="showrooms")
     blocks_number = models.IntegerField(default=0)
-    path = models.CharField(max_length=500)
+    path = models.CharField(max_length=2000)
     navigate_to = models.CharField(max_length=200)
     hover_color = models.CharField(max_length=200)
     default_color = models.CharField(max_length=200)
