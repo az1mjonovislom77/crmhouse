@@ -36,12 +36,25 @@ class Command(BaseCommand):
         block_title = options["block"]
         dry_run = options["dry_run"]
 
-        try:
-            block = Block.objects.get(title=block_title)
-        except Block.DoesNotExist:
-            self.stdout.write(self.style.ERROR(f'Block topilmadi: "{block_title}"'))
-            self.stdout.write("Mavjud blocklar: " + ", ".join(Block.objects.values_list("title", flat=True)))
+        # Block title org bo'yicha unique emas — shu org homelariga tegishlilarini olamiz
+        blocks = list(Block.objects.filter(title=block_title, homes__organization__name=org_name).distinct())
+        if not blocks:
+            self.stdout.write(self.style.ERROR(f'"{org_name}" ichida block topilmadi: "{block_title}"'))
+            self.stdout.write(
+                "Mavjud blocklar: "
+                + ", ".join(
+                    sorted(
+                        Block.objects.filter(homes__organization__name=org_name)
+                        .values_list("title", flat=True)
+                        .distinct()
+                    )
+                )
+            )
             return
+        if len(blocks) > 1:
+            self.stdout.write(
+                self.style.WARNING(f'"{block_title}" nomli {len(blocks)} ta block topildi — hammasi olinadi')
+            )
 
         images_dir = os.path.join(settings.BASE_DIR, options["images_dir"])
         image_files = [name.strip() for name in options["order"].split(",") if name.strip()]
@@ -51,7 +64,9 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f"Rasm topilmadi ({images_dir}): {missing}"))
             return
 
-        homes = list(Home.objects.filter(blocks=block, organization__name=org_name).order_by("home_number"))
+        homes = list(
+            Home.objects.filter(blocks__in=blocks, organization__name=org_name).order_by("home_number").distinct()
+        )
         if not homes:
             self.stdout.write(self.style.ERROR(f'"{org_name}" + "{block_title}" bo\'yicha home topilmadi'))
             return
