@@ -4,15 +4,18 @@ from decimal import Decimal
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
-from booking.models import Booking, Commitment, Payment
+from booking.models import Booking, Commitment, InstallmentAdjustment, Payment
 from booking.services.schedule import (
     add_months,
     allocate,
+    apply_adjustments,
     booking_schedule,
     build_schedule,
     down_payment_amount,
+    set_installment_planned_amount,
 )
 from common.factories import make_client, make_company, make_home, make_user
 
@@ -94,6 +97,129 @@ class BuildScheduleTest(TestCase):
     def test_falls_back_to_start_day_when_payment_day_missing(self):
         booking = make_installment_booking(monthly_payment_day=None)
         self.assertEqual(build_schedule(booking)[0].due_date, date(2024, 9, 26))
+
+
+class InstallmentAdjustmentTest(TestCase):
+    def make_flat_booking(self, **kwargs):
+        defaults = {
+            "home": make_home(home_number=101),
+            "client": make_client(phone_number="+998900000101"),
+            "credit_years": 1,
+            "monthly_full": Decimal("7000000"),
+            "client_payment": Decimal("0"),
+        }
+        defaults.update(kwargs)
+        return make_installment_booking(**defaults)
+
+    def test_increase_cascades_forward_and_conserves_total(self):
+        booking = self.make_flat_booking()
+        set_installment_planned_amount(booking, 5, Decimal("50000000"))
+
+        schedule = build_schedule(booking)
+        amounts = [i.planned_amount for i in schedule]
+
+        self.assertEqual(amounts[:4], [Decimal("7000000")] * 4)
+        self.assertEqual(amounts[4], Decimal("50000000"))
+        self.assertEqual(amounts[5:11], [Decimal("0")] * 6)
+        self.assertEqual(amounts[11], Decimal("6000000"))
+        self.assertEqual(sum(amounts, Decimal("0")), Decimal("84000000"))
+
+    def test_edited_installment_stays_full_until_paid(self):
+        booking = self.make_flat_booking()
+        set_installment_planned_amount(booking, 5, Decimal("50000000"))
+
+        data = booking_schedule(booking, today=SIGN_DATE)
+        edited = data["installments"][4]
+        self.assertEqual(edited["planned_amount"], Decimal("50000000"))
+        self.assertEqual(edited["remaining"], Decimal("50000000"))
+
+    def test_partial_payment_on_edited_installment_shows_remaining_debt(self):
+        booking = self.make_flat_booking()
+        set_installment_planned_amount(booking, 5, Decimal("50000000"))
+        for index in range(4):
+            Payment.objects.create(
+                booking=booking, amount=Decimal("7000000"), payment_date=add_months(SIGN_DATE, index + 1)
+            )
+        Payment.objects.create(booking=booking, amount=Decimal("40000000"), payment_date=add_months(SIGN_DATE, 5))
+
+        data = booking_schedule(booking, today=add_months(SIGN_DATE, 5))
+        edited = data["installments"][4]
+        self.assertEqual(edited["filled"], Decimal("40000000"))
+        self.assertEqual(edited["remaining"], Decimal("10000000"))
+        self.assertEqual(edited["status"], "partial")
+
+    def test_decrease_sets_value_without_cascade(self):
+        booking = self.make_flat_booking()
+        set_installment_planned_amount(booking, 3, Decimal("1000000"))
+
+        amounts = [i.planned_amount for i in build_schedule(booking)]
+        self.assertEqual(amounts[2], Decimal("1000000"))
+        self.assertEqual(amounts[3:], [Decimal("7000000")] * 9)
+
+    def test_second_adjustment_recomputes_cascade_from_scratch(self):
+        booking = self.make_flat_booking()
+        set_installment_planned_amount(booking, 5, Decimal("50000000"))
+        set_installment_planned_amount(booking, 5, Decimal("7000000"))
+
+        amounts = [i.planned_amount for i in build_schedule(booking)]
+        self.assertTrue(all(a == Decimal("7000000") for a in amounts))
+
+    def test_rejects_out_of_range_installment_number(self):
+        booking = self.make_flat_booking()
+        with self.assertRaises(ValidationError):
+            set_installment_planned_amount(booking, 13, Decimal("1000000"))
+        with self.assertRaises(ValidationError):
+            set_installment_planned_amount(booking, 0, Decimal("1000000"))
+
+    def test_rejects_negative_amount(self):
+        booking = self.make_flat_booking()
+        with self.assertRaises(ValidationError):
+            set_installment_planned_amount(booking, 1, Decimal("-1"))
+
+    def test_apply_adjustments_helper_is_pure_and_idempotent(self):
+        booking = self.make_flat_booking()
+        schedule = build_schedule(booking)
+        adjustment = InstallmentAdjustment(booking=booking, no=1, planned_amount=Decimal("14000000"))
+        apply_adjustments(schedule, [adjustment])
+        self.assertEqual(schedule[0].planned_amount, Decimal("14000000"))
+        self.assertEqual(schedule[1].planned_amount, Decimal("0"))
+
+    def test_balance_after_running_total(self):
+        booking = self.make_flat_booking(credit_years=Decimal("0.25"), monthly_full=Decimal("10000000"))
+        schedule = build_schedule(booking)
+        self.assertEqual(len(schedule), 3)
+        self.assertEqual([i.balance_after for i in schedule], [Decimal("20000000"), Decimal("10000000"), Decimal("0")])
+
+
+class InstallmentAdjustmentApiTest(APITestCase):
+    def setUp(self):
+        self.user = make_user(username="installment_adjust_user")
+        self.client.force_authenticate(self.user)
+        self.booking = make_installment_booking(credit_years=1, monthly_full=Decimal("7000000"))
+
+    def test_patch_installment_cascades_and_persists(self):
+        url = reverse("booking-installment", args=[self.booking.id, 5])
+        response = self.client.put(url, {"planned_amount": "50000000"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        installments = response.json()["installments"]
+        self.assertEqual(Decimal(installments[4]["planned_amount"]), Decimal("50000000"))
+        self.assertEqual(Decimal(installments[5]["planned_amount"]), Decimal("0"))
+        self.assertEqual(Decimal(installments[11]["planned_amount"]), Decimal("6000000"))
+
+        self.assertEqual(
+            InstallmentAdjustment.objects.get(booking=self.booking, no=5).planned_amount, Decimal("50000000")
+        )
+
+    def test_patch_out_of_range_returns_400(self):
+        url = reverse("booking-installment", args=[self.booking.id, 999])
+        response = self.client.put(url, {"planned_amount": "1000000"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_patch_requires_planned_amount(self):
+        url = reverse("booking-installment", args=[self.booking.id, 1])
+        response = self.client.put(url, {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
 class AllocateTest(TestCase):

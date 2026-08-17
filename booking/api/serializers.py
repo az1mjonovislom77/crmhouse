@@ -233,6 +233,11 @@ class InstallmentSerializer(serializers.Serializer):
     status = serializers.CharField()
     paid_on = serializers.DateField(allow_null=True)
     payment_ids = serializers.ListField(child=serializers.IntegerField())
+    balance_after = _money()
+
+
+class InstallmentAdjustmentInputSerializer(serializers.Serializer):
+    planned_amount = serializers.DecimalField(max_digits=16, decimal_places=2, min_value=Decimal("0"))
 
 
 class BookingScheduleSerializer(serializers.Serializer):

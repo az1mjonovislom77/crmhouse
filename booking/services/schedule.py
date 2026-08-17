@@ -4,6 +4,7 @@ from datetime import date
 from decimal import Decimal
 
 from django.utils import timezone
+from rest_framework.exceptions import ValidationError
 
 ZERO = Decimal("0")
 
@@ -42,6 +43,7 @@ class Installment:
     paid_on: date | None = None
     status: str = STATUS_PENDING
     payment_ids: list = field(default_factory=list)
+    balance_after: Decimal = ZERO
 
     @property
     def remaining(self):
@@ -59,6 +61,7 @@ class Installment:
             "status": self.status,
             "paid_on": self.paid_on,
             "payment_ids": self.payment_ids,
+            "balance_after": self.balance_after,
         }
 
 
@@ -74,6 +77,39 @@ def down_payment_amount(booking):
     if booking.client_payment is not None:
         return _d(booking.client_payment)
     return _d(booking.manual_down_payment)
+
+
+def apply_adjustments(schedule, adjustments):
+    """Overwrite installments' planned_amount per adjustment, cascading any
+    increase forward: the surplus eats into (zeroes out) the following
+    installments' planned amounts in order, so the schedule's total stays
+    conserved instead of just adding debt. A decrease is applied in place
+    with no cascade.
+    """
+    by_no = {a.no: _d(a.planned_amount) for a in adjustments}
+    for no in sorted(by_no):
+        idx = no - 1
+        if idx < 0 or idx >= len(schedule):
+            continue
+        new_amount = by_no[no]
+        delta = new_amount - schedule[idx].planned_amount
+        schedule[idx].planned_amount = new_amount
+        if delta > ZERO:
+            remaining = delta
+            j = idx + 1
+            while remaining > ZERO and j < len(schedule):
+                take = min(remaining, schedule[j].planned_amount)
+                schedule[j].planned_amount -= take
+                remaining -= take
+                j += 1
+    return schedule
+
+
+def _apply_balance_after(schedule):
+    running = sum((i.planned_amount for i in schedule), ZERO)
+    for installment in schedule:
+        running -= installment.planned_amount
+        installment.balance_after = running
 
 
 def build_schedule(booking):
@@ -101,7 +137,29 @@ def build_schedule(booking):
                 stage=stage,
             )
         )
+
+    adjustments = list(booking.installment_adjustments.all())
+    if adjustments:
+        apply_adjustments(schedule, adjustments)
+
+    _apply_balance_after(schedule)
     return schedule
+
+
+def set_installment_planned_amount(booking, no, planned_amount):
+    from booking.models import InstallmentAdjustment
+
+    amount = _d(planned_amount)
+    if amount < ZERO:
+        raise ValidationError({"planned_amount": "Summa manfiy bo'lishi mumkin emas."})
+
+    schedule_len = len(build_schedule(booking))
+    if schedule_len == 0:
+        raise ValidationError({"no": "Ushbu booking uchun to'lov jadvali mavjud emas."})
+    if no < 1 or no > schedule_len:
+        raise ValidationError({"no": f"Oy raqami 1 dan {schedule_len} gacha bo'lishi kerak."})
+
+    InstallmentAdjustment.objects.update_or_create(booking=booking, no=no, defaults={"planned_amount": amount})
 
 
 def total_planned(booking):

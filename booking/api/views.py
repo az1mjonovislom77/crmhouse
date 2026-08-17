@@ -17,11 +17,12 @@ from booking.api.serializers import (
     BookingScheduleSerializer,
     CommitmentSerializer,
     CompanySerializer,
+    InstallmentAdjustmentInputSerializer,
     PaymentSerializer,
 )
 from booking.models import Booking, Commitment, Company, Payment
 from booking.services.booking import create_booking, delete_booking, set_booking_status
-from booking.services.schedule import booking_schedule
+from booking.services.schedule import booking_schedule, set_installment_planned_amount
 from common.base.views_base import BaseUserViewSet
 from common.mixins import filter_by_org
 from common.search import TransliteratedSearchFilter
@@ -132,6 +133,29 @@ class BookingViewSet(BaseUserViewSet):
         booking = self.get_object()
         today = parse_date_param(request.query_params.get("date")) or timezone.localdate()
 
+        payments = list(booking.payments.all())
+        data = booking_schedule(booking, today=today, payments=payments)
+        context = {"request": request}
+        data["payments"] = PaymentSerializer(
+            sorted(payments, key=lambda p: (p.payment_date or timezone.localdate(), p.id)),
+            many=True,
+            context=context,
+        ).data
+        data["commitments"] = CommitmentSerializer(booking.commitments.all(), many=True, context=context).data
+        return Response(data)
+
+    @extend_schema(
+        request=InstallmentAdjustmentInputSerializer,
+        responses=BookingScheduleSerializer,
+    )
+    @action(detail=True, methods=["put"], url_path=r"installments/(?P<no>\d+)")
+    def installment(self, request, pk=None, no=None):
+        booking = self.get_object()
+        serializer = InstallmentAdjustmentInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        set_installment_planned_amount(booking, int(no), serializer.validated_data["planned_amount"])
+
+        today = timezone.localdate()
         payments = list(booking.payments.all())
         data = booking_schedule(booking, today=today, payments=payments)
         context = {"request": request}

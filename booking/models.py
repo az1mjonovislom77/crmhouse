@@ -190,6 +190,22 @@ class Commitment(models.Model):
         return f"Commitment {self.id} - {self.amount} ({self.expected_date})"
 
 
+class InstallmentAdjustment(models.Model):
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name="installment_adjustments")
+    no = models.PositiveIntegerField()
+    planned_amount = models.DecimalField(max_digits=16, decimal_places=2)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["no"]
+        constraints = [
+            models.UniqueConstraint(fields=["booking", "no"], name="unique_adjustment_per_installment"),
+        ]
+
+    def __str__(self):
+        return f"Adjustment {self.booking_id}#{self.no} -> {self.planned_amount}"
+
+
 @receiver(post_delete, sender=Payment)
 def delete_payment_file(sender, instance, **kwargs):
     if instance.file:
