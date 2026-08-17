@@ -53,7 +53,7 @@ class Booking(models.Model):
     status = models.CharField(max_length=20, choices=BookingStatus.choices, default=BookingStatus.ACTIVE, db_index=True)
     price_per_m2 = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     guarantee_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    credit_years = models.PositiveIntegerField(null=True, blank=True)
+    credit_years = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
     manual_down_payment = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     annual_rate_pct = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     state_threshold_pct = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)

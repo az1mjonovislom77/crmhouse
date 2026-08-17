@@ -77,7 +77,7 @@ def down_payment_amount(booking):
 
 
 def build_schedule(booking):
-    months = int(booking.credit_years or 0) * 12
+    months = int(float(booking.credit_years or 0) * 12)
     if months <= 0 or booking.monthly_full is None:
         return []
 
