@@ -30,13 +30,14 @@ class EngineTest(TestCase):
         self.config = CalculatorConfig.load()
 
     def _calc(self, payment_type, g, s, **kw):
+        if "credit_years" not in kw:
+            kw["credit_years"] = 20  # Set default if not provided
         return calculate(
             area=AREA,
             price_per_m2=PRICE,
             payment_type=payment_type,
             guarantee_percent=g,
             subsidy_amount=s,
-            credit_years=20,
             rounding=True,
             config=self.config,
             **kw,
@@ -91,6 +92,11 @@ class EngineTest(TestCase):
         r = self._calc("bosh_tolovli", 15, 0, manual_down_payment=Decimal("60000000"))
         self.assertEqual(r["client_payment"], Decimal("60000000"))
         self.assertEqual(r["credit_amount"], Decimal("319995000"))
+
+    def test_fractional_years(self):
+        # 2.5 yil = 30 oy, subsidiya bilan
+        r = self._calc("bosh_tolovli", 15, 30000000, credit_years=2.5)
+        self.assert_case(r, "379995000", "0", "27000000", "322995000", "13290911", stage1="12822373", gov="468538")
 
 
 class ConfigTest(TestCase):
@@ -341,6 +347,21 @@ class CalculateApiTest(APITestCase):
         self.assertEqual(resp.data["client_payment"], Decimal("27000000"))
         self.assertEqual(resp.data["credit_amount"], Decimal("322995000"))
         self.assertEqual(resp.data["monthly_full"], Decimal("4737692"))
+
+    def test_calculate_with_fractional_years(self):
+        resp = self.client.post(
+            reverse("calculator-calculate"),
+            {
+                "home_id": self.home.id,
+                "payment_type": "bosh_tolovli",
+                "guarantee_id": self.guarantee.id,
+                "subsidy_id": self.subsidy.id,
+                "credit_years": "2.5",
+            },
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data["monthly_full"], Decimal("13290911"))
 
     def test_calculate_requires_home_id(self):
         resp = self.client.post(

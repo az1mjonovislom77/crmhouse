@@ -51,7 +51,7 @@ class CalculateInputSerializer(serializers.Serializer):
     guarantee_key = serializers.CharField(required=False)
     subsidy_id = serializers.IntegerField(required=False)
     subsidy_key = serializers.CharField(required=False)
-    credit_years = serializers.IntegerField(min_value=1)
+    credit_years = serializers.DecimalField(max_digits=4, decimal_places=2, min_value=Decimal("0.1"))
     price_per_m2 = serializers.DecimalField(
         max_digits=14, decimal_places=2, required=False, allow_null=True, min_value=Decimal("0.01")
     )

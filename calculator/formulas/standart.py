@@ -20,7 +20,7 @@ def calculate(
     m = _d(config.firm_markup_pct) / 100
     R = _d(config.annual_rate_pct)
     T = _d(config.state_threshold_pct)
-    Y = int(credit_years)
+    Y = _d(credit_years)
     step = config.round_step if rounding else 0
 
     def rnd(v):
