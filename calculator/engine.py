@@ -17,7 +17,7 @@ def ceil_step(value, step):
 
 def annuity_factor(annual_rate_pct, years):
     r = float(annual_rate_pct) / 100.0 / 12.0
-    n = int(years) * 12
+    n = int(float(years) * 12)
     if n <= 0:
         return 0.0
     if r == 0:
