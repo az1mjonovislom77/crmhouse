@@ -148,13 +148,30 @@ class InstallmentAdjustmentTest(TestCase):
         self.assertEqual(edited["remaining"], Decimal("10000000"))
         self.assertEqual(edited["status"], "partial")
 
-    def test_decrease_sets_value_without_cascade(self):
+    def test_decrease_spreads_freed_amount_forward_and_conserves_total(self):
         booking = self.make_flat_booking()
-        set_installment_planned_amount(booking, 3, Decimal("1000000"))
+        set_installment_planned_amount(booking, 3, Decimal("2500000"))
 
         amounts = [i.planned_amount for i in build_schedule(booking)]
-        self.assertEqual(amounts[2], Decimal("1000000"))
-        self.assertEqual(amounts[3:], [Decimal("7000000")] * 9)
+        self.assertEqual(amounts[:2], [Decimal("7000000")] * 2)
+        self.assertEqual(amounts[2], Decimal("2500000"))
+        # 4,500,000 freed from month 3, spread evenly across the 9 following months.
+        expected_share = Decimal("7000000") + Decimal("4500000") / 9
+        self.assertTrue(all(a == expected_share for a in amounts[3:]))
+        self.assertEqual(sum(amounts, Decimal("0")), Decimal("84000000"))
+
+    def test_zeroing_several_months_spreads_freed_total_over_remaining(self):
+        booking = self.make_flat_booking(credit_years=Decimal("30") / 12, monthly_full=Decimal("27000000"))
+        for no in (1, 2, 3):
+            set_installment_planned_amount(booking, no, Decimal("0"))
+
+        amounts = [i.planned_amount for i in build_schedule(booking)]
+        self.assertEqual(len(amounts), 30)
+        self.assertEqual(amounts[:3], [Decimal("0")] * 3)
+        # 81,000,000 freed total, spread evenly across the remaining 27 months.
+        expected_share = Decimal("27000000") + Decimal("81000000") / 27
+        self.assertTrue(all(a == expected_share for a in amounts[3:]))
+        self.assertEqual(sum(amounts, Decimal("0")), Decimal("810000000"))
 
     def test_second_adjustment_recomputes_cascade_from_scratch(self):
         booking = self.make_flat_booking()
