@@ -3,12 +3,14 @@ from decimal import Decimal
 from django.db import transaction
 from django.db.models import DecimalField, OuterRef, Prefetch, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
+from django.http import HttpResponse
 from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
 from booking.api.serializers import (
@@ -23,12 +25,16 @@ from booking.api.serializers import (
 from booking.models import Booking, Commitment, Company, Payment
 from booking.services.booking import create_booking, delete_booking, set_booking_status
 from booking.services.schedule import booking_schedule, set_installment_planned_amount
+from booking.services.schedule_excel import build_schedule_xlsx
 from common.base.views_base import BaseUserViewSet
 from common.mixins import filter_by_org
+from common.renderers import BinaryFileRenderer
 from common.search import TransliteratedSearchFilter
 from common.utils import parse_date_param
 from home.models import HomeStatusHistory
 from home.services.home import HomeService
+
+XLSX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 _client_bookings_qs = Booking.objects.select_related("home", "home__renovation").annotate(
     payments_total=Coalesce(Sum("payments__amount"), Value(Decimal("0")), output_field=DecimalField())
@@ -143,6 +149,26 @@ class BookingViewSet(BaseUserViewSet):
         ).data
         data["commitments"] = CommitmentSerializer(booking.commitments.all(), many=True, context=context).data
         return Response(data)
+
+    @extend_schema(
+        parameters=[OpenApiParameter(name="date", type=OpenApiTypes.DATE, location=OpenApiParameter.QUERY)],
+        responses={(200, "application/octet-stream"): OpenApiTypes.BINARY},
+    )
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="schedule/export",
+        renderer_classes=[BinaryFileRenderer, JSONRenderer],
+    )
+    def schedule_export(self, request, pk=None):
+        booking = self.get_object()
+        today = parse_date_param(request.query_params.get("date")) or timezone.localdate()
+
+        content = build_schedule_xlsx(booking, today=today)
+        response = HttpResponse(content, content_type=XLSX_CONTENT_TYPE)
+        filename = f"tolov-jadvali-{booking.booking_no or booking.pk}.xlsx"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
 
     @extend_schema(
         request=InstallmentAdjustmentInputSerializer,
