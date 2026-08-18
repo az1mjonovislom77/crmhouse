@@ -61,7 +61,7 @@ def build_schedule_xlsx(booking, today=None):
     ws = wb.active
     ws.title = "To'lov jadvali"
 
-    widths = [6, 16, 20, 16, 22, 14]
+    widths = [20, 16, 20, 16, 22, 14]
     for idx, width in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(idx)].width = width
 
