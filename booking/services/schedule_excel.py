@@ -32,7 +32,7 @@ def _fmt_som(value):
     sign = "-" if v < 0 else ""
     v = abs(v)
     int_part, _, dec_part = f"{v:.2f}".partition(".")
-    groups = []
+    groups: list[str] = []
     s = int_part
     while len(s) > 3:
         groups.insert(0, s[-3:])
