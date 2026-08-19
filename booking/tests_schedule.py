@@ -274,6 +274,87 @@ class ClientPaymentApiTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
+class PaymentCascadeApiTest(APITestCase):
+    def setUp(self):
+        self.user = make_user(username="payment_cascade_user")
+        self.client.force_authenticate(self.user)
+        self.booking = make_installment_booking(
+            credit_years=1, monthly_full=Decimal("7000000"), client_payment=Decimal("0")
+        )
+
+    def _schedule(self):
+        return self.client.get(reverse("booking-schedule", args=[self.booking.id])).json()
+
+    def test_edit_amount_recomputes_everywhere(self):
+        create = self.client.post(
+            reverse("payment-list"),
+            {"booking": self.booking.id, "amount": "1000000", "payment_date": str(SIGN_DATE)},
+            format="json",
+        )
+        self.assertEqual(create.status_code, status.HTTP_201_CREATED)
+        payment_id = create.json()["id"]
+
+        before = self._schedule()
+        self.assertEqual(Decimal(before["kpi"]["total_paid"]), Decimal("1000000"))
+        self.assertEqual(Decimal(before["installments"][0]["filled"]), Decimal("1000000"))
+
+        edit = self.client.put(
+            reverse("payment-detail", args=[payment_id]),
+            {"booking": self.booking.id, "amount": "500000", "payment_date": str(SIGN_DATE)},
+            format="json",
+        )
+        self.assertEqual(edit.status_code, status.HTTP_200_OK)
+        after_down = self._schedule()
+        self.assertEqual(Decimal(after_down["kpi"]["total_paid"]), Decimal("500000"))
+        self.assertEqual(Decimal(after_down["installments"][0]["filled"]), Decimal("500000"))
+        self.assertEqual(after_down["installments"][0]["status"], "overdue")
+
+        edit_up = self.client.put(
+            reverse("payment-detail", args=[payment_id]),
+            {"booking": self.booking.id, "amount": "10000000", "payment_date": str(SIGN_DATE)},
+            format="json",
+        )
+        self.assertEqual(edit_up.status_code, status.HTTP_200_OK)
+        after_up = self._schedule()
+        self.assertEqual(Decimal(after_up["kpi"]["total_paid"]), Decimal("10000000"))
+        self.assertEqual(after_up["installments"][0]["status"], "paid")
+        self.assertEqual(after_up["installments"][1]["status"], "overdue")
+        self.assertEqual(Decimal(after_up["installments"][1]["filled"]), Decimal("3000000"))
+
+    def test_edit_amount_above_remaining_is_rejected(self):
+        create = self.client.post(
+            reverse("payment-list"),
+            {"booking": self.booking.id, "amount": "1000000", "payment_date": str(SIGN_DATE)},
+            format="json",
+        )
+        payment_id = create.json()["id"]
+        too_much = self.booking.total_planned + Decimal("1")
+        edit = self.client.put(
+            reverse("payment-detail", args=[payment_id]),
+            {"booking": self.booking.id, "amount": str(too_much), "payment_date": str(SIGN_DATE)},
+            format="json",
+        )
+        self.assertEqual(edit.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_reverts_as_if_never_paid(self):
+        create = self.client.post(
+            reverse("payment-list"),
+            {"booking": self.booking.id, "amount": "1000000", "payment_date": str(SIGN_DATE)},
+            format="json",
+        )
+        payment_id = create.json()["id"]
+        self.assertEqual(Decimal(self._schedule()["kpi"]["total_paid"]), Decimal("1000000"))
+
+        delete = self.client.delete(reverse("payment-detail", args=[payment_id]))
+        self.assertEqual(delete.status_code, status.HTTP_204_NO_CONTENT)
+
+        after = self._schedule()
+        self.assertEqual(Decimal(after["kpi"]["total_paid"]), Decimal("0"))
+        self.assertEqual(after["installments"][0]["status"], "overdue")
+        self.assertEqual(Decimal(after["installments"][0]["filled"]), Decimal("0"))
+        self.assertFalse(Payment.objects.filter(id=payment_id).exists())
+
+
 class AllocateTest(TestCase):
     def setUp(self):
         self.booking = make_installment_booking()
