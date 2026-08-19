@@ -9,7 +9,7 @@ class MeetingNotificationService:
     def check_and_create():
         LeadNotification.objects.exclude(meeting_at=F("lead__meeting_at")).delete()
 
-        today = timezone.now().date()
+        today = timezone.localdate()
         upcoming = Lead.objects.filter(
             meeting_at__date=today,
             assignee__isnull=False,
