@@ -239,6 +239,41 @@ class InstallmentAdjustmentApiTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
+class ClientPaymentApiTest(APITestCase):
+    def setUp(self):
+        self.user = make_user(username="client_payment_user")
+        self.client.force_authenticate(self.user)
+        self.booking = make_installment_booking(credit_years=1, monthly_full=Decimal("7000000"))
+        add_mock_payments(self.booking)
+
+    def test_patch_updates_down_payment_and_persists(self):
+        url = reverse("booking-client-payment", args=[self.booking.id])
+        response = self.client.put(url, {"client_payment": "60000000"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data = response.json()
+        self.assertEqual(Decimal(data["down_payment"]["amount"]), Decimal("60000000"))
+        self.assertEqual(Decimal(data["down_payment"]["paid"]), Decimal("60000000"))
+        self.assertEqual(data["down_payment"]["status"], "paid")
+
+        self.booking.refresh_from_db()
+        self.assertEqual(self.booking.client_payment, Decimal("60000000"))
+
+        first_installment = data["installments"][0]
+        self.assertGreater(Decimal(first_installment["filled"]), Decimal("0"))
+
+    def test_patch_rejects_negative_amount(self):
+        url = reverse("booking-client-payment", args=[self.booking.id])
+        response = self.client.put(url, {"client_payment": "-1"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_patch_rejects_amount_above_total_price(self):
+        url = reverse("booking-client-payment", args=[self.booking.id])
+        too_much = self.booking.total_price + Decimal("1")
+        response = self.client.put(url, {"client_payment": str(too_much)}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
 class AllocateTest(TestCase):
     def setUp(self):
         self.booking = make_installment_booking()

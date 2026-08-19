@@ -167,6 +167,22 @@ def set_installment_planned_amount(booking, no, planned_amount):
     InstallmentAdjustment.objects.update_or_create(booking=booking, no=no, defaults={"planned_amount": amount})
 
 
+def set_client_payment(booking, client_payment):
+    amount = _d(client_payment)
+    if amount < ZERO:
+        raise ValidationError({"client_payment": "Summa manfiy bo'lishi mumkin emas."})
+
+    total_price = _d(booking.total_price)
+    if total_price and amount > total_price:
+        raise ValidationError(
+            {"client_payment": f"Boshlang'ich to'lov uy umumiy narxidan ({total_price}) ko'p bo'lishi mumkin emas."}
+        )
+
+    booking.client_payment = amount
+    booking.save(update_fields=["client_payment"])
+    return booking
+
+
 def total_planned(booking):
     schedule = build_schedule(booking)
     if not schedule:

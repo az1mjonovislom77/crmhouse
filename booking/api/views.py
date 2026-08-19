@@ -17,6 +17,7 @@ from booking.api.serializers import (
     BookingCreateSerializer,
     BookingGetSerializer,
     BookingScheduleSerializer,
+    ClientPaymentInputSerializer,
     CommitmentSerializer,
     CompanySerializer,
     InstallmentAdjustmentInputSerializer,
@@ -24,7 +25,7 @@ from booking.api.serializers import (
 )
 from booking.models import Booking, Commitment, Company, Payment
 from booking.services.booking import create_booking, delete_booking, set_booking_status
-from booking.services.schedule import booking_schedule, set_installment_planned_amount
+from booking.services.schedule import booking_schedule, set_client_payment, set_installment_planned_amount
 from booking.services.schedule_excel import build_schedule_xlsx
 from common.base.views_base import BaseUserViewSet
 from common.mixins import filter_by_org
@@ -138,7 +139,10 @@ class BookingViewSet(BaseUserViewSet):
     def schedule(self, request, pk=None):
         booking = self.get_object()
         today = parse_date_param(request.query_params.get("date")) or timezone.localdate()
+        return Response(self._schedule_data(booking, request, today=today))
 
+    def _schedule_data(self, booking, request, today=None):
+        today = today or timezone.localdate()
         payments = list(booking.payments.all())
         data = booking_schedule(booking, today=today, payments=payments)
         context = {"request": request}
@@ -148,7 +152,7 @@ class BookingViewSet(BaseUserViewSet):
             context=context,
         ).data
         data["commitments"] = CommitmentSerializer(booking.commitments.all(), many=True, context=context).data
-        return Response(data)
+        return data
 
     @extend_schema(
         parameters=[OpenApiParameter(name="date", type=OpenApiTypes.DATE, location=OpenApiParameter.QUERY)],
@@ -180,18 +184,19 @@ class BookingViewSet(BaseUserViewSet):
         serializer = InstallmentAdjustmentInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         set_installment_planned_amount(booking, int(no), serializer.validated_data["planned_amount"])
+        return Response(self._schedule_data(booking, request))
 
-        today = timezone.localdate()
-        payments = list(booking.payments.all())
-        data = booking_schedule(booking, today=today, payments=payments)
-        context = {"request": request}
-        data["payments"] = PaymentSerializer(
-            sorted(payments, key=lambda p: (p.payment_date or timezone.localdate(), p.id)),
-            many=True,
-            context=context,
-        ).data
-        data["commitments"] = CommitmentSerializer(booking.commitments.all(), many=True, context=context).data
-        return Response(data)
+    @extend_schema(
+        request=ClientPaymentInputSerializer,
+        responses=BookingScheduleSerializer,
+    )
+    @action(detail=True, methods=["put"], url_path="client-payment")
+    def client_payment(self, request, pk=None):
+        booking = self.get_object()
+        serializer = ClientPaymentInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        set_client_payment(booking, serializer.validated_data["client_payment"])
+        return Response(self._schedule_data(booking, request))
 
     @extend_schema(
         methods=["GET"], responses=CommitmentSerializer(many=True), request=None, filters=False, parameters=[]

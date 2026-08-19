@@ -242,6 +242,10 @@ class InstallmentAdjustmentInputSerializer(serializers.Serializer):
     planned_amount = serializers.DecimalField(max_digits=16, decimal_places=2, min_value=Decimal("0"))
 
 
+class ClientPaymentInputSerializer(serializers.Serializer):
+    client_payment = serializers.DecimalField(max_digits=16, decimal_places=2, min_value=Decimal("0"))
+
+
 class BookingScheduleSerializer(serializers.Serializer):
     kpi = ScheduleKpiSerializer()
     down_payment = DownPaymentSerializer()
