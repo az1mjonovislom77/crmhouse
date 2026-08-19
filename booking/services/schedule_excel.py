@@ -83,7 +83,7 @@ def build_schedule_xlsx(booking, today=None):
     ws.merge_cells("C3:C5")
     _cell(ws, "C3", _fmt_plain(home.area, decimals=2))
     ws.merge_cells("D3:D5")
-    _cell(ws, "D3", _fmt_plain(home.price_per_sqm or booking.price_per_m2))
+    _cell(ws, "D3", _fmt_plain(booking.price_per_m2 or home.price_per_sqm))
     ws.merge_cells("E3:F5")
     _cell(ws, "E3", today.strftime("%d.%m.%Y"))
 

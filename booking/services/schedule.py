@@ -80,15 +80,6 @@ def down_payment_amount(booking):
 
 
 def apply_adjustments(schedule, adjustments):
-    """Overwrite installments' planned_amount per adjustment, keeping the
-    schedule's total conserved either way:
-
-    - An increase cascades forward: the surplus eats into (zeroes out) the
-      following installments' planned amounts in order.
-    - A decrease frees up its delta, which is spread evenly across the
-      following installments that have no explicit adjustment of their own,
-      raising their planned amounts instead of just shrinking the total.
-    """
     by_no = {a.no: _d(a.planned_amount) for a in adjustments}
     explicit_nos = set(by_no)
     for no in sorted(by_no):

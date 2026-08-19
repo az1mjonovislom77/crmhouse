@@ -54,6 +54,8 @@ class BookingGetSerializer(serializers.ModelSerializer):
         return obj.home.entrance if obj.home else None
 
     def get_price_per_sqm(self, obj):
+        if obj.price_per_m2 is not None:
+            return obj.price_per_m2
         return obj.home.price_per_sqm if obj.home else None
 
 
